@@ -21,6 +21,11 @@ function LoginForm({ goToReset, goToRegister }) {
       password: "123456",
     };
 
+    const lecturer = {
+      email: "lecturer@university.edu",
+      password: "123456",
+    };
+
     if (email === admin.email && password === admin.password) {
       localStorage.setItem("isLoggedIn", true);
       localStorage.setItem("role", "admin");
@@ -29,10 +34,14 @@ function LoginForm({ goToReset, goToRegister }) {
       localStorage.setItem("isLoggedIn", true);
       localStorage.setItem("role", "student");
       navigate("/student");
+    } else if (email === lecturer.email && password === lecturer.password) {
+      localStorage.setItem("isLoggedIn", true);
+      localStorage.setItem("role", "lecturer");
+      navigate("/lecturer"); // 👈 صفحة الدكتور
     } else {
       setError("Invalid email or password");
     }
-  }; // 👈 كان ناقص هنا
+  };
 
   return (
     <div className="form-card">

@@ -1,14 +1,63 @@
 import "./../styles/dashboard.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import EnrollForm from "../components/EnrollForm";
 
 function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
+  const [showModal, setShowModal] = useState(false);
+  const [courses, setCourses] = useState([]);
+
+  const [profile, setProfile] = useState(() => {
+    const data = localStorage.getItem("profile");
+    return data
+      ? JSON.parse(data)
+      : {
+          firstName: "",
+          middleName: "",
+          lastName: "",
+          email: "student@university.edu",
+          ssn: "123456789",
+          username: "",
+          section: "",
+          level: "",
+          department: "",
+        };
+  });
+
+  // 🔥 Toast State
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.clear();
     navigate("/");
+  };
+
+  const handleChange = (e) => {
+    setProfile({
+      ...profile,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSave = () => {
+    localStorage.setItem("profile", JSON.stringify(profile));
+    showToast("Profile updated successfully ✅", "success");
+  };
+
+  // 🔥 Toast Function
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" });
+    }, 3000);
   };
 
   return (
@@ -39,7 +88,7 @@ function StudentDashboard() {
           <div className="user-info">
             <div className="avatar">U</div>
             <div>
-              <p>User Name</p>
+              <p>{profile.firstName || "User Name"}</p>
               <span>Student</span>
             </div>
           </div>
@@ -59,7 +108,7 @@ function StudentDashboard() {
             <div className="cards">
               <div className="card">
                 <p>Courses</p>
-                <h2>0</h2>
+                <h2>{courses.length}</h2>
               </div>
 
               <div className="card">
@@ -74,14 +123,31 @@ function StudentDashboard() {
             </div>
 
             <div className="top-bar">
-              <button className="enroll-btn">📘 Enroll in Course</button>
+              <button
+                className="enroll-btn"
+                onClick={() => setShowModal(true)}
+              >
+                📘 Enroll in Course
+              </button>
             </div>
 
-            <div className="empty-box">
-              <div className="icon">📖</div>
-              <p>You're not enrolled in any courses yet.</p>
-              <span>Use the "Enroll in Course" button to join a course.</span>
-            </div>
+            {courses.length === 0 ? (
+              <div className="empty-box">
+                <div className="icon">📖</div>
+                <p>You're not enrolled in any courses yet.</p>
+                <span>
+                  Use the "Enroll in Course" button to join a course.
+                </span>
+              </div>
+            ) : (
+              <div className="empty-box">
+                <div className="icon">📚</div>
+                <p>Enrolled Courses:</p>
+                {courses.map((c, i) => (
+                  <span key={i}>{c.code}</span>
+                ))}
+              </div>
+            )}
           </>
         )}
 
@@ -93,30 +159,126 @@ function StudentDashboard() {
               <div className="profile-header">
                 <div className="big-avatar">U</div>
                 <div>
-                  <h2>User Name</h2>
+                  <h2>{profile.firstName || "User Name"}</h2>
                   <p>Student</p>
                 </div>
               </div>
 
               <div className="form-grid">
-                <input placeholder="First Name" />
-                <input placeholder="Middle Name" />
-                <input placeholder="Last Name" />
+                <input
+                  name="firstName"
+                  value={profile.firstName}
+                  onChange={handleChange}
+                  placeholder="First Name"
+                />
 
-                <input placeholder="Email" className="full" />
-                <input placeholder="SSN" className="full" />
-                <input placeholder="Username" className="full" />
+                <input
+                  name="middleName"
+                  value={profile.middleName}
+                  onChange={handleChange}
+                  placeholder="Middle Name"
+                />
 
-                <input placeholder="Section" />
-                <input placeholder="Level" />
-                <input placeholder="Department" />
+                <input
+                  name="lastName"
+                  value={profile.lastName}
+                  onChange={handleChange}
+                  placeholder="Last Name"
+                />
+
+                <input
+                  name="email"
+                  value={profile.email}
+                  className="full"
+                  disabled
+                />
+
+                <input
+                  name="ssn"
+                  value={profile.ssn}
+                  className="full"
+                  disabled
+                />
+
+                <input
+                  name="username"
+                  value={profile.username}
+                  onChange={handleChange}
+                  placeholder="Username"
+                  className="full"
+                />
+
+                <input
+                  name="section"
+                  value={profile.section}
+                  onChange={handleChange}
+                  placeholder="Section"
+                />
+
+                <input
+                  name="level"
+                  value={profile.level}
+                  onChange={handleChange}
+                  placeholder="Level"
+                />
+
+                <input
+                  name="department"
+                  value={profile.department}
+                  onChange={handleChange}
+                  placeholder="Department"
+                />
               </div>
 
-              <button className="save-btn">Save Changes</button>
+              <button className="save-btn" onClick={handleSave}>
+                Save Changes
+              </button>
             </div>
           </>
         )}
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Enroll in a Course</h3>
+              <span onClick={() => setShowModal(false)}>✖</span>
+            </div>
+
+            <EnrollForm
+              onEnroll={(course) => {
+                if (!course) {
+                  showToast("Please fill all fields", "error");
+                  return;
+                }
+
+                const exists = courses.find(
+                  (c) => c.code === course.code
+                );
+
+                if (exists) {
+                  showToast("Already enrolled!", "error");
+                  return;
+                }
+
+                setCourses([...courses, course]);
+                setShowModal(false);
+
+                showToast("Enrolled successfully 🎉", "success");
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast.show && (
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }
