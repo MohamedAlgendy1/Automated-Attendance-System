@@ -15,8 +15,9 @@
 .modal {
   background: #fff;
   padding: 25px;
-  border-radius: 12px;
-  width: 380px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 400px;
   animation: scaleIn 0.2s ease;
 }
 
@@ -28,41 +29,64 @@
 
 .modal-header span {
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .modal input {
   width: 100%;
   margin-bottom: 12px;
   padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  transition: 0.2s;
 }
 
+.modal input:focus {
+  border-color: #1e88e5;
+  outline: none;
+}
+
+/* 🔥 Save Button */
 .modal button {
   width: 100%;
-  padding: 10px;
-  background: #1e88e5;
-  color: white;
+  padding: 12px;
+  border-radius: 10px;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1e88e5, #42a5f5);
+  color: white;
+  transition: 0.3s;
+}
+
+.modal button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(30, 136, 229, 0.3);
+}
+
+.modal button:active {
+  transform: scale(0.97);
 }
 
 /* ================= COURSE CARD ================= */
 .course-card {
   background: #fff;
-  padding: 15px;
-  border-radius: 12px;
+  padding: 18px;
+  border-radius: 14px;
   margin-top: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  transition: 0.2s;
+}
+
+.course-card:hover {
+  transform: translateY(-3px);
 }
 
 .course-card span {
   display: inline-block;
   background: #2ecc71;
   color: white;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
   margin-bottom: 10px;
@@ -70,6 +94,62 @@
 
 .course-card h3 {
   margin: 5px 0;
+}
+
+/* 🔥 HEADER ROW FIX */
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 🔥 ACTION BUTTONS (FINAL FIX) */
+.actions {
+  display: flex;
+}
+
+.actions button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: 0.25s;
+}
+
+/* 👈 يفصلهم غصب عن أي حاجة */
+.actions button + button {
+  margin-left: 14px;
+}
+
+/* Edit */
+.edit-btn {
+  background: #e3f2fd;
+  color: #1e88e5;
+}
+
+.edit-btn:hover {
+  background: #1e88e5;
+  color: white;
+  transform: scale(1.08);
+}
+
+/* Delete */
+.delete-btn {
+  background: #fdecea;
+  color: #e74c3c;
+}
+
+.delete-btn:hover {
+  background: #e74c3c;
+  color: white;
+  transform: scale(1.08);
 }
 
 /* ================= TOAST ================= */
@@ -113,5 +193,18 @@
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 600px) {
+  .course-card {
+    padding: 15px;
+  }
+
+  .actions button {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
   }
 }

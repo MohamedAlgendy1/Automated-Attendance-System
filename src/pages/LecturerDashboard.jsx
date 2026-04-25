@@ -1,8 +1,9 @@
-import "./../styles/dashboard.css";
+import "./../styles/dashboardLecturer.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function LecturerDashboard() {
+  const [activePage, setActivePage] = useState("courses"); // 👈 الجديد
   const [showModal, setShowModal] = useState(false);
   const [courses, setCourses] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
@@ -86,8 +87,19 @@ function LecturerDashboard() {
           <h2 className="logo">QR Attend</h2>
 
           <ul className="menu">
-            <li className="active">📘 My Courses</li>
-            <li>📊 Attendance Overview</li>
+            <li
+              className={activePage === "courses" ? "active" : ""}
+              onClick={() => setActivePage("courses")}
+            >
+              📘 My Courses
+            </li>
+
+            <li
+              className={activePage === "attendance" ? "active" : ""}
+              onClick={() => setActivePage("attendance")}
+            >
+              📊 Attendance Overview
+            </li>
           </ul>
         </div>
 
@@ -95,7 +107,8 @@ function LecturerDashboard() {
           <div className="user-info">
             <div className="avatar">A</div>
             <div>
-              <p>Ahmed Hassan</p>
+              <p>user</p>
+              
               <span>Lecturer</span>
             </div>
           </div>
@@ -108,59 +121,103 @@ function LecturerDashboard() {
 
       {/* Main */}
       <div className="main">
-        <h1>Lecturer Dashboard</h1>
+        {/* 🔹 Courses Page */}
+        {activePage === "courses" && (
+          <>
+            <h1>Lecturer Dashboard</h1>
 
-        <div className="cards">
-          <div className="card">
-            <p>Courses</p>
-            <h2>{courses.length}</h2>
-          </div>
-
-          <div className="card">
-            <p>Lectures</p>
-            <h2>0</h2>
-          </div>
-
-          <div className="card">
-            <p>Students</p>
-            <h2>0</h2>
-          </div>
-        </div>
-
-        <div className="top-bar">
-          <button
-            className="enroll-btn"
-            onClick={() => {
-              setShowModal(true);
-              setEditIndex(null);
-              setForm({ code: "", name: "", password: "" });
-            }}
-          >
-            + Add Course
-          </button>
-        </div>
-
-        <div className="empty-box">
-          {courses.length === 0 ? (
-            <p>No courses yet</p>
-          ) : (
-            courses.map((c, i) => (
-              <div key={i} className="course-card">
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{c.code}</span>
-
-                  <div>
-                    <button onClick={() => handleEdit(i)}>✏️</button>
-                    <button onClick={() => handleDelete(i)}>🗑</button>
-                  </div>
-                </div>
-
-                <h3>{c.name}</h3>
-                <p>0 students enrolled</p>
+            <div className="cards">
+              <div className="card">
+                <p>Courses</p>
+                <h2>{courses.length}</h2>
               </div>
-            ))
-          )}
+
+              <div className="card">
+                <p>Lectures</p>
+                <h2>0</h2>
+              </div>
+
+              <div className="card">
+                <p>Students</p>
+                <h2>0</h2>
+              </div>
+            </div>
+
+            <div className="top-bar">
+              <button
+                className="enroll-btn"
+                onClick={() => {
+                  setShowModal(true);
+                  setEditIndex(null);
+                  setForm({ code: "", name: "", password: "" });
+                }}
+              >
+                + Add Course
+              </button>
+            </div>
+
+            <div className="empty-box">
+              {courses.length === 0 ? (
+                <p>No courses yet</p>
+              ) : (
+                courses.map((c, i) => (
+                  <div key={i} className="course-card">
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                    }}
+                    >
+                <div className="course-header">
+            <span>{c.code}</span>
+
+            <div className="actions">
+                <button className="edit-btn" onClick={() => handleEdit(i)}>✏️</button>
+                <button className="delete-btn" onClick={() => handleDelete(i)}>🗑</button>
+            </div>
         </div>
+                    </div>
+
+                    <h3>{c.name}</h3>
+                    <p>0 students enrolled</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
+
+        {/* 🔥 Attendance Overview Page */}
+        {activePage === "attendance" && (
+          <>
+            <h1>Attendance Overview</h1>
+
+            <div className="cards">
+              <div className="card">
+                <p>Courses</p>
+                <h2>{courses.length}</h2>
+              </div>
+
+              <div className="card">
+                <p>Lectures</p>
+                <h2>0</h2>
+              </div>
+
+              <div className="card">
+                <p>Students</p>
+                <h2>0</h2>
+              </div>
+            </div>
+
+            <div className="table-box">
+              <h2>Attendance Across All Courses</h2>
+
+              <div className="empty-box">
+                <p>No students enrolled yet</p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Modal */}
