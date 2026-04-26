@@ -2,10 +2,9 @@ import "./../styles/dashboardLecturer.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function LecturerDashboard() {
-  const [activePage, setActivePage] = useState("courses"); // 👈 الجديد
+function LecturerDashboard({ courses, setCourses }) {
+  const [activePage, setActivePage] = useState("courses");
   const [showModal, setShowModal] = useState(false);
-  const [courses, setCourses] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
 
   const [form, setForm] = useState({
@@ -35,7 +34,6 @@ function LecturerDashboard() {
     }, 3000);
   };
 
-  // ✅ إضافة أو تعديل
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -48,7 +46,7 @@ function LecturerDashboard() {
       const updated = [...courses];
       updated[editIndex] = form;
       setCourses(updated);
-      showToast("Course updated ✅", "success");
+      showToast("Course updated ✅");
     } else {
       const exists = courses.find((c) => c.code === form.code);
       if (exists) {
@@ -57,7 +55,7 @@ function LecturerDashboard() {
       }
 
       setCourses([...courses, form]);
-      showToast("Course added 🎉", "success");
+      showToast("Course added 🎉");
     }
 
     setForm({ code: "", name: "", password: "" });
@@ -65,14 +63,12 @@ function LecturerDashboard() {
     setShowModal(false);
   };
 
-  // 🗑 حذف
   const handleDelete = (index) => {
     const updated = courses.filter((_, i) => i !== index);
     setCourses(updated);
     showToast("Course deleted ❌", "error");
   };
 
-  // ✏️ تعديل
   const handleEdit = (index) => {
     setForm(courses[index]);
     setEditIndex(index);
@@ -81,7 +77,7 @@ function LecturerDashboard() {
 
   return (
     <div className="dashboard">
-      {/* Sidebar */}
+      {/* ================= SIDEBAR ================= */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
@@ -107,8 +103,7 @@ function LecturerDashboard() {
           <div className="user-info">
             <div className="avatar">A</div>
             <div>
-              <p>user</p>
-              
+              <p>Ahmed Hassan</p>
               <span>Lecturer</span>
             </div>
           </div>
@@ -119,9 +114,9 @@ function LecturerDashboard() {
         </div>
       </div>
 
-      {/* Main */}
+      {/* ================= MAIN ================= */}
       <div className="main">
-        {/* 🔹 Courses Page */}
+        {/* ========= COURSES ========= */}
         {activePage === "courses" && (
           <>
             <h1>Lecturer Dashboard</h1>
@@ -156,26 +151,40 @@ function LecturerDashboard() {
               </button>
             </div>
 
-            <div className="empty-box">
+            {/* 🔥 GRID COURSES */}
+            <div className="courses-grid">
               {courses.length === 0 ? (
                 <p>No courses yet</p>
               ) : (
                 courses.map((c, i) => (
-                  <div key={i} className="course-card">
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                    }}
-                    >
-                <div className="course-header">
-            <span>{c.code}</span>
+                  <div
+                    key={i}
+                    className="course-card"
+                    onClick={() => navigate(`/course/${i}`)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="course-header">
+                      <span className="course-code">{c.code}</span>
 
-            <div className="actions">
-                <button className="edit-btn" onClick={() => handleEdit(i)}>✏️</button>
-                <button className="delete-btn" onClick={() => handleDelete(i)}>🗑</button>
-            </div>
-        </div>
+                      {/* ❗️ مهم: نوقف propagation علشان الضغط على الأزرار مايفتحش الصفحة */}
+                      <div
+                        className="actions"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          className="edit-btn"
+                          onClick={() => handleEdit(i)}
+                        >
+                          ✏️
+                        </button>
+
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDelete(i)}
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </div>
 
                     <h3>{c.name}</h3>
@@ -187,7 +196,7 @@ function LecturerDashboard() {
           </>
         )}
 
-        {/* 🔥 Attendance Overview Page */}
+        {/* ========= ATTENDANCE ========= */}
         {activePage === "attendance" && (
           <>
             <h1>Attendance Overview</h1>
@@ -211,7 +220,6 @@ function LecturerDashboard() {
 
             <div className="table-box">
               <h2>Attendance Across All Courses</h2>
-
               <div className="empty-box">
                 <p>No students enrolled yet</p>
               </div>
@@ -220,7 +228,7 @@ function LecturerDashboard() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* ================= MODAL ================= */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
@@ -231,7 +239,7 @@ function LecturerDashboard() {
 
             <form onSubmit={handleSubmit}>
               <input
-                placeholder="Course Code (e.g. CS401)"
+                placeholder="Course Code"
                 value={form.code}
                 onChange={(e) =>
                   setForm({ ...form, code: e.target.value })
@@ -248,7 +256,7 @@ function LecturerDashboard() {
 
               <input
                 type="password"
-                placeholder="Enrollment Password"
+                placeholder="Password"
                 value={form.password}
                 onChange={(e) =>
                   setForm({ ...form, password: e.target.value })
@@ -263,7 +271,7 @@ function LecturerDashboard() {
         </div>
       )}
 
-      {/* Toast */}
+      {/* ================= TOAST ================= */}
       {toast.show && (
         <div className={`toast ${toast.type}`}>
           {toast.message}
