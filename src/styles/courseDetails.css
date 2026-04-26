@@ -1,0 +1,398 @@
+/* ================= PAGE SCOPE ================= */
+.course-details-page {
+  display: flex;
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ================= SIDEBAR ================= */
+.course-details-page .sidebar {
+  width: 250px;
+  background: linear-gradient(180deg, #0f172a, #020617);
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.course-details-page .logo {
+  margin-bottom: 30px;
+}
+
+.course-details-page .menu {
+  list-style: none;
+  padding: 0;
+}
+
+.course-details-page .menu li {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: default;
+}
+
+.course-details-page .menu .active {
+  background: #1e293b;
+}
+
+/* ================= USER ================= */
+.course-details-page .user-box {
+  border-top: 1px solid #334155;
+  padding-top: 15px;
+}
+
+.course-details-page .user-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.course-details-page .avatar {
+  width: 35px;
+  height: 35px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.course-details-page .logout-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.course-details-page .logout-btn:hover {
+  background: #ef4444;
+}
+
+/* ================= MAIN ================= */
+.course-details-page .main {
+  flex: 1;
+  padding: 20px;
+  background: #f1f5f9;
+}
+
+/* ================= BACK ================= */
+.course-details-page .back {
+  margin: 10px 0;
+  cursor: pointer;
+  color: #2563eb;
+}
+
+.course-details-page .back:hover {
+  text-decoration: underline;
+}
+
+/* ================= CARDS ================= */
+.course-details-page .cards {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.course-details-page .card {
+  flex: 1;
+  min-width: 150px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* ================= TABLE ================= */
+.course-details-page .table-box {
+  background: white;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.course-details-page .table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.course-details-page .table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.course-details-page .table th,
+.course-details-page .table td {
+  padding: 10px;
+  border-top: 1px solid #eee;
+  text-align: left;
+}
+
+.course-details-page .table th {
+  color: gray;
+}
+
+/* ================= BUTTON ================= */
+.course-details-page .enroll-btn {
+  background: #2563eb;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.course-details-page .enroll-btn:hover {
+  background: #1e40af;
+}
+
+/* ================= MODAL ================= */
+.course-details-page .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.course-details-page .modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.course-details-page .modal-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.course-details-page .modal-header span {
+  cursor: pointer;
+}
+
+/* inputs */
+.course-details-page .modal input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* 🔥 الزرار */
+.course-details-page .modal-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1e88e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.course-details-page .modal-btn:hover {
+  background: #1565c0;
+}
+
+.course-details-page .modal-btn:active {
+  transform: scale(0.97);
+}
+
+/* ================= ANIMATION ================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+  .course-details-page {
+    flex-direction: column;
+  }
+
+  .course-details-page .sidebar {
+    width: 100%;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.form-group input,
+.form-group select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #007bff;
+}
+
+/* =========================
+   ACTION ICONS (QR / EDIT / DELETE)
+========================= */
+
+.actions {
+  display: flex;
+  gap: 15px; /* 👈 المسافة بين الأيقونات */
+  justify-content: center;
+  align-items: center;
+}
+
+.actions span {
+  cursor: pointer;
+  font-size: 18px;
+  transition: 0.2s ease;
+}
+
+.actions span:hover {
+  transform: scale(1.2);
+}
+
+/* ألوان لكل أيقونة */
+.actions span:nth-child(1) {
+  color: #444; /* QR */
+}
+
+.actions span:nth-child(2) {
+  color: #1e88e5; /* Edit */
+}
+
+.actions span:nth-child(3) {
+  color: #e53935; /* Delete */
+}
+
+
+/* =========================
+   TABLE تحسين شكل الجدول
+========================= */
+
+.table td {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+.table th {
+  padding: 14px;
+  text-align: center;
+}
+
+.table td {
+  text-align: center;
+}
+
+
+/* =========================
+   QR BOX (الشكل اللي تحت الجدول)
+========================= */
+
+.qr-box {
+  margin: 30px auto;
+  padding: 25px;
+  width: 300px;
+  text-align: center;
+  background: #f8f9fb;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.qr-box h2 {
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.qr-box canvas {
+  margin: 15px 0;
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+}
+
+.qr-box p {
+  font-size: 13px;
+  color: gray;
+  margin-bottom: 10px;
+}
+
+.qr-box button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #e0e0e0;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.qr-box button:hover {
+  background: #d5d5d5;
+}
+
+
+/* =========================
+   MODAL تحسين الشكل
+========================= */
+
+.modal input,
+.modal select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: 0.2s;
+}
+
+.modal input:focus,
+.modal select:focus {
+  border-color: #1e88e5;
+}
+
+.modal-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #1e88e5;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal-btn:hover {
+  background: #1565c0;
+}

@@ -76,7 +76,7 @@ function LecturerDashboard({ courses, setCourses }) {
   };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard lecturer-page">
       {/* ================= SIDEBAR ================= */}
       <div className="sidebar">
         <div>
@@ -90,12 +90,9 @@ function LecturerDashboard({ courses, setCourses }) {
               📘 My Courses
             </li>
 
-            <li
-              className={activePage === "attendance" ? "active" : ""}
-              onClick={() => setActivePage("attendance")}
-            >
-              📊 Attendance Overview
-            </li>
+            <li onClick={() => navigate("/attendance")}>
+                📊 Attendance Overview
+              </li>
           </ul>
         </div>
 

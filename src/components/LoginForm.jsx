@@ -20,7 +20,6 @@ function LoginForm({ goToReset, goToRegister }) {
       email: "student@university.edu",
       password: "123456",
     };
-
     const lecturer = {
       email: "lecturer@university.edu",
       password: "123456",

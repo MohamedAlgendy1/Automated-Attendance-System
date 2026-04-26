@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import "./../styles/dashboard.css";
+import { QRCodeCanvas } from "qrcode.react"; // ✅ الصحيح
+import "./../styles/courseDetails.css";
 
 function CourseDetails({ courses }) {
   const { id } = useParams();
@@ -10,6 +11,8 @@ function CourseDetails({ courses }) {
 
   const [lectures, setLectures] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [selectedQR, setSelectedQR] = useState(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -20,12 +23,20 @@ function CourseDetails({ courses }) {
 
   if (!course) return <h2>Course not found</h2>;
 
+  // ✅ ADD / EDIT
   const handleAddLecture = (e) => {
     e.preventDefault();
 
     if (!form.title || !form.classroom || !form.start || !form.end) return;
 
-    setLectures([...lectures, form]);
+    if (editingIndex !== null) {
+      const updated = [...lectures];
+      updated[editingIndex] = form;
+      setLectures(updated);
+      setEditingIndex(null);
+    } else {
+      setLectures([...lectures, form]);
+    }
 
     setForm({
       title: "",
@@ -37,25 +48,35 @@ function CourseDetails({ courses }) {
     setShowModal(false);
   };
 
+  // ✅ DELETE
+  const handleDelete = (index) => {
+    const updated = lectures.filter((_, i) => i !== index);
+    setLectures(updated);
+  };
+
+  // ✅ EDIT
+  const handleEdit = (index) => {
+    setForm(lectures[index]);
+    setEditingIndex(index);
+    setShowModal(true);
+  };
+
   return (
-    <div className="dashboard">
-      {/* ✅ Sidebar FIXED */}
+    <div className="dashboard course-details-page">
+      {/* Sidebar */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
 
           <ul className="menu">
-            <li onClick={() => navigate("/lecturer")}>
-              📘 My Courses
-            </li>
+            <li className="active">📘 My Courses</li>
 
-            <li className="active">
+            <li >
               📊 Attendance Overview
             </li>
           </ul>
         </div>
 
-        {/* 👇 ده اللي تحت لوحده */}
         <div className="user-box">
           <div className="user-info">
             <div className="avatar">A</div>
@@ -110,7 +131,16 @@ function CourseDetails({ courses }) {
 
             <button
               className="enroll-btn"
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                setEditingIndex(null);
+                setForm({
+                  title: "",
+                  classroom: "",
+                  start: "",
+                  end: "",
+                });
+                setShowModal(true);
+              }}
             >
               + Add Lecture
             </button>
@@ -123,13 +153,14 @@ function CourseDetails({ courses }) {
                 <th>Classroom</th>
                 <th>Start</th>
                 <th>End</th>
+                <th>Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {lectures.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: "center" }}>
+                  <td colSpan="5" style={{ textAlign: "center" }}>
                     No lectures yet
                   </td>
                 </tr>
@@ -140,12 +171,37 @@ function CourseDetails({ courses }) {
                     <td>{l.classroom}</td>
                     <td>{l.start}</td>
                     <td>{l.end}</td>
+
+                    <td className="actions">
+                      <span onClick={() => setSelectedQR(i)}>📷</span>
+                      <span onClick={() => handleEdit(i)}>✏️</span>
+                      <span onClick={() => handleDelete(i)}>🗑️</span>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* ✅ QR يظهر هنا في نفس الصفحة */}
+        {selectedQR !== null && lectures[selectedQR] && (
+          <div className="qr-box">
+            <h2>Scan this QR Code</h2>
+
+            <QRCodeCanvas
+              value={JSON.stringify({
+                courseId: id,
+                lecture: lectures[selectedQR],
+              })}
+              size={200}
+            />
+
+            <p>Expires in 10 minutes</p>
+
+            <button onClick={() => setSelectedQR(null)}>Close</button>
+          </div>
+        )}
 
         {/* Students */}
         <div className="table-box">
@@ -177,45 +233,65 @@ function CourseDetails({ courses }) {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>Add Lecture</h3>
+              <h3>
+                {editingIndex !== null ? "Edit Lecture" : "Add Lecture"}
+              </h3>
               <span onClick={() => setShowModal(false)}>✖</span>
             </div>
 
             <form onSubmit={handleAddLecture}>
-              <input
-                placeholder="Lecture Title"
-                value={form.title}
-                onChange={(e) =>
-                  setForm({ ...form, title: e.target.value })
-                }
-              />
+  <div className="form-group">
+    <label>Lecture Title</label>
+    <input
+      placeholder="Lecture Title"
+      value={form.title}
+      onChange={(e) =>
+        setForm({ ...form, title: e.target.value })
+      }
+    />
+  </div>
 
-              <input
-                placeholder="Classroom"
-                value={form.classroom}
-                onChange={(e) =>
-                  setForm({ ...form, classroom: e.target.value })
-                }
-              />
+  <div className="form-group">
+    <label>Start Time</label>
+    <input
+      type="datetime-local"
+      value={form.start}
+      onChange={(e) =>
+        setForm({ ...form, start: e.target.value })
+      }
+    />
+  </div>
 
-              <input
-                type="datetime-local"
-                value={form.start}
-                onChange={(e) =>
-                  setForm({ ...form, start: e.target.value })
-                }
-              />
+  <div className="form-group">
+    <label>End Time</label>
+    <input
+      type="datetime-local"
+      value={form.end}
+      onChange={(e) =>
+        setForm({ ...form, end: e.target.value })
+      }
+    />
+  </div>
 
-              <input
-                type="datetime-local"
-                value={form.end}
-                onChange={(e) =>
-                  setForm({ ...form, end: e.target.value })
-                }
-              />
+  <div className="form-group">
+    <label>Classroom</label>
+    <select
+      value={form.classroom}
+      onChange={(e) =>
+        setForm({ ...form, classroom: e.target.value })
+      }
+    >
+      <option value="">Select classroom</option>
+      <option value="Lab A1">Lab A1</option>
+      <option value="Lab B1">Lab B1</option>
+      <option value="Hall 1">Hall 1</option>
+    </select>
+  </div>
 
-              <button type="submit">Save Lecture</button>
-            </form>
+  <button type="submit" className="modal-btn">
+    Save
+  </button>
+</form>
           </div>
         </div>
       )}
