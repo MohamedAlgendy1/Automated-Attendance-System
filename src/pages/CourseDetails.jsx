@@ -171,12 +171,17 @@ function CourseDetails({ courses }) {
                     <td>{l.classroom}</td>
                     <td>{l.start}</td>
                     <td>{l.end}</td>
+<td className="actions">
+  <span onClick={() => setSelectedQR(i)}>📷</span>
 
-                    <td className="actions">
-                      <span onClick={() => setSelectedQR(i)}>📷</span>
-                      <span onClick={() => handleEdit(i)}>✏️</span>
-                      <span onClick={() => handleDelete(i)}>🗑️</span>
-                    </td>
+  {/* 🔥 الزر الجديد */}
+                   <span onClick={() => navigate(`/attendance-records/${id}/${i}`)}>
+                          📊
+                  </span>
+ 
+                  <span onClick={() => handleEdit(i)}>✏️</span>
+                  <span onClick={() => handleDelete(i)}>🗑️</span>
+                  </td>
                   </tr>
                 ))
               )}

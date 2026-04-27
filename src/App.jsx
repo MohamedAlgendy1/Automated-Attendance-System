@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import LecturerDashboard from "./pages/LecturerDashboard";
 import CourseDetails from "./pages/CourseDetails";
 import AttendanceOverview from "./pages/AttendanceOverview";
+import AttendanceRecords from "./pages/AttendanceRecords"; // ✅ جديد
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -57,12 +58,22 @@ function App() {
           }
         />
 
-        {/* ✅ Attendance (🔥 التعديل هنا بس) */}
+        {/* ✅ Attendance Overview */}
         <Route
           path="/attendance"
           element={
             <ProtectedRoute role="lecturer">
               <AttendanceOverview courses={courses} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 🔥 NEW PAGE (Attendance Records) */}
+        <Route
+          path="/attendance-records/:courseId/:lectureId"
+          element={
+            <ProtectedRoute role="lecturer">
+              <AttendanceRecords courses={courses} />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,39 @@
+.attendance-page .main h1 {
+  margin-bottom: 10px;
+}
+
+.back {
+  cursor: pointer;
+  margin-bottom: 20px;
+  display: inline-block;
+  color: #555;
+}
+
+.table-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.table-box h2 {
+  margin-bottom: 15px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.table th {
+  color: #777;
+  font-weight: 500;
+}

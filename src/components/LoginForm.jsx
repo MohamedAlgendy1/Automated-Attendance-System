@@ -20,24 +20,35 @@ function LoginForm({ goToReset, goToRegister }) {
       email: "student@university.edu",
       password: "123456",
     };
+
     const lecturer = {
       email: "lecturer@university.edu",
       password: "123456",
     };
 
+    // ✅ Admin
     if (email === admin.email && password === admin.password) {
-      localStorage.setItem("isLoggedIn", true);
+      localStorage.setItem("isLoggedIn", "true"); // 👈 مهم
       localStorage.setItem("role", "admin");
       navigate("/dashboard");
-    } else if (email === student.email && password === student.password) {
-      localStorage.setItem("isLoggedIn", true);
+    }
+
+    // ✅ Student
+    else if (email === student.email && password === student.password) {
+      localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "student");
       navigate("/student");
-    } else if (email === lecturer.email && password === lecturer.password) {
-      localStorage.setItem("isLoggedIn", true);
+    }
+
+    // ✅ Lecturer
+    else if (email === lecturer.email && password === lecturer.password) {
+      localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "lecturer");
-      navigate("/lecturer"); // 👈 صفحة الدكتور
-    } else {
+      navigate("/lecturer");
+    }
+
+    // ❌ Error
+    else {
       setError("Invalid email or password");
     }
   };
