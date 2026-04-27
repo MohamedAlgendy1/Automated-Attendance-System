@@ -22,7 +22,8 @@ function LecturerDashboard({ courses, setCourses }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("role");
     navigate("/");
   };
 
@@ -58,7 +59,7 @@ function LecturerDashboard({ courses, setCourses }) {
       showToast("Course added 🎉");
     }
 
-    setForm({ code: "", name: "", password: "" });
+    setForm({  name: "",code: "", password: "" });
     setEditIndex(null);
     setShowModal(false);
   };
@@ -100,7 +101,7 @@ function LecturerDashboard({ courses, setCourses }) {
           <div className="user-info">
             <div className="avatar">A</div>
             <div>
-              <p>Ahmed Hassan</p>
+              <p>user</p>
               <span>Lecturer</span>
             </div>
           </div>
@@ -141,7 +142,7 @@ function LecturerDashboard({ courses, setCourses }) {
                 onClick={() => {
                   setShowModal(true);
                   setEditIndex(null);
-                  setForm({ code: "", name: "", password: "" });
+                  setForm({ name: "",  code: "",password: "" });
                 }}
               >
                 + Add Course
@@ -235,19 +236,21 @@ function LecturerDashboard({ courses, setCourses }) {
             </div>
 
             <form onSubmit={handleSubmit}>
-              <input
-                placeholder="Course Code"
-                value={form.code}
-                onChange={(e) =>
-                  setForm({ ...form, code: e.target.value })
-                }
-              />
+            
 
               <input
                 placeholder="Course Name"
                 value={form.name}
                 onChange={(e) =>
                   setForm({ ...form, name: e.target.value })
+                }
+              />
+
+              <input
+                placeholder="Course Code"
+                value={form.code}
+                onChange={(e) =>
+                  setForm({ ...form, code: e.target.value })
                 }
               />
 

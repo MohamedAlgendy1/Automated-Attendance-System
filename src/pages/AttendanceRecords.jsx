@@ -2,16 +2,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./../styles/attendanceRecords.css";
 
 function AttendanceRecords({ courses }) {
-  const { courseId,lectureId } = useParams();
+  const { courseId, lectureId } = useParams();
   const navigate = useNavigate();
 
   const course = courses[courseId];
 
-  // ❗ حماية من crash
+  // ✅ مستخدمين lecture فعلاً
+  const lecture = course?.lectures?.[lectureId];
+
   if (!course) return <h2>Course not found</h2>;
 
   return (
-    <div className="dashboard">
+    <div className="dashboard records-page">
       {/* Sidebar */}
       <div className="sidebar">
         <div>
@@ -32,7 +34,8 @@ function AttendanceRecords({ courses }) {
           <button
             className="logout-btn"
             onClick={() => {
-              localStorage.clear();
+              localStorage.removeItem("isLoggedIn");
+              localStorage.removeItem("role");
               navigate("/");
             }}
           >
@@ -50,7 +53,9 @@ function AttendanceRecords({ courses }) {
         </p>
 
         <div className="table-box">
-          <h2>{course.name}</h2>
+          <h2>
+            {course.name} - {lecture?.title || `Lecture ${lectureId}`}
+          </h2>
 
           <table className="table">
             <thead>

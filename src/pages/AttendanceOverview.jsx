@@ -34,7 +34,8 @@ function AttendanceOverview({ courses }) {
           <button
             className="logout-btn"
             onClick={() => {
-              localStorage.clear();
+              localStorage.removeItem("isLoggedIn");
+              localStorage.removeItem("role");
               navigate("/");
             }}
           >

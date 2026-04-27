@@ -268,6 +268,19 @@
 .lecturer-page .toast.error {
   background: #e74c3c;
 }
+.lecturer-page .enroll-btn {
+  background: #1e88e5;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.lecturer-page .enroll-btn:hover {
+  background: #1565c0;
+}
 
 /* ================= RESPONSIVE ================= */
 @media (max-width: 900px) {

@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Pages
 import Login from "./pages/Login";
 import LecturerDashboard from "./pages/LecturerDashboard";
 import CourseDetails from "./pages/CourseDetails";
 import AttendanceOverview from "./pages/AttendanceOverview";
-import AttendanceRecords from "./pages/AttendanceRecords"; // ✅ جديد
+import AttendanceRecords from "./pages/AttendanceRecords";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -29,13 +29,17 @@ function App() {
     JSON.parse(localStorage.getItem("courses")) || []
   );
 
+  // ✅ حفظ الكورسات
+  useEffect(() => {
+    localStorage.setItem("courses", JSON.stringify(courses));
+  }, [courses]);
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* ✅ Login */}
         <Route path="/" element={<Login />} />
 
-        {/* ✅ Lecturer */}
+        {/* Lecturer */}
         <Route
           path="/lecturer"
           element={
@@ -48,7 +52,7 @@ function App() {
           }
         />
 
-        {/* ✅ Course Details */}
+        {/* Course Details */}
         <Route
           path="/course/:id"
           element={
@@ -58,7 +62,7 @@ function App() {
           }
         />
 
-        {/* ✅ Attendance Overview */}
+        {/* Attendance Overview */}
         <Route
           path="/attendance"
           element={
@@ -68,7 +72,7 @@ function App() {
           }
         />
 
-        {/* 🔥 NEW PAGE (Attendance Records) */}
+        {/* Attendance Records */}
         <Route
           path="/attendance-records/:courseId/:lectureId"
           element={
@@ -78,17 +82,16 @@ function App() {
           }
         />
 
-        {/* ✅ Student */}
+        {/* ✅ Student (التعديل هنا) */}
         <Route
           path="/student"
           element={
             <ProtectedRoute role="student">
-              <StudentDashboard />
+              <StudentDashboard courses={courses} />
             </ProtectedRoute>
           }
         />
 
-        {/* ✅ Admin */}
         <Route
           path="/dashboard"
           element={
@@ -98,7 +101,6 @@ function App() {
           }
         />
 
-        {/* fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
