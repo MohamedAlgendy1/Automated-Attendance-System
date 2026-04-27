@@ -6,29 +6,19 @@ import EnrollForm from "../components/EnrollForm";
 function StudentDashboard({ courses }) {
   const [activePage, setActivePage] = useState("courses");
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
-  // ✅ كورسات الطالب
-  const [myCourses, setMyCourses] = useState(() => {
-    return JSON.parse(localStorage.getItem("studentCourses")) || [];
-  });
-
-  // ✅ حفظ الكورسات
-  useEffect(() => {
-    localStorage.setItem("studentCourses", JSON.stringify(myCourses));
-  }, [myCourses]);
-
-  // ✅ البروفايل
+  // ✅ البروفايل أولاً
   const [profile, setProfile] = useState(() => {
     const data = localStorage.getItem("profile");
-
     return data
       ? JSON.parse(data)
       : {
           firstName: "",
           middleName: "",
           lastName: "",
-          email: "student@university.edu",
-          ssn: "123456789",
+          email: "",
+          ssn: "",
           username: "",
           section: "",
           level: "",
@@ -36,51 +26,42 @@ function StudentDashboard({ courses }) {
         };
   });
 
-  // ✅ Toast
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
+  // ✅ الإيميل من البروفايل
+  const studentEmail = profile.email || "unknown";
+
+  // ✅ كورسات الطالب بـ key مخصص بالإيميل
+  const [myCourses, setMyCourses] = useState(() => {
+    return JSON.parse(localStorage.getItem(`studentCourses_${studentEmail}`)) || [];
   });
 
-  const navigate = useNavigate();
+  // ✅ حفظ كورسات الطالب
+  useEffect(() => {
+    localStorage.setItem(`studentCourses_${studentEmail}`, JSON.stringify(myCourses));
+  }, [myCourses]);
 
-  // ✅ Logout
+  // ✅ Toast
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" });
+    }, 3000);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("role");
     navigate("/");
   };
 
-  // ✅ تغيير بيانات البروفايل
   const handleChange = (e) => {
-    setProfile({
-      ...profile,
-      [e.target.name]: e.target.value,
-    });
+    setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  // ✅ حفظ البروفايل
   const handleSave = () => {
     localStorage.setItem("profile", JSON.stringify(profile));
     showToast("Profile updated successfully ✅", "success");
-  };
-
-  // ✅ إشعار
-  const showToast = (message, type = "success") => {
-    setToast({
-      show: true,
-      message,
-      type,
-    });
-
-    setTimeout(() => {
-      setToast({
-        show: false,
-        message: "",
-        type: "success",
-      });
-    }, 3000);
   };
 
   return (
@@ -89,7 +70,6 @@ function StudentDashboard({ courses }) {
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
-
           <ul className="menu">
             <li
               className={activePage === "courses" ? "active" : ""}
@@ -97,7 +77,6 @@ function StudentDashboard({ courses }) {
             >
               📘 My Courses
             </li>
-
             <li
               className={activePage === "profile" ? "active" : ""}
               onClick={() => setActivePage("profile")}
@@ -109,14 +88,14 @@ function StudentDashboard({ courses }) {
 
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">U</div>
-
+            <div className="avatar">
+              {profile.firstName?.[0]?.toUpperCase() || "U"}
+            </div>
             <div>
               <p>{profile.firstName || "User Name"}</p>
               <span>Student</span>
             </div>
           </div>
-
           <button className="logout-btn" onClick={handleLogout}>
             Sign Out
           </button>
@@ -125,7 +104,8 @@ function StudentDashboard({ courses }) {
 
       {/* Main */}
       <div className="main">
-        {/* Courses Page */}
+
+        {/* ========= COURSES ========= */}
         {activePage === "courses" && (
           <>
             <h1>Student Dashboard</h1>
@@ -142,54 +122,35 @@ function StudentDashboard({ courses }) {
               </div>
 
               <div className="card">
-  <p>Overall Attendance</p>
-  <h2>
-    {(() => {
-      const studentEmail = profile.email;
+                <p>Overall Attendance</p>
+                <h2>
+                  {(() => {
+                    let totalLectures = 0;
+                    let totalAttended = 0;
 
-      let totalLectures = 0;
-      let totalAttended = 0;
+                    myCourses.forEach((course) => {
+                      const lectures =
+                        JSON.parse(localStorage.getItem(`lectures_${course.code}`)) || [];
+                      const attendance =
+                        JSON.parse(localStorage.getItem(`attendance_${course.code}_${studentEmail}`)) || [];
 
-      myCourses.forEach((course) => {
-        const lectures =
-          JSON.parse(
-            localStorage.getItem(
-              "lectures_" + course.code
-            )
-          ) || [];
+                      totalLectures += lectures.length;
+                      totalAttended += attendance.length;
+                    });
 
-        const attendance =
-          JSON.parse(
-            localStorage.getItem(
-              "attendance_" +
-                course.code +
-                "_" +
-                studentEmail
-            )
-          ) || [];
+                    const percent =
+                      totalLectures === 0
+                        ? 0
+                        : Math.round((totalAttended / totalLectures) * 100);
 
-        totalLectures += lectures.length;
-        totalAttended += attendance.length;
-      });
-
-      const percent =
-        totalLectures === 0
-          ? 0
-          : Math.round(
-              (totalAttended / totalLectures) * 100
-            );
-
-      return percent + "%";
-    })()}
-  </h2>
-</div>
+                    return percent + "%";
+                  })()}
+                </h2>
+              </div>
             </div>
 
             <div className="top-bar">
-              <button
-                className="enroll-btn"
-                onClick={() => setShowModal(true)}
-              >
+              <button className="enroll-btn" onClick={() => setShowModal(true)}>
                 📘 Enroll in Course
               </button>
             </div>
@@ -197,78 +158,66 @@ function StudentDashboard({ courses }) {
             {myCourses.length === 0 ? (
               <div className="empty-box">
                 <div className="icon">📖</div>
-
                 <p>You're not enrolled in any courses yet.</p>
-
-                <span>
-                  Use the "Enroll in Course" button to join a course.
-                </span>
+                <span>Use the "Enroll in Course" button to join a course.</span>
               </div>
             ) : (
               <div className="courses-grid">
-               {myCourses.map((course, index) => {
-  const studentEmail = profile.email;
+                {myCourses.map((course, index) => {
+                  const lectures =
+                    JSON.parse(localStorage.getItem(`lectures_${course.code}`)) || [];
+                  const records =
+                    JSON.parse(localStorage.getItem(`attendance_${course.code}_${studentEmail}`)) || [];
 
-  // كل محاضرات الكورس
-  const lectures =
-    JSON.parse(
-      localStorage.getItem("lectures_" + course.code)
-    ) || [];
+                  const totalLectures = lectures.length;
+                  const attended = records.length;
+                  const percent =
+                    totalLectures === 0
+                      ? 0
+                      : Math.round((attended / totalLectures) * 100);
 
-  // حضور هذا الطالب فقط
-  const records =
-    JSON.parse(
-      localStorage.getItem(
-        "attendance_" + course.code + "_" + studentEmail
-      )
-    ) || [];
+                  return (
+                    <div
+                      key={index}
+                      className="course-card"
+                      onClick={() => navigate(`/student/course/${course.code}`)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <h3>{course.name}</h3>
+                      <span className="course-code">{course.code}</span>
 
-  const totalLectures = lectures.length;
-  const attended = records.length;
-
-  const percent =
-    totalLectures === 0
-      ? 0
-      : Math.round((attended / totalLectures) * 100);
-
-  return (
-    <div key={index} className="course-card">
-      <h3>{course.name}</h3>
-
-      <span className="course-code">{course.code}</span>
-
-      <div className="attendance-box">
-        <div
-          className="progress-circle"
-          style={{
-            background: `conic-gradient(
-              #22c55e 0% ${percent}%,
-              #e5e7eb ${percent}% 100%
-            )`,
-          }}
-        >
-          <span>{percent}%</span>
-        </div>
-
-        <p>My Attendance</p>
-      </div>
-    </div>
-  );
-})}
+                      <div className="attendance-box">
+                        <div
+                          className="progress-circle"
+                          style={{
+                            background: `conic-gradient(
+                              #22c55e 0% ${percent}%,
+                              #e5e7eb ${percent}% 100%
+                            )`,
+                          }}
+                        >
+                          <span>{percent}%</span>
+                        </div>
+                        <p>My Attendance</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </>
         )}
 
-        {/* Profile Page */}
+        {/* ========= PROFILE ========= */}
         {activePage === "profile" && (
           <>
             <h1>My Profile</h1>
 
             <div className="profile-card">
               <div className="profile-header">
-                <div className="big-avatar">U</div>
-
+                <div className="big-avatar">
+                  {profile.firstName?.[0]?.toUpperCase() || "U"}
+                </div>
                 <div>
                   <h2>{profile.firstName || "User Name"}</h2>
                   <p>Student</p>
@@ -282,35 +231,30 @@ function StudentDashboard({ courses }) {
                   onChange={handleChange}
                   placeholder="First Name"
                 />
-
                 <input
                   name="middleName"
                   value={profile.middleName}
                   onChange={handleChange}
                   placeholder="Middle Name"
                 />
-
                 <input
                   name="lastName"
                   value={profile.lastName}
                   onChange={handleChange}
                   placeholder="Last Name"
                 />
-
                 <input
                   name="email"
                   value={profile.email}
                   className="full"
                   disabled
                 />
-
                 <input
                   name="ssn"
                   value={profile.ssn}
                   className="full"
                   disabled
                 />
-
                 <input
                   name="username"
                   value={profile.username}
@@ -318,21 +262,18 @@ function StudentDashboard({ courses }) {
                   placeholder="Username"
                   className="full"
                 />
-
                 <input
                   name="section"
                   value={profile.section}
                   onChange={handleChange}
                   placeholder="Section"
                 />
-
                 <input
                   name="level"
                   value={profile.level}
                   onChange={handleChange}
                   placeholder="Level"
                 />
-
                 <input
                   name="department"
                   value={profile.department}
@@ -355,7 +296,6 @@ function StudentDashboard({ courses }) {
           <div className="modal">
             <div className="modal-header">
               <h3>Enroll in a Course</h3>
-
               <span onClick={() => setShowModal(false)}>✖</span>
             </div>
 
@@ -366,10 +306,7 @@ function StudentDashboard({ courses }) {
                   return;
                 }
 
-                const exists = myCourses.find(
-                  (c) => c.code === course.code
-                );
-
+                const exists = myCourses.find((c) => c.code === course.code);
                 if (exists) {
                   showToast("Already enrolled!", "error");
                   return;
@@ -377,11 +314,7 @@ function StudentDashboard({ courses }) {
 
                 setMyCourses([...myCourses, course]);
                 setShowModal(false);
-
-                showToast(
-                  "Enrolled successfully 🎉",
-                  "success"
-                );
+                showToast("Enrolled successfully 🎉", "success");
               }}
             />
           </div>
@@ -390,9 +323,7 @@ function StudentDashboard({ courses }) {
 
       {/* Toast */}
       {toast.show && (
-        <div className={`toast ${toast.type}`}>
-          {toast.message}
-        </div>
+        <div className={`toast ${toast.type}`}>{toast.message}</div>
       )}
     </div>
   );

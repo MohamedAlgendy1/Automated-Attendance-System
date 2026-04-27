@@ -11,46 +11,50 @@ function LoginForm({ goToReset, goToRegister }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const admin = {
-      email: "admin@university.edu",
-      password: "admin123",
-    };
-
-    const student = {
-      email: "student@university.edu",
-      password: "123456",
-    };
-
-    const lecturer = {
-      email: "lecturer@university.edu",
-      password: "123456",
-    };
-
-    // ✅ Admin
-    if (email === admin.email && password === admin.password) {
-      localStorage.setItem("isLoggedIn", "true"); // 👈 مهم
+    // ✅ Admin hardcoded
+    if (email === "admin@university.edu" && password === "admin123") {
+      localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "admin");
       navigate("/dashboard");
+      return;
     }
 
-    // ✅ Student
-    else if (email === student.email && password === student.password) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("role", "student");
-      navigate("/student");
-    }
-
-    // ✅ Lecturer
-    else if (email === lecturer.email && password === lecturer.password) {
+    // ✅ Lecturer hardcoded
+    if (email === "lecturer@university.edu" && password === "123456") {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "lecturer");
       navigate("/lecturer");
+      return;
     }
 
-    // ❌ Error
-    else {
-      setError("Invalid email or password");
+    // ✅ Student من localStorage
+    const students = JSON.parse(localStorage.getItem("students")) || [];
+    const student = students.find(
+      (s) => s.email === email && s.password === password
+    );
+
+    if (student) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("role", "student");
+
+      // ✅ حفظ بيانات الطالب في profile
+      localStorage.setItem("profile", JSON.stringify({
+        firstName: student.firstName,
+        middleName: student.middleName,
+        lastName: student.lastName,
+        email: student.email,
+        ssn: student.ssin,
+        username: student.username,
+        section: student.section,
+        level: student.level,
+        department: student.department,
+      }));
+
+      navigate("/student");
+      return;
     }
+
+    setError("Invalid email or password");
   };
 
   return (
@@ -80,9 +84,7 @@ function LoginForm({ goToReset, goToRegister }) {
         <button type="submit">Sign In</button>
       </form>
 
-      <p className="forgot" onClick={goToReset}>
-        Forgot password?
-      </p>
+      <p className="forgot" onClick={goToReset}>Forgot password?</p>
 
       <p className="register">
         Student? <span onClick={goToRegister}>Register here</span>

@@ -18,10 +18,7 @@ function RegisterForm({ goBack }) {
   const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
@@ -37,8 +34,37 @@ function RegisterForm({ goBack }) {
       return;
     }
 
+    // ✅ تحقق إن الإيميل مش موجود قبل كده
+    const students = JSON.parse(localStorage.getItem("students")) || [];
+    const exists = students.find((s) => s.email === form.email);
+
+    if (exists) {
+      setError("Email already registered");
+      return;
+    }
+
+    // ✅ حفظ الطالب
+    const newStudent = {
+      id: Date.now(),
+      name: `${form.first} ${form.middle} ${form.last}`.trim(),
+      firstName: form.first,
+      middleName: form.middle,
+      lastName: form.last,
+      username: form.username,
+      ssin: form.ssin,
+      section: form.section,
+      level: form.level,
+      department: form.department,
+      email: form.email,
+      password: form.password,
+      role: "student",
+      registeredAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem("students", JSON.stringify([...students, newStudent]));
+
     setError("");
-    setSuccess("Account created successfully!");
+    setSuccess("Account created successfully! Redirecting...");
 
     setTimeout(() => {
       goBack();

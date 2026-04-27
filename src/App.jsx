@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-// Pages
 import Login from "./pages/Login";
 import LecturerDashboard from "./pages/LecturerDashboard";
 import CourseDetails from "./pages/CourseDetails";
@@ -9,18 +8,13 @@ import AttendanceOverview from "./pages/AttendanceOverview";
 import AttendanceRecords from "./pages/AttendanceRecords";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import StudentCourseDetails from "./pages/StudentCourseDetails"; // ✅ جديد
 
-// ✅ Protected Route
 function ProtectedRoute({ children, role }) {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
   const userRole = localStorage.getItem("role");
-
   if (!isLoggedIn) return <Navigate to="/" />;
-
-  if (role && role !== userRole) {
-    return <Navigate to="/" />;
-  }
-
+  if (role && role !== userRole) return <Navigate to="/" />;
   return children;
 }
 
@@ -29,7 +23,6 @@ function App() {
     JSON.parse(localStorage.getItem("courses")) || []
   );
 
-  // ✅ حفظ الكورسات
   useEffect(() => {
     localStorage.setItem("courses", JSON.stringify(courses));
   }, [courses]);
@@ -39,20 +32,15 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
 
-        {/* Lecturer */}
         <Route
           path="/lecturer"
           element={
             <ProtectedRoute role="lecturer">
-              <LecturerDashboard
-                courses={courses}
-                setCourses={setCourses}
-              />
+              <LecturerDashboard courses={courses} setCourses={setCourses} />
             </ProtectedRoute>
           }
         />
 
-        {/* Course Details */}
         <Route
           path="/course/:id"
           element={
@@ -62,7 +50,6 @@ function App() {
           }
         />
 
-        {/* Attendance Overview */}
         <Route
           path="/attendance"
           element={
@@ -72,7 +59,6 @@ function App() {
           }
         />
 
-        {/* Attendance Records */}
         <Route
           path="/attendance-records/:courseId/:lectureId"
           element={
@@ -82,12 +68,21 @@ function App() {
           }
         />
 
-        {/* ✅ Student (التعديل هنا) */}
         <Route
           path="/student"
           element={
             <ProtectedRoute role="student">
               <StudentDashboard courses={courses} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ صفحة تفاصيل الكورس للطالب */}
+        <Route
+          path="/student/course/:courseCode"
+          element={
+            <ProtectedRoute role="student">
+              <StudentCourseDetails />
             </ProtectedRoute>
           }
         />
