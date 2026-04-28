@@ -29,10 +29,10 @@ function RegisterForm({ goBack }) {
       return;
     }
 
-    if (!form.email.includes("@")) {
-      setError("Invalid email");
-      return;
-    }
+  if (!form.email.endsWith(".edu.eg")) {
+  setError("Only university emails ending with .edu.eg are allowed");
+  return;
+}
 
     // ✅ تحقق إن الإيميل مش موجود قبل كده
     const students = JSON.parse(localStorage.getItem("students")) || [];
