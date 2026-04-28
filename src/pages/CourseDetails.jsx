@@ -3,24 +3,25 @@ import { useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import "./../styles/courseDetails.css";
 
-function CourseDetails({ courses }) {
+function CourseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // ✅ جيب courses الدكتور الحالي بس من localStorage
+  const lecturerProfile = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
+  const lecturerEmail = lecturerProfile.email || "default";
+  const courses = JSON.parse(localStorage.getItem(`courses_${lecturerEmail}`)) || [];
   const course = courses[id];
 
   const [lectures, setLectures] = useState(() => {
     return JSON.parse(localStorage.getItem(`lectures_${course?.code}`)) || [];
   });
 
-  // ✅ classrooms بدون setState
   const classrooms = JSON.parse(localStorage.getItem("classrooms")) || [];
 
   const [showModal, setShowModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [selectedQR, setSelectedQR] = useState(null);
-
-  // ✅ expiresAt في state مش في الـ render
   const [qrExpiry, setQrExpiry] = useState(null);
 
   const [form, setForm] = useState({
@@ -79,9 +80,12 @@ function CourseDetails({ courses }) {
 
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">L</div>
+            {/* ✅ اسم الدكتور الحقيقي */}
+            <div className="avatar">
+              {lecturerProfile.name?.[0]?.toUpperCase() || "L"}
+            </div>
             <div>
-              <p>Lecturer</p>
+              <p>{lecturerProfile.name || "Lecturer"}</p>
               <span>Lecturer</span>
             </div>
           </div>
@@ -90,6 +94,7 @@ function CourseDetails({ courses }) {
             onClick={() => {
               localStorage.removeItem("isLoggedIn");
               localStorage.removeItem("role");
+              localStorage.removeItem("lecturerProfile");
               navigate("/");
             }}
           >
@@ -177,7 +182,6 @@ function CourseDetails({ courses }) {
                     <td>{new Date(l.start).toLocaleString()}</td>
                     <td>{new Date(l.end).toLocaleString()}</td>
                     <td className="actions">
-                      {/* ✅ Date.now() هنا في event handler مش في الـ render */}
                       <span onClick={() => {
                         setSelectedQR(i);
                         setQrExpiry(Date.now() + 10 * 60 * 1000);
@@ -203,7 +207,6 @@ function CourseDetails({ courses }) {
                 courseCode: course.code,
                 lectureIndex: selectedQR,
                 lecture: lectures[selectedQR],
-                // ✅ إحداثيات الـ classroom
                 classroom: (() => {
                   const found = classrooms.find(
                     (c) => c.name === lectures[selectedQR]?.classroom
@@ -212,7 +215,6 @@ function CourseDetails({ courses }) {
                     ? { lat: found.lat, lng: found.lng, radius: found.radius }
                     : null;
                 })(),
-                // ✅ من الـ state مش Date.now() مباشرة
                 expiresAt: qrExpiry,
               })}
               size={200}

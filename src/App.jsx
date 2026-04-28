@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 
 import Login from "./pages/Login";
 import LecturerDashboard from "./pages/LecturerDashboard";
@@ -18,40 +17,7 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
-// ✅ جيب كل كورسات كل الدكاترة
-function getAllCourses() {
-  const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
-  const all = [];
-  lecturers.forEach((lecturer) => {
-    const lCourses =
-      JSON.parse(localStorage.getItem(`courses_${lecturer.email}`)) || [];
-    all.push(...lCourses);
-  });
-  return all;
-}
-
 function App() {
-  const getLecturerEmail = () => {
-    const p = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
-    return p.email || "default";
-  };
-
-  // ✅ courses الدكتور الحالي بس
-  const [courses, setCourses] = useState(() => {
-    const email = getLecturerEmail();
-    return JSON.parse(localStorage.getItem(`courses_${email}`)) || [];
-  });
-
-  // ✅ كل الكورسات من كل الدكاترة للطالب
-  const [allCourses, setAllCourses] = useState(() => getAllCourses());
-
-  useEffect(() => {
-    const email = getLecturerEmail();
-    localStorage.setItem(`courses_${email}`, JSON.stringify(courses));
-    // ✅ حدّث allCourses كمان
-    setAllCourses(getAllCourses());
-  }, [courses]);
-
   return (
     <BrowserRouter>
       <Routes>
@@ -61,7 +27,7 @@ function App() {
           path="/lecturer"
           element={
             <ProtectedRoute role="lecturer">
-              <LecturerDashboard courses={courses} setCourses={setCourses} />
+              <LecturerDashboard />
             </ProtectedRoute>
           }
         />
@@ -70,7 +36,7 @@ function App() {
           path="/course/:id"
           element={
             <ProtectedRoute role="lecturer">
-              <CourseDetails courses={courses} />
+              <CourseDetails />
             </ProtectedRoute>
           }
         />
@@ -79,7 +45,7 @@ function App() {
           path="/attendance"
           element={
             <ProtectedRoute role="lecturer">
-              <AttendanceOverview courses={courses} />
+              <AttendanceOverview />
             </ProtectedRoute>
           }
         />
@@ -88,17 +54,16 @@ function App() {
           path="/attendance-records/:courseId/:lectureId"
           element={
             <ProtectedRoute role="lecturer">
-              <AttendanceRecords courses={courses} />
+              <AttendanceRecords />
             </ProtectedRoute>
           }
         />
 
-        {/* ✅ بعت allCourses للطالب مش courses */}
         <Route
           path="/student"
           element={
             <ProtectedRoute role="student">
-              <StudentDashboard courses={allCourses} />
+              <StudentDashboard />
             </ProtectedRoute>
           }
         />

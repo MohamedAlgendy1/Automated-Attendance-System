@@ -1,14 +1,22 @@
 import "./../styles/dashboardLecturer.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-function LecturerDashboard({ courses, setCourses }) {
-  const [activePage, setActivePage] = useState("courses");
-  const [showModal, setShowModal] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
+function LecturerDashboard() {
+  const navigate = useNavigate();
 
   // ✅ بيانات الدكتور من localStorage
   const lecturerProfile = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
+  const lecturerEmail = lecturerProfile.email || "default";
+
+  // ✅ courses الدكتور ده بس من localStorage
+  const [courses, setCourses] = useState(() => {
+    return JSON.parse(localStorage.getItem(`courses_${lecturerEmail}`)) || [];
+  });
+
+  const [activePage, setActivePage] = useState("courses");
+  const [showModal, setShowModal] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   const [form, setForm] = useState({
     code: "",
@@ -22,7 +30,10 @@ function LecturerDashboard({ courses, setCourses }) {
     type: "success",
   });
 
-  const navigate = useNavigate();
+  // ✅ حفظ courses بـ key الدكتور
+  useEffect(() => {
+    localStorage.setItem(`courses_${lecturerEmail}`, JSON.stringify(courses));
+  }, [courses, lecturerEmail]);
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -127,12 +138,10 @@ function LecturerDashboard({ courses, setCourses }) {
 
         <div className="user-box">
           <div className="user-info">
-            {/* ✅ أول حرف من اسم الدكتور */}
             <div className="avatar">
               {lecturerProfile.name?.[0]?.toUpperCase() || "L"}
             </div>
             <div>
-              {/* ✅ اسم الدكتور الحقيقي */}
               <p>{lecturerProfile.name || "Lecturer"}</p>
               <span>Lecturer</span>
             </div>
@@ -159,13 +168,11 @@ function LecturerDashboard({ courses, setCourses }) {
 
               <div className="card">
                 <p>Lectures</p>
-                {/* ✅ عدد المحاضرات الحقيقي */}
                 <h2>{totalLectures()}</h2>
               </div>
 
               <div className="card">
                 <p>Students</p>
-                {/* ✅ عدد الطلاب الحقيقي */}
                 <h2>{totalStudents()}</h2>
               </div>
             </div>
@@ -189,7 +196,6 @@ function LecturerDashboard({ courses, setCourses }) {
                 <p>No courses yet</p>
               ) : (
                 courses.map((c, i) => {
-                  // ✅ عدد الطلاب في كل كورس
                   const allStudents =
                     JSON.parse(localStorage.getItem("students")) || [];
                   const enrolled = allStudents.filter((student) => {
@@ -231,7 +237,6 @@ function LecturerDashboard({ courses, setCourses }) {
                       </div>
 
                       <h3>{c.name}</h3>
-                      {/* ✅ عدد الطلاب الحقيقي في الكارت */}
                       <p>{enrolled.length} students enrolled</p>
                     </div>
                   );

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import EnrollForm from "../components/EnrollForm";
 
-function StudentDashboard({ courses }) {
+function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
@@ -115,11 +115,18 @@ useEffect(() => {
                 <p>My Courses</p>
                 <h2>{myCourses.length}</h2>
               </div>
-
-              <div className="card">
-                <p>Available Courses</p>
-                <h2>{courses.length}</h2>
-              </div>
+<div className="card">
+  <p>Available Courses</p>
+  <h2>
+    {(() => {
+      const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
+      return lecturers.reduce((sum, l) => {
+        const c = JSON.parse(localStorage.getItem(`courses_${l.email}`)) || [];
+        return sum + c.length;
+      }, 0);
+    })()}
+  </h2>
+</div>
 
               <div className="card">
                 <p>Overall Attendance</p>
