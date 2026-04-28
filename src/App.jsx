@@ -18,21 +18,38 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
+// ✅ جيب كل كورسات كل الدكاترة
+function getAllCourses() {
+  const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
+  const all = [];
+  lecturers.forEach((lecturer) => {
+    const lCourses =
+      JSON.parse(localStorage.getItem(`courses_${lecturer.email}`)) || [];
+    all.push(...lCourses);
+  });
+  return all;
+}
+
 function App() {
-  // ✅ الـ key بيتحسب في كل مرة
   const getLecturerEmail = () => {
     const p = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
     return p.email || "default";
   };
 
+  // ✅ courses الدكتور الحالي بس
   const [courses, setCourses] = useState(() => {
     const email = getLecturerEmail();
     return JSON.parse(localStorage.getItem(`courses_${email}`)) || [];
   });
 
+  // ✅ كل الكورسات من كل الدكاترة للطالب
+  const [allCourses, setAllCourses] = useState(() => getAllCourses());
+
   useEffect(() => {
     const email = getLecturerEmail();
     localStorage.setItem(`courses_${email}`, JSON.stringify(courses));
+    // ✅ حدّث allCourses كمان
+    setAllCourses(getAllCourses());
   }, [courses]);
 
   return (
@@ -76,11 +93,12 @@ function App() {
           }
         />
 
+        {/* ✅ بعت allCourses للطالب مش courses */}
         <Route
           path="/student"
           element={
             <ProtectedRoute role="student">
-              <StudentDashboard courses={courses} />
+              <StudentDashboard courses={allCourses} />
             </ProtectedRoute>
           }
         />

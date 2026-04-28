@@ -174,10 +174,18 @@ function AdminDashboard() {
           </div>
 
           <div className="card">
-            <FaBook />
-            <h2>1</h2>
-            <p>Courses</p>
-          </div>
+  <FaBook />
+  <h2>
+    {(() => {
+      const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
+      return lecturers.reduce((sum, l) => {
+        const c = JSON.parse(localStorage.getItem(`courses_${l.email}`)) || [];
+        return sum + c.length;
+      }, 0);
+    })()}
+  </h2>
+  <p>Courses</p>
+</div>
 
           <div className="card">
             <FaMapMarkerAlt />

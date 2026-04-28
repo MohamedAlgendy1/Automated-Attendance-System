@@ -11,8 +11,17 @@ function StudentCourseDetails() {
   const profile = JSON.parse(localStorage.getItem("profile")) || {};
   const studentEmail = profile.email || "unknown";
 
-  const allCourses = JSON.parse(localStorage.getItem("courses")) || [];
-  const course = allCourses.find((c) => c.code === courseCode);
+const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
+let course = null;
+for (const lecturer of lecturers) {
+  const lCourses =
+    JSON.parse(localStorage.getItem(`courses_${lecturer.email}`)) || [];
+  const found = lCourses.find((c) => c.code === courseCode);
+  if (found) {
+    course = found;
+    break;
+  }
+}
 
   const lectures = JSON.parse(localStorage.getItem(`lectures_${courseCode}`)) || [];
 
