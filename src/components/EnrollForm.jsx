@@ -8,20 +8,30 @@ function EnrollForm({ onEnroll }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const allCourses =
-      JSON.parse(localStorage.getItem("courses")) || [];
-
-    if (allCourses.length === 0) {
-      setError("No courses found ❌");
+    if (!code || !password) {
+      setError("Please fill all fields");
       return;
     }
 
-    const matched = allCourses.find(
-      (c) =>
-        c.code.trim().toLowerCase() ===
-          code.trim().toLowerCase() &&
-        c.password.trim() === password.trim()
-    );
+    // ✅ دور في كورسات كل الدكاترة
+    const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
+    let matched = null;
+
+    for (const lecturer of lecturers) {
+      const lecturerCourses =
+        JSON.parse(localStorage.getItem(`courses_${lecturer.email}`)) || [];
+
+      const found = lecturerCourses.find(
+        (c) =>
+          c.code.trim().toLowerCase() === code.trim().toLowerCase() &&
+          c.password.trim() === password.trim()
+      );
+
+      if (found) {
+        matched = found;
+        break;
+      }
+    }
 
     if (!matched) {
       setError("Invalid code or password ❌");

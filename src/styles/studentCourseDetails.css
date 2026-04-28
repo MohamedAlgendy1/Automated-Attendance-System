@@ -254,3 +254,28 @@
   cursor: pointer;
   margin-left: 10px;
 }
+
+/* ===== Location Checking ===== */
+.location-checking {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 14px 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

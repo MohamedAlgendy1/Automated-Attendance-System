@@ -9,14 +9,19 @@ function CourseDetails({ courses }) {
 
   const course = courses[id];
 
-  // ✅ جيب المحاضرات من localStorage
   const [lectures, setLectures] = useState(() => {
     return JSON.parse(localStorage.getItem(`lectures_${course?.code}`)) || [];
   });
 
+  // ✅ classrooms بدون setState
+  const classrooms = JSON.parse(localStorage.getItem("classrooms")) || [];
+
   const [showModal, setShowModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [selectedQR, setSelectedQR] = useState(null);
+
+  // ✅ expiresAt في state مش في الـ render
+  const [qrExpiry, setQrExpiry] = useState(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -25,7 +30,6 @@ function CourseDetails({ courses }) {
     end: "",
   });
 
-  // ✅ احفظ المحاضرات في localStorage كل ما تتغير
   useEffect(() => {
     if (course?.code) {
       localStorage.setItem(`lectures_${course.code}`, JSON.stringify(lectures));
@@ -75,9 +79,9 @@ function CourseDetails({ courses }) {
 
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">A</div>
+            <div className="avatar">L</div>
             <div>
-              <p>user</p>
+              <p>Lecturer</p>
               <span>Lecturer</span>
             </div>
           </div>
@@ -116,6 +120,20 @@ function CourseDetails({ courses }) {
             <p>Total Lectures</p>
             <h2>{lectures.length}</h2>
           </div>
+          <div className="card">
+            <p>Enrolled Students</p>
+            <h2>
+              {(() => {
+                const allStudents = JSON.parse(localStorage.getItem("students")) || [];
+                return allStudents.filter((student) => {
+                  const studentCourses = JSON.parse(
+                    localStorage.getItem(`studentCourses_${student.email}`)
+                  ) || [];
+                  return studentCourses.find((c) => c.code === course.code);
+                }).length;
+              })()}
+            </h2>
+          </div>
         </div>
 
         {/* Lectures Table */}
@@ -147,7 +165,7 @@ function CourseDetails({ courses }) {
             <tbody>
               {lectures.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: "center" }}>
+                  <td colSpan="5" style={{ textAlign: "center", padding: 20 }}>
                     No lectures yet
                   </td>
                 </tr>
@@ -159,7 +177,11 @@ function CourseDetails({ courses }) {
                     <td>{new Date(l.start).toLocaleString()}</td>
                     <td>{new Date(l.end).toLocaleString()}</td>
                     <td className="actions">
-                      <span onClick={() => setSelectedQR(i)}>📷</span>
+                      {/* ✅ Date.now() هنا في event handler مش في الـ render */}
+                      <span onClick={() => {
+                        setSelectedQR(i);
+                        setQrExpiry(Date.now() + 10 * 60 * 1000);
+                      }}>📷</span>
                       <span onClick={() => navigate(`/attendance-records/${id}/${i}`)}>📊</span>
                       <span onClick={() => handleEdit(i)}>✏️</span>
                       <span onClick={() => handleDelete(i)}>🗑️</span>
@@ -175,16 +197,32 @@ function CourseDetails({ courses }) {
         {selectedQR !== null && lectures[selectedQR] && (
           <div className="qr-box">
             <h2>Scan this QR Code</h2>
+
             <QRCodeCanvas
               value={JSON.stringify({
                 courseCode: course.code,
                 lectureIndex: selectedQR,
                 lecture: lectures[selectedQR],
+                // ✅ إحداثيات الـ classroom
+                classroom: (() => {
+                  const found = classrooms.find(
+                    (c) => c.name === lectures[selectedQR]?.classroom
+                  );
+                  return found
+                    ? { lat: found.lat, lng: found.lng, radius: found.radius }
+                    : null;
+                })(),
+                // ✅ من الـ state مش Date.now() مباشرة
+                expiresAt: qrExpiry,
               })}
               size={200}
             />
-            <p>Show this to students to record attendance</p>
-            <button onClick={() => setSelectedQR(null)}>Close</button>
+
+            <p style={{ color: "#888", fontSize: 13 }}>Expires in 10 minutes</p>
+            <button onClick={() => {
+              setSelectedQR(null);
+              setQrExpiry(null);
+            }}>Close</button>
           </div>
         )}
 
@@ -196,16 +234,71 @@ function CourseDetails({ courses }) {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Attendance</th>
-                <th>Enrolled On</th>
+                <th>Attended</th>
+                <th>Total</th>
+                <th>Percentage</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colSpan="4" style={{ textAlign: "center" }}>
-                  No students enrolled yet
-                </td>
-              </tr>
+              {(() => {
+                const allStudents = JSON.parse(localStorage.getItem("students")) || [];
+                const enrolled = allStudents.filter((student) => {
+                  const studentCourses = JSON.parse(
+                    localStorage.getItem(`studentCourses_${student.email}`)
+                  ) || [];
+                  return studentCourses.find((c) => c.code === course.code);
+                });
+
+                if (enrolled.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: "center", padding: 20, color: "#888" }}>
+                        No students enrolled yet
+                      </td>
+                    </tr>
+                  );
+                }
+
+                return enrolled.map((student) => {
+                  const attendance = JSON.parse(
+                    localStorage.getItem(`attendance_${course.code}_${student.email}`)
+                  ) || [];
+                  const attendedCount = attendance.length;
+                  const total = lectures.length;
+                  const percent = total === 0
+                    ? 0
+                    : Math.round((attendedCount / total) * 100);
+
+                  return (
+                    <tr key={student.id}>
+                      <td>{student.name}</td>
+                      <td>{student.email}</td>
+                      <td>{attendedCount}</td>
+                      <td>{total}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            flex: 1, height: 8, background: "#e5e7eb",
+                            borderRadius: 999, overflow: "hidden"
+                          }}>
+                            <div style={{
+                              width: `${percent}%`, height: "100%",
+                              background: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444",
+                              borderRadius: 999,
+                            }} />
+                          </div>
+                          <span style={{
+                            fontWeight: 700,
+                            color: percent >= 75 ? "#16a34a" : percent >= 50 ? "#d97706" : "#dc2626"
+                          }}>
+                            {percent}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
@@ -255,9 +348,15 @@ function CourseDetails({ courses }) {
                   onChange={(e) => setForm({ ...form, classroom: e.target.value })}
                 >
                   <option value="">Select classroom</option>
-                  <option value="Lab A1">Lab A1</option>
-                  <option value="Lab B1">Lab B1</option>
-                  <option value="Hall 1">Hall 1</option>
+                  {classrooms.length === 0 ? (
+                    <option disabled>No classrooms added yet</option>
+                  ) : (
+                    classrooms.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name} — {c.building}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 

@@ -7,6 +7,9 @@ function LecturerDashboard({ courses, setCourses }) {
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
 
+  // ✅ بيانات الدكتور من localStorage
+  const lecturerProfile = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
+
   const [form, setForm] = useState({
     code: "",
     name: "",
@@ -24,12 +27,12 @@ function LecturerDashboard({ courses, setCourses }) {
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("role");
+    localStorage.removeItem("lecturerProfile");
     navigate("/");
   };
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
-
     setTimeout(() => {
       setToast({ show: false, message: "", type: "success" });
     }, 3000);
@@ -59,7 +62,7 @@ function LecturerDashboard({ courses, setCourses }) {
       showToast("Course added 🎉");
     }
 
-    setForm({  name: "",code: "", password: "" });
+    setForm({ name: "", code: "", password: "" });
     setEditIndex(null);
     setShowModal(false);
   };
@@ -74,6 +77,31 @@ function LecturerDashboard({ courses, setCourses }) {
     setForm(courses[index]);
     setEditIndex(index);
     setShowModal(true);
+  };
+
+  // ✅ حساب عدد الطلاب الكلي
+  const totalStudents = () => {
+    const allStudents = JSON.parse(localStorage.getItem("students")) || [];
+    const emails = new Set();
+    courses.forEach((course) => {
+      allStudents.forEach((student) => {
+        const studentCourses =
+          JSON.parse(localStorage.getItem(`studentCourses_${student.email}`)) || [];
+        if (studentCourses.find((c) => c.code === course.code)) {
+          emails.add(student.email);
+        }
+      });
+    });
+    return emails.size;
+  };
+
+  // ✅ حساب عدد المحاضرات الكلي
+  const totalLectures = () => {
+    return courses.reduce((sum, course) => {
+      const lectures =
+        JSON.parse(localStorage.getItem(`lectures_${course.code}`)) || [];
+      return sum + lectures.length;
+    }, 0);
   };
 
   return (
@@ -92,16 +120,20 @@ function LecturerDashboard({ courses, setCourses }) {
             </li>
 
             <li onClick={() => navigate("/attendance")}>
-                📊 Attendance Overview
-              </li>
+              📊 Attendance Overview
+            </li>
           </ul>
         </div>
 
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">A</div>
+            {/* ✅ أول حرف من اسم الدكتور */}
+            <div className="avatar">
+              {lecturerProfile.name?.[0]?.toUpperCase() || "L"}
+            </div>
             <div>
-              <p>user</p>
+              {/* ✅ اسم الدكتور الحقيقي */}
+              <p>{lecturerProfile.name || "Lecturer"}</p>
               <span>Lecturer</span>
             </div>
           </div>
@@ -127,12 +159,14 @@ function LecturerDashboard({ courses, setCourses }) {
 
               <div className="card">
                 <p>Lectures</p>
-                <h2>0</h2>
+                {/* ✅ عدد المحاضرات الحقيقي */}
+                <h2>{totalLectures()}</h2>
               </div>
 
               <div className="card">
                 <p>Students</p>
-                <h2>0</h2>
+                {/* ✅ عدد الطلاب الحقيقي */}
+                <h2>{totalStudents()}</h2>
               </div>
             </div>
 
@@ -142,53 +176,66 @@ function LecturerDashboard({ courses, setCourses }) {
                 onClick={() => {
                   setShowModal(true);
                   setEditIndex(null);
-                  setForm({ name: "",  code: "",password: "" });
+                  setForm({ name: "", code: "", password: "" });
                 }}
               >
                 + Add Course
               </button>
             </div>
 
-            {/* 🔥 GRID COURSES */}
+            {/* GRID COURSES */}
             <div className="courses-grid">
               {courses.length === 0 ? (
                 <p>No courses yet</p>
               ) : (
-                courses.map((c, i) => (
-                  <div
-                    key={i}
-                    className="course-card"
-                    onClick={() => navigate(`/course/${i}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="course-header">
-                      <span className="course-code">{c.code}</span>
+                courses.map((c, i) => {
+                  // ✅ عدد الطلاب في كل كورس
+                  const allStudents =
+                    JSON.parse(localStorage.getItem("students")) || [];
+                  const enrolled = allStudents.filter((student) => {
+                    const studentCourses =
+                      JSON.parse(
+                        localStorage.getItem(`studentCourses_${student.email}`)
+                      ) || [];
+                    return studentCourses.find((sc) => sc.code === c.code);
+                  });
 
-                      {/* ❗️ مهم: نوقف propagation علشان الضغط على الأزرار مايفتحش الصفحة */}
-                      <div
-                        className="actions"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          className="edit-btn"
-                          onClick={() => handleEdit(i)}
-                        >
-                          ✏️
-                        </button>
+                  return (
+                    <div
+                      key={i}
+                      className="course-card"
+                      onClick={() => navigate(`/course/${i}`)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="course-header">
+                        <span className="course-code">{c.code}</span>
 
-                        <button
-                          className="delete-btn"
-                          onClick={() => handleDelete(i)}
+                        <div
+                          className="actions"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          🗑
-                        </button>
+                          <button
+                            className="edit-btn"
+                            onClick={() => handleEdit(i)}
+                          >
+                            ✏️
+                          </button>
+
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(i)}
+                          >
+                            🗑
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <h3>{c.name}</h3>
-                    <p>0 students enrolled</p>
-                  </div>
-                ))
+                      <h3>{c.name}</h3>
+                      {/* ✅ عدد الطلاب الحقيقي في الكارت */}
+                      <p>{enrolled.length} students enrolled</p>
+                    </div>
+                  );
+                })
               )}
             </div>
           </>
@@ -207,12 +254,12 @@ function LecturerDashboard({ courses, setCourses }) {
 
               <div className="card">
                 <p>Lectures</p>
-                <h2>0</h2>
+                <h2>{totalLectures()}</h2>
               </div>
 
               <div className="card">
                 <p>Students</p>
-                <h2>0</h2>
+                <h2>{totalStudents()}</h2>
               </div>
             </div>
 
@@ -236,31 +283,23 @@ function LecturerDashboard({ courses, setCourses }) {
             </div>
 
             <form onSubmit={handleSubmit}>
-            
-
               <input
                 placeholder="Course Name"
                 value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
 
               <input
                 placeholder="Course Code"
                 value={form.code}
-                onChange={(e) =>
-                  setForm({ ...form, code: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
               />
 
               <input
                 type="password"
                 placeholder="Password"
                 value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
 
               <button type="submit">

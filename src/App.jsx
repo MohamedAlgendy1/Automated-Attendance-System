@@ -8,7 +8,7 @@ import AttendanceOverview from "./pages/AttendanceOverview";
 import AttendanceRecords from "./pages/AttendanceRecords";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import StudentCourseDetails from "./pages/StudentCourseDetails"; // ✅ جديد
+import StudentCourseDetails from "./pages/StudentCourseDetails";
 
 function ProtectedRoute({ children, role }) {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
@@ -19,12 +19,20 @@ function ProtectedRoute({ children, role }) {
 }
 
 function App() {
-  const [courses, setCourses] = useState(
-    JSON.parse(localStorage.getItem("courses")) || []
-  );
+  // ✅ الـ key بيتحسب في كل مرة
+  const getLecturerEmail = () => {
+    const p = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
+    return p.email || "default";
+  };
+
+  const [courses, setCourses] = useState(() => {
+    const email = getLecturerEmail();
+    return JSON.parse(localStorage.getItem(`courses_${email}`)) || [];
+  });
 
   useEffect(() => {
-    localStorage.setItem("courses", JSON.stringify(courses));
+    const email = getLecturerEmail();
+    localStorage.setItem(`courses_${email}`, JSON.stringify(courses));
   }, [courses]);
 
   return (
@@ -77,7 +85,6 @@ function App() {
           }
         />
 
-        {/* ✅ صفحة تفاصيل الكورس للطالب */}
         <Route
           path="/student/course/:courseCode"
           element={

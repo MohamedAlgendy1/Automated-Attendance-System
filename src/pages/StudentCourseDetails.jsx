@@ -8,47 +8,152 @@ function StudentCourseDetails() {
   const { courseCode } = useParams();
   const navigate = useNavigate();
 
-  // ✅ بيانات الطالب
   const profile = JSON.parse(localStorage.getItem("profile")) || {};
   const studentEmail = profile.email || "unknown";
 
-  // ✅ الكورس
   const allCourses = JSON.parse(localStorage.getItem("courses")) || [];
   const course = allCourses.find((c) => c.code === courseCode);
 
-  // ✅ المحاضرات
-  const [lectures, setLectures] = useState(
-    JSON.parse(localStorage.getItem(`lectures_${courseCode}`)) || []
-  );
+  const lectures = JSON.parse(localStorage.getItem(`lectures_${courseCode}`)) || [];
 
-  // ✅ حضور الطالب ده بس في الكورس ده
   const [attendance, setAttendance] = useState(
     JSON.parse(localStorage.getItem(`attendance_${courseCode}_${studentEmail}`)) || []
   );
 
-  // QR Scanner
   const [showScanner, setShowScanner] = useState(false);
   const [scanMode, setScanMode] = useState("camera");
   const [manualInput, setManualInput] = useState("");
   const [scanResult, setScanResult] = useState(null);
   const [scanMessage, setScanMessage] = useState("");
+  const [locationStatus, setLocationStatus] = useState("idle");
 
   const videoRef = useRef(null);
   const readerRef = useRef(null);
 
-  // ✅ حساب النسبة
   const totalLectures = lectures.length;
   const attended = attendance.length;
   const percent =
     totalLectures === 0 ? 0 : Math.round((attended / totalLectures) * 100);
 
-  // ✅ تشغيل الكاميرا
+  // ✅ حساب المسافة
+  const getDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371000;
+    const toRad = (val) => (val * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const showError = (msg) => {
+    setScanResult("error");
+    setScanMessage(msg);
+    setLocationStatus("idle");
+  };
+
+  const closeScanner = () => {
+    setShowScanner(false);
+    setScanMode("camera");
+    if (readerRef.current) {
+      try { readerRef.current.reset(); } catch { /* ignore */ }
+    }
+  };
+
+  const recordAttendance = (lectureIndex) => {
+    setAttendance((prev) => {
+      const newAttendance = [...prev, lectureIndex];
+      localStorage.setItem(
+        `attendance_${courseCode}_${studentEmail}`,
+        JSON.stringify(newAttendance)
+      );
+      return newAttendance;
+    });
+    setScanResult("success");
+    setScanMessage("✅ Attendance recorded successfully!");
+    setLocationStatus("idle");
+  };
+
+  const checkLocation = (data) => {
+    if (!navigator.geolocation) {
+      showError("❌ Geolocation not supported on this device!");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const distance = getDistance(
+          latitude, longitude,
+          data.classroom.lat, data.classroom.lng
+        );
+        const radius = data.classroom.radius || 100;
+
+        if (distance <= radius) {
+          setLocationStatus("approved");
+          recordAttendance(data.lectureIndex);
+        } else {
+          showError(`📍 You are ${Math.round(distance)}m away. Must be within ${radius}m!`);
+        }
+      },
+      () => {
+        showError("❌ Location access denied. Please allow location access.");
+        setLocationStatus("idle");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleQRResult = (text) => {
+    const now = Date.now();
+
+    try {
+      const data = JSON.parse(text);
+
+      if (data.courseCode !== courseCode) {
+        showError("❌ This QR code is for a different course!");
+        closeScanner();
+        return;
+      }
+
+      if (data.expiresAt && now > data.expiresAt) {
+        showError("⏱️ This QR code has expired!");
+        closeScanner();
+        return;
+      }
+
+      if (attendance.includes(data.lectureIndex)) {
+        showError("⚠️ Already recorded for this lecture!");
+        closeScanner();
+        return;
+      }
+
+      if (data.classroom?.lat && data.classroom?.lng) {
+        setLocationStatus("checking");
+        closeScanner();
+        checkLocation(data);
+      } else {
+        recordAttendance(data.lectureIndex);
+        closeScanner();
+      }
+
+    } catch {
+      showError("❌ Invalid QR code!");
+      closeScanner();
+    }
+  };
+
+  // ✅ useEffect بدون handleQRResult في الـ dependencies
   useEffect(() => {
     if (showScanner && scanMode === "camera" && videoRef.current) {
       const codeReader = new BrowserQRCodeReader();
       readerRef.current = codeReader;
 
-      codeReader.decodeFromVideoDevice(null, videoRef.current, (result, err) => {
+      codeReader.decodeFromVideoDevice(null, videoRef.current, (result) => {
         if (result) {
           handleQRResult(result.getText());
         }
@@ -57,63 +162,15 @@ function StudentCourseDetails() {
 
     return () => {
       if (readerRef.current) {
-        try { readerRef.current.reset(); } catch (e) {}
+        try { readerRef.current.reset(); } catch { /* ignore */ }
       }
     };
-  }, [showScanner, scanMode]);
-
-  // ✅ معالجة نتيجة الـ QR
-  const handleQRResult = (text) => {
-    try {
-      const data = JSON.parse(text);
-
-      if (data.courseCode !== courseCode) {
-        setScanResult("error");
-        setScanMessage("❌ This QR code is for a different course!");
-        closeScanner();
-        return;
-      }
-
-      const lectureIndex = data.lectureIndex;
-
-      if (attendance.includes(lectureIndex)) {
-        setScanResult("error");
-        setScanMessage("⚠️ Already recorded for this lecture!");
-        closeScanner();
-        return;
-      }
-
-      // ✅ سجل الحضور بـ key مخصص للطالب
-      const newAttendance = [...attendance, lectureIndex];
-      setAttendance(newAttendance);
-      localStorage.setItem(
-        `attendance_${courseCode}_${studentEmail}`,
-        JSON.stringify(newAttendance)
-      );
-
-      setScanResult("success");
-      setScanMessage("✅ Attendance recorded successfully!");
-      closeScanner();
-
-    } catch (e) {
-      setScanResult("error");
-      setScanMessage("❌ Invalid QR code!");
-      closeScanner();
-    }
-  };
+  }, [showScanner, scanMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleManualSubmit = (e) => {
     e.preventDefault();
     handleQRResult(manualInput);
     setManualInput("");
-  };
-
-  const closeScanner = () => {
-    setShowScanner(false);
-    setScanMode("camera");
-    if (readerRef.current) {
-      try { readerRef.current.reset(); } catch (e) {}
-    }
   };
 
   if (!course) return <h2 style={{ padding: 20 }}>Course not found</h2>;
@@ -161,7 +218,7 @@ function StudentCourseDetails() {
           ← Back
         </p>
 
-        {/* Scan Result Toast */}
+        {/* Toast */}
         {scanResult && (
           <div className={`scan-toast ${scanResult}`}>
             {scanMessage}
@@ -169,53 +226,37 @@ function StudentCourseDetails() {
           </div>
         )}
 
-        {/* Attendance Rate Card */}
+        {/* Location Checking */}
+        {locationStatus === "checking" && (
+          <div className="location-checking">
+            <span className="spinner">🌀</span>
+            Verifying your location...
+          </div>
+        )}
+
+        {/* Attendance Rate */}
         <div className="attendance-rate-card">
           <div className="rate-header">
             <h3>Attendance Rate</h3>
-            <span
-              className="rate-percent"
-              style={{
-                color:
-                  percent >= 75
-                    ? "#22c55e"
-                    : percent >= 50
-                    ? "#f59e0b"
-                    : "#ef4444",
-              }}
-            >
+            <span className="rate-percent" style={{
+              color: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444"
+            }}>
               {percent}%
             </span>
           </div>
-
           <div className="rate-bar-bg">
-            <div
-              className="rate-bar-fill"
-              style={{
-                width: `${percent}%`,
-                background:
-                  percent >= 75
-                    ? "#22c55e"
-                    : percent >= 50
-                    ? "#f59e0b"
-                    : "#ef4444",
-              }}
-            />
+            <div className="rate-bar-fill" style={{
+              width: `${percent}%`,
+              background: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444"
+            }} />
           </div>
-
-          <p className="rate-sub">
-            {attended} / {totalLectures} lectures attended
-          </p>
+          <p className="rate-sub">{attended} / {totalLectures} lectures attended</p>
         </div>
 
         {/* Lectures Table */}
         <div className="table-box" style={{ marginTop: 20 }}>
           <h2>Lectures</h2>
-
-          <table
-            className="table"
-            style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}
-          >
+          <table className="table" style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
             <thead>
               <tr>
                 <th>Lecture</th>
@@ -227,10 +268,7 @@ function StudentCourseDetails() {
             <tbody>
               {lectures.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="4"
-                    style={{ textAlign: "center", padding: 20, color: "#888" }}
-                  >
+                  <td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>
                     No lectures yet
                   </td>
                 </tr>
@@ -242,11 +280,7 @@ function StudentCourseDetails() {
                       <td>{lec.title}</td>
                       <td>{new Date(lec.start).toLocaleString()}</td>
                       <td>
-                        <span
-                          className={`status-badge ${
-                            isAttended ? "attended" : "not-recorded"
-                          }`}
-                        >
+                        <span className={`status-badge ${isAttended ? "attended" : "not-recorded"}`}>
                           {isAttended ? "✅ Attended" : "Not Recorded"}
                         </span>
                       </td>
@@ -298,10 +332,7 @@ function StudentCourseDetails() {
 
             {scanMode === "camera" && (
               <div className="camera-box">
-                <video
-                  ref={videoRef}
-                  style={{ width: "100%", borderRadius: 12 }}
-                />
+                <video ref={videoRef} style={{ width: "100%", borderRadius: 12 }} />
                 <div className="scan-frame">
                   <div className="corner tl" />
                   <div className="corner tr" />

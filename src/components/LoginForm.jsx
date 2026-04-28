@@ -19,10 +19,20 @@ function LoginForm({ goToReset, goToRegister }) {
       return;
     }
 
-    // ✅ Lecturer hardcoded
-    if (email === "lecturer@university.edu" && password === "123456") {
+    // ✅ Lecturer من localStorage
+    const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
+    const lecturer = lecturers.find(
+      (l) => l.email === email && l.password === password
+    );
+
+    if (lecturer) {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "lecturer");
+      localStorage.setItem("lecturerProfile", JSON.stringify({
+        name: lecturer.name,
+        email: lecturer.email,
+        username: lecturer.username,
+      }));
       navigate("/lecturer");
       return;
     }
@@ -36,8 +46,6 @@ function LoginForm({ goToReset, goToRegister }) {
     if (student) {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "student");
-
-      // ✅ حفظ بيانات الطالب في profile
       localStorage.setItem("profile", JSON.stringify({
         firstName: student.firstName,
         middleName: student.middleName,
@@ -49,7 +57,6 @@ function LoginForm({ goToReset, goToRegister }) {
         level: student.level,
         department: student.department,
       }));
-
       navigate("/student");
       return;
     }

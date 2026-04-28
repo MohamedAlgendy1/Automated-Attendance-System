@@ -35,9 +35,9 @@ function StudentDashboard({ courses }) {
   });
 
   // ✅ حفظ كورسات الطالب
-  useEffect(() => {
-    localStorage.setItem(`studentCourses_${studentEmail}`, JSON.stringify(myCourses));
-  }, [myCourses]);
+useEffect(() => {
+  localStorage.setItem(`studentCourses_${studentEmail}`, JSON.stringify(myCourses));
+}, [myCourses, studentEmail]);
 
   // ✅ Toast
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
