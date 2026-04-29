@@ -30,6 +30,7 @@
   margin-bottom: 10px;
   border-radius: 10px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .lecturer-page .menu li:hover,
@@ -69,6 +70,7 @@
   background: transparent;
   color: white;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .lecturer-page .logout-btn:hover {
@@ -106,6 +108,7 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .lecturer-page .enroll-btn:hover {
@@ -133,10 +136,17 @@
   transform: translateY(-4px);
 }
 
+/* 🔥 مهم للموبايل */
+.lecturer-page .course-card h3 {
+  word-break: break-word;
+}
+
 .lecturer-page .course-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap; /* ✅ */
 }
 
 .lecturer-page .course-code {
@@ -145,12 +155,14 @@
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
+  white-space: nowrap; /* ✅ */
 }
 
 /* ================= ACTION BUTTONS ================= */
 .lecturer-page .actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0; /* ✅ */
 }
 
 .lecturer-page .actions button {
@@ -191,6 +203,7 @@
   margin-top: 20px;
   padding: 20px;
   border-radius: 12px;
+  overflow-x: auto; /* ✅ مهم */
 }
 
 /* ================= EMPTY ================= */
@@ -220,6 +233,7 @@
   padding: 20px;
   border-radius: 12px;
   width: 400px;
+  max-width: 95vw; /* ✅ */
 }
 
 .lecturer-page .modal-header {
@@ -236,7 +250,7 @@
   border: 1px solid #ccc;
 }
 
-/* 🔥 زرار المودال */
+/* زر المودال */
 .lecturer-page .modal button {
   width: 100%;
   padding: 12px;
@@ -268,6 +282,7 @@
 .lecturer-page .toast.error {
   background: #e74c3c;
 }
+
 .lecturer-page .enroll-btn {
   background: #1e88e5;
   color: white;
@@ -283,6 +298,8 @@
 }
 
 /* ================= RESPONSIVE ================= */
+
+/* Tablet */
 @media (max-width: 900px) {
   .lecturer-page {
     flex-direction: column;
@@ -290,5 +307,49 @@
 
   .lecturer-page .sidebar {
     width: 100%;
+    flex-direction: row; /* ✅ */
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lecturer-page .menu {
+    display: flex;
+    gap: 10px;
+  }
+
+  .lecturer-page .menu li {
+    margin-bottom: 0;
+  }
+
+  .lecturer-page .user-box {
+    display: none; /* نفس أسلوبك */
+  }
+}
+
+/* Mobile */
+@media (max-width: 500px) {
+  .lecturer-page .main {
+    padding: 15px;
+  }
+
+  .lecturer-page .cards {
+    flex-direction: column;
+  }
+
+  .lecturer-page .course-card {
+    padding: 12px;
+  }
+
+  .lecturer-page .course-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lecturer-page .actions {
+    margin-top: 10px;
+  }
+
+  .lecturer-page .enroll-btn {
+    width: 100%; /* زر full width */
   }
 }

@@ -1,74 +1,71 @@
 import { useState } from "react";
+import api, { getErrorMessage } from "../services/api";
 
-function RegisterForm({ goBack }) {
+function RegisterForm({ goBack, onSuccess }) {
   const [form, setForm] = useState({
-    first: "",
-    middle: "",
-    last: "",
-    username: "",
+    firstName: "",
+    lastName: "",
     ssin: "",
-    section: "",
-    level: "",
     department: "",
+    level: "",
     email: "",
-    password: ""
+    password: "",
+    confirmPassword: "",
   });
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
-  if (!form.email.endsWith(".edu.eg")) {
-  setError("Only university emails ending with .edu.eg are allowed");
-  return;
-}
-
-    // ✅ تحقق إن الإيميل مش موجود قبل كده
-    const students = JSON.parse(localStorage.getItem("students")) || [];
-    const exists = students.find((s) => s.email === form.email);
-
-    if (exists) {
-      setError("Email already registered");
-      return;
-    }
-
-    // ✅ حفظ الطالب
-    const newStudent = {
-      id: Date.now(),
-      name: `${form.first} ${form.middle} ${form.last}`.trim(),
-      firstName: form.first,
-      middleName: form.middle,
-      lastName: form.last,
-      username: form.username,
-      ssin: form.ssin,
-      section: form.section,
-      level: form.level,
-      department: form.department,
-      email: form.email,
-      password: form.password,
-      role: "student",
-      registeredAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem("students", JSON.stringify([...students, newStudent]));
-
     setError("");
-    setSuccess("Account created successfully! Redirecting...");
+    setSuccess("");
 
-    setTimeout(() => {
-      goBack();
-    }, 1500);
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (!form.email.endsWith(".edu.eg")) {
+      setError("Only university emails ending with .edu.eg are allowed");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await api.post("/account/Register", {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        ssin: form.ssin,
+        department: form.department,
+        level: form.level,
+        email: form.email,
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+      });
+
+      setSuccess("Account created! Please check your email for verification code.");
+
+      setTimeout(() => {
+        if (onSuccess) onSuccess(form.email);
+        else goBack();
+      }, 1500);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,27 +75,27 @@ function RegisterForm({ goBack }) {
 
       <form onSubmit={handleSubmit}>
         <div className="row">
-          <input name="first" placeholder="First Name" onChange={handleChange} required />
-          <input name="middle" placeholder="Middle Name" onChange={handleChange} />
-          <input name="last" placeholder="Last Name" onChange={handleChange} required />
+          <input name="firstName" placeholder="First Name" onChange={handleChange} required />
+          <input name="lastName" placeholder="Last Name" onChange={handleChange} required />
         </div>
 
-        <input name="username" placeholder="Username" onChange={handleChange} required />
         <input name="ssin" placeholder="SSIN" onChange={handleChange} required />
 
         <div className="row">
-          <input name="section" placeholder="Section" onChange={handleChange} required />
-          <input name="level" placeholder="Level" onChange={handleChange} required />
           <input name="department" placeholder="Department" onChange={handleChange} required />
+          <input name="level" placeholder="Level" onChange={handleChange} required />
         </div>
 
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
+        <input name="email" type="email" placeholder="University Email (.edu.eg)" onChange={handleChange} required />
         <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
+        <input name="confirmPassword" type="password" placeholder="Confirm Password" onChange={handleChange} required />
 
         {error && <p style={{ color: "red" }}>{error}</p>}
         {success && <p style={{ color: "green" }}>{success}</p>}
 
-        <button type="submit">Register</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Register"}
+        </button>
       </form>
 
       <p className="back" onClick={goBack}>

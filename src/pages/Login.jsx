@@ -2,51 +2,87 @@ import "../styles/login.css";
 import { useState } from "react";
 
 import LoginForm from "../components/LoginForm";
-import ResetForm from "../components/ResetForm";
 import RegisterForm from "../components/RegisterForm";
+import VerificationForm from "../components/VerificationForm";
+import ForgetPasswordForm from "../components/ForgetPasswordForm";
+import ResetPasswordForm from "../components/ResetPasswordForm";
 
 function Login() {
-  const FORM_TYPES = {
+  const MODES = {
     LOGIN: "login",
-    RESET: "reset",
-    REGISTER: "register"
+    REGISTER: "register",
+    VERIFY_EMAIL: "verify_email",
+    FORGET: "forget",
+    NEW_PASSWORD: "new_password",
   };
 
-  const [mode, setMode] = useState(FORM_TYPES.LOGIN);
-
-  const forms = {
-    login: (
-      <LoginForm
-        goToReset={() => setMode(FORM_TYPES.RESET)}
-        goToRegister={() => setMode(FORM_TYPES.REGISTER)}
-      />
-    ),
-    reset: <ResetForm goBack={() => setMode(FORM_TYPES.LOGIN)} />,
-    register: <RegisterForm goBack={() => setMode(FORM_TYPES.LOGIN)} />
-  };
+  const [mode, setMode] = useState(MODES.LOGIN);
+  const [pendingEmail, setPendingEmail] = useState("");
 
   return (
     <div className="login-container">
-      {/* LEFT */}
       <div className="login-left">
         <div className="logo-box">⌘</div>
-
         <h1>QR Attendance System</h1>
-
         <p>
           Prevent fake attendance using QR codes with location and time
           verification.
         </p>
-
         <div className="features">
           <span>✔ Location Verified</span>
           <span>✔ Time Tracked</span>
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="login-right" key={mode}>
-        {forms[mode]}
+
+        {/* Login */}
+        {mode === MODES.LOGIN && (
+          <LoginForm
+            goToReset={() => setMode(MODES.FORGET)}
+            goToRegister={() => setMode(MODES.REGISTER)}
+          />
+        )}
+
+        {/* Register */}
+        {mode === MODES.REGISTER && (
+          <RegisterForm
+            goBack={() => setMode(MODES.LOGIN)}
+            onSuccess={(email) => {
+              setPendingEmail(email);
+              setMode(MODES.VERIFY_EMAIL);
+            }}
+          />
+        )}
+
+        {/* Verify Email بعد Register */}
+        {mode === MODES.VERIFY_EMAIL && (
+          <VerificationForm
+            email={pendingEmail}
+            goBack={() => setMode(MODES.LOGIN)}
+          />
+        )}
+
+        {/* Forget Password - إدخال الإيميل */}
+        {mode === MODES.FORGET && (
+          <ForgetPasswordForm
+            goBack={() => setMode(MODES.LOGIN)}
+            goToNewPassword={(email) => {
+              setPendingEmail(email);
+              setMode(MODES.NEW_PASSWORD);
+            }}
+          />
+        )}
+
+        {/* ✅ New Password - كود من الإيميل + باسورد جديد */}
+        {mode === MODES.NEW_PASSWORD && (
+          <ResetPasswordForm
+            email={pendingEmail}
+            goBack={() => setMode(MODES.FORGET)}
+            goToLogin={() => setMode(MODES.LOGIN)}
+          />
+        )}
+
       </div>
     </div>
   );

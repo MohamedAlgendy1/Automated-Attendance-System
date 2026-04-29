@@ -113,18 +113,22 @@
   margin-top: 20px;
   padding: 20px;
   border-radius: 12px;
+  overflow-x: auto; /* 🔥 مهم */
 }
 
 .course-details-page .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap; /* 🔥 */
+  gap: 10px;
 }
 
 .course-details-page .table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  min-width: 600px; /* 🔥 يمنع تكسير الجدول */
 }
 
 .course-details-page .table th,
@@ -171,6 +175,9 @@
   padding: 20px;
   border-radius: 12px;
   width: 400px;
+  max-width: 95vw; /* 🔥 */
+  max-height: 90vh; /* 🔥 */
+  overflow-y: auto; /* 🔥 */
   animation: fadeIn 0.2s ease-in-out;
 }
 
@@ -193,7 +200,7 @@
   border: 1px solid #ccc;
 }
 
-/* 🔥 الزرار */
+/* الزرار */
 .course-details-page .modal-btn {
   width: 100%;
   padding: 12px;
@@ -225,17 +232,7 @@
   }
 }
 
-/* ================= RESPONSIVE ================= */
-@media (max-width: 900px) {
-  .course-details-page {
-    flex-direction: column;
-  }
-
-  .course-details-page .sidebar {
-    width: 100%;
-  }
-}
-
+/* ================= FORM ================= */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -262,48 +259,36 @@
   border-color: #007bff;
 }
 
-/* =========================
-   ACTION ICONS (QR / EDIT / DELETE)
-========================= */
-
+/* ================= ACTION ICONS ================= */
 .actions {
   display: flex;
-  gap: 15px; /* 👈 المسافة بين الأيقونات */
+  gap: 12px;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap; /* 🔥 */
 }
 
 .actions span {
   cursor: pointer;
   font-size: 18px;
   transition: 0.2s ease;
+  padding: 6px; /* 🔥 لمس أسهل */
 }
 
 .actions span:hover {
   transform: scale(1.2);
 }
 
-/* ألوان لكل أيقونة */
-.actions span:nth-child(1) {
-  color: #444; /* QR */
-}
+/* colors */
+.actions span:nth-child(1) { color: #444; }
+.actions span:nth-child(2) { color: #1e88e5; }
+.actions span:nth-child(3) { color: #e53935; }
 
-.actions span:nth-child(2) {
-  color: #1e88e5; /* Edit */
-}
-
-.actions span:nth-child(3) {
-  color: #e53935; /* Delete */
-}
-
-
-/* =========================
-   TABLE تحسين شكل الجدول
-========================= */
-
+/* ================= TABLE STYLE ================= */
 .table td {
   padding: 12px;
   vertical-align: middle;
+  text-align: center;
 }
 
 .table th {
@@ -311,19 +296,12 @@
   text-align: center;
 }
 
-.table td {
-  text-align: center;
-}
-
-
-/* =========================
-   QR BOX (الشكل اللي تحت الجدول)
-========================= */
-
+/* ================= QR BOX ================= */
 .qr-box {
   margin: 30px auto;
   padding: 25px;
   width: 300px;
+  max-width: 95%; /* 🔥 */
   text-align: center;
   background: #f8f9fb;
   border-radius: 15px;
@@ -340,6 +318,8 @@
   padding: 10px;
   background: white;
   border-radius: 10px;
+  width: 100%; /* 🔥 */
+  height: auto;
 }
 
 .qr-box p {
@@ -361,61 +341,59 @@
   background: #d5d5d5;
 }
 
+/* ================= RESPONSIVE ================= */
 
-/* =========================
-   MODAL تحسين الشكل
-========================= */
+/* Tablet */
+@media (max-width: 900px) {
+  .course-details-page {
+    flex-direction: column;
+  }
 
-.modal input,
-.modal select {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  outline: none;
-  transition: 0.2s;
+  .course-details-page .sidebar {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .course-details-page .menu {
+    display: flex;
+    gap: 10px;
+  }
+
+  .course-details-page .menu li {
+    margin-bottom: 0;
+  }
+
+  .course-details-page .user-box {
+    display: none;
+  }
 }
 
-.modal input:focus,
-.modal select:focus {
-  border-color: #1e88e5;
-}
+/* Mobile */
+@media (max-width: 500px) {
+  .course-details-page .main {
+    padding: 15px;
+  }
 
-.modal-btn {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: #1e88e5;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
+  .course-details-page .cards {
+    flex-direction: column;
+  }
 
-.modal-btn:hover {
-  background: #1565c0;
-}
+  .course-details-page .table-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.course-details-page .enroll-btn {
-  background: #43a047;
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-}
+  .course-details-page .enroll-btn {
+    width: 100%;
+  }
 
-.course-details-page .actions span {
-  cursor: pointer;
-  margin-right: 10px;
-  font-size: 18px;
-}
+  .actions {
+    gap: 10px;
+  }
 
-.qr-box {
-  margin-top: 20px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 12px;
-  text-align: center;
+  .qr-box {
+    padding: 15px;
+  }
 }

@@ -70,40 +70,105 @@ function AttendanceOverview() {
                 {lectures.length} lectures · {enrolledStudents.length} students
               </p>
 
-              <table className="table">
-                <thead>
-                  <tr><th>Student</th><th>Email</th><th>Attended</th><th>Total</th><th>Percentage</th></tr>
-                </thead>
-                <tbody>
-                  {enrolledStudents.length === 0 ? (
-                    <tr><td colSpan="5" className="empty">No students enrolled yet</td></tr>
-                  ) : (
-                    enrolledStudents.map((student) => {
-                      const att = JSON.parse(localStorage.getItem(`attendance_${course.code}_${student.email}`)) || [];
-                      const attendedCount = att.length;
-                      const total = lectures.length;
-                      const percent = total === 0 ? 0 : Math.round((attendedCount / total) * 100);
+             <table className="table">
+  <thead>
+    <tr>
+      <th>Student</th>
+      <th>Email</th>
+      <th>Attended</th>
+      <th>Total</th>
+      <th>Percentage</th>
+    </tr>
+  </thead>
 
-                      return (
-                        <tr key={student.id}>
-                          <td>{student.name}</td>
-                          <td>{student.email}</td>
-                          <td>{attendedCount}</td>
-                          <td>{total}</td>
-                          <td>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ flex: 1, height: 8, background: "#e5e7eb", borderRadius: 999, overflow: "hidden" }}>
-                                <div style={{ width: `${percent}%`, height: "100%", background: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444", borderRadius: 999, transition: "width 0.3s" }} />
-                              </div>
-                              <span style={{ fontWeight: 700, color: percent >= 75 ? "#16a34a" : percent >= 50 ? "#d97706" : "#dc2626" }}>{percent}%</span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+  <tbody>
+    {enrolledStudents.length === 0 ? (
+      <tr>
+        <td colSpan="5" className="empty">
+          No students enrolled yet
+        </td>
+      </tr>
+    ) : (
+      enrolledStudents.map((student) => {
+        const att =
+          JSON.parse(
+            localStorage.getItem(
+              `attendance_${course.code}_${student.email}`
+            )
+          ) || [];
+
+        const attendedCount = att.length;
+        const total = lectures.length;
+
+        const percent =
+          total === 0
+            ? 0
+            : Math.round((attendedCount / total) * 100);
+
+        return (
+          <tr key={student.id}>
+            <td data-label="Student">{student.name}</td>
+
+            <td data-label="Email">{student.email}</td>
+
+            <td data-label="Attended">{attendedCount}</td>
+
+            <td data-label="Total">{total}</td>
+
+            <td data-label="Percentage">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    height: 8,
+                    background: "#e5e7eb",
+                    borderRadius: 999,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${percent}%`,
+                      height: "100%",
+                      background:
+                        percent >= 75
+                          ? "#22c55e"
+                          : percent >= 50
+                          ? "#f59e0b"
+                          : "#ef4444",
+                      borderRadius: 999,
+                      transition: "width 0.3s",
+                    }}
+                  />
+                </div>
+
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color:
+                      percent >= 75
+                        ? "#16a34a"
+                        : percent >= 50
+                        ? "#d97706"
+                        : "#dc2626",
+                  }}
+                >
+                  {percent}%
+                </span>
+              </div>
+            </td>
+          </tr>
+        );
+      })
+    )}
+  </tbody>
+</table>
             </div>
           );
         })}
