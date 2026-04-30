@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api, { getErrorMessage } from "../services/api";
+import api, { parseJwt, getErrorMessage } from "../services/api";
 
 function LoginForm({ goToReset, goToRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,19 +15,23 @@ function LoginForm({ goToReset, goToRegister }) {
     setLoading(true);
 
     try {
-      const response = await api.post("/account/Login", { email, password });
+      const res = await api.post("/account/Login", { email, password });
+      const token = res.data.token;
+      const decoded = parseJwt(token);
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("role", response.data.role);
+      const role = decoded?.[
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+      ]?.toLowerCase();
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
       localStorage.setItem("isLoggedIn", "true");
 
-      if (response.data.role === "admin") {
-        navigate("/dashboard");
-      } else if (response.data.role === "lecturer") {
-        navigate("/lecturer");
-      } else {
-        navigate("/student");
-      }
+      if (role === "admin") navigate("/dashboard");
+      else if (role === "lecturer") navigate("/lecturer");
+      else if (role === "student") navigate("/student");
+      else setError("Unknown role");
+
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -40,35 +43,14 @@ function LoginForm({ goToReset, goToRegister }) {
     <div className="form-card">
       <h2>Welcome Back</h2>
       <p className="subtitle">Sign in to your account</p>
-
       <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="University Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
+        <input type="email" placeholder="University Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         {error && <p style={{ color: "red" }}>{error}</p>}
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
+        <button type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</button>
       </form>
-
       <p className="forgot" onClick={goToReset}>Forgot password?</p>
-      <p className="register">
-        Student? <span onClick={goToRegister}>Register here</span>
-      </p>
+      <p className="register">Student? <span onClick={goToRegister}>Register here</span></p>
     </div>
   );
 }

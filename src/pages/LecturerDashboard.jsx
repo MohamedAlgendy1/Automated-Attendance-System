@@ -1,326 +1,204 @@
 import "./../styles/dashboardLecturer.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api, { getErrorMessage, getUserIdFromToken } from "../services/api";
 
 function LecturerDashboard() {
   const navigate = useNavigate();
-
-  // ✅ بيانات الدكتور من localStorage
-  const lecturerProfile = JSON.parse(localStorage.getItem("lecturerProfile")) || {};
-  const lecturerEmail = lecturerProfile.email || "default";
-
-  // ✅ courses الدكتور ده بس من localStorage
-  const [courses, setCourses] = useState(() => {
-    return JSON.parse(localStorage.getItem(`courses_${lecturerEmail}`)) || [];
-  });
-
   const [activePage, setActivePage] = useState("courses");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
+  const [editCourse, setEditCourse] = useState(null);
+  const [stats, setStats] = useState({ lectures: 0, students: 0 });
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [refresh, setRefresh] = useState(0);
 
-  const [form, setForm] = useState({
-    code: "",
-    name: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ name: "", code: "" });
+  const [formError, setFormError] = useState("");
+  const [formLoading, setFormLoading] = useState(false);
 
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
+  const lecturerId = getUserIdFromToken();
 
-  // ✅ حفظ courses بـ key الدكتور
-  useEffect(() => {
-    localStorage.setItem(`courses_${lecturerEmail}`, JSON.stringify(courses));
-  }, [courses, lecturerEmail]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("role");
-    localStorage.removeItem("lecturerProfile");
-    navigate("/");
-  };
+  // ✅ جيب profile من الـ token
+  const token = localStorage.getItem("token");
+  const decoded = token ? JSON.parse(atob(token.split(".")[1])) : {};
+  const lecturerName = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Lecturer";
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: "", type: "success" });
-    }, 3000);
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  const handleSubmit = (e) => {
+  // ✅ جيب الكورسات
+  useEffect(() => {
+    const loadCourses = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/course/AllCourses", {
+          params: { pagenumber: 1, pagesize: 100 }
+        });
+        setCourses(res.data?.items || res.data || []);
+      } catch (err) {
+        showToast(getErrorMessage(err), "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCourses();
+  }, [refresh]);
+
+  // ✅ إضافة / تعديل كورس
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError("");
+    setFormLoading(true);
 
-    if (!form.code || !form.name || !form.password) {
-      showToast("Please fill all fields", "error");
-      return;
-    }
-
-    if (editIndex !== null) {
-      const updated = [...courses];
-      updated[editIndex] = form;
-      setCourses(updated);
-      showToast("Course updated ✅");
-    } else {
-      const exists = courses.find((c) => c.code === form.code);
-      if (exists) {
-        showToast("Course already exists", "error");
-        return;
+    try {
+      if (editCourse) {
+        // تعديل
+        await api.put(`/course/Edit/${editCourse.id}`, {
+          courseCode: form.code,
+          courseName: form.name,
+        });
+        showToast("Course updated ✅");
+      } else {
+        // إضافة
+        await api.post("/course/Create", {
+          name: form.name,
+          code: form.code,
+          lecturerId: parseInt(lecturerId),
+        });
+        showToast("Course added 🎉");
       }
 
-      setCourses([...courses, form]);
-      showToast("Course added 🎉");
+      setShowModal(false);
+      setEditCourse(null);
+      setForm({ name: "", code: "" });
+      setRefresh((r) => r + 1);
+    } catch (err) {
+      setFormError(getErrorMessage(err));
+    } finally {
+      setFormLoading(false);
     }
-
-    setForm({ name: "", code: "", password: "" });
-    setEditIndex(null);
-    setShowModal(false);
   };
 
-  const handleDelete = (index) => {
-    const updated = courses.filter((_, i) => i !== index);
-    setCourses(updated);
-    showToast("Course deleted ❌", "error");
+  // ✅ حذف كورس
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this course?")) return;
+    try {
+      await api.delete(`/course/Delete/${id}`);
+      showToast("Course deleted", "error");
+      setRefresh((r) => r + 1);
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    }
   };
 
-  const handleEdit = (index) => {
-    setForm(courses[index]);
-    setEditIndex(index);
+  const handleEdit = (course) => {
+    setEditCourse(course);
+    setForm({ name: course.name || course.courseName, code: course.code || course.courseCode });
     setShowModal(true);
   };
 
-  // ✅ حساب عدد الطلاب الكلي
-  const totalStudents = () => {
-    const allStudents = JSON.parse(localStorage.getItem("students")) || [];
-    const emails = new Set();
-    courses.forEach((course) => {
-      allStudents.forEach((student) => {
-        const studentCourses =
-          JSON.parse(localStorage.getItem(`studentCourses_${student.email}`)) || [];
-        if (studentCourses.find((c) => c.code === course.code)) {
-          emails.add(student.email);
-        }
-      });
-    });
-    return emails.size;
-  };
-
-  // ✅ حساب عدد المحاضرات الكلي
-  const totalLectures = () => {
-    return courses.reduce((sum, course) => {
-      const lectures =
-        JSON.parse(localStorage.getItem(`lectures_${course.code}`)) || [];
-      return sum + lectures.length;
-    }, 0);
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
   };
 
   return (
     <div className="dashboard lecturer-page">
-      {/* ================= SIDEBAR ================= */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
-
           <ul className="menu">
-            <li
-              className={activePage === "courses" ? "active" : ""}
-              onClick={() => setActivePage("courses")}
-            >
+            <li className={activePage === "courses" ? "active" : ""} onClick={() => setActivePage("courses")}>
               📘 My Courses
             </li>
-
-            <li onClick={() => navigate("/attendance")}>
-              📊 Attendance Overview
-            </li>
+            <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>
           </ul>
         </div>
-
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">
-              {lecturerProfile.name?.[0]?.toUpperCase() || "L"}
-            </div>
+            <div className="avatar">{lecturerName?.[0]?.toUpperCase() || "L"}</div>
             <div>
-              <p>{lecturerProfile.name || "Lecturer"}</p>
+              <p>{lecturerName}</p>
               <span>Lecturer</span>
             </div>
           </div>
-
-          <button className="logout-btn" onClick={handleLogout}>
-            Sign Out
-          </button>
+          <button className="logout-btn" onClick={handleLogout}>Sign Out</button>
         </div>
       </div>
 
-      {/* ================= MAIN ================= */}
       <div className="main">
-        {/* ========= COURSES ========= */}
         {activePage === "courses" && (
           <>
             <h1>Lecturer Dashboard</h1>
 
             <div className="cards">
-              <div className="card">
-                <p>Courses</p>
-                <h2>{courses.length}</h2>
-              </div>
-
-              <div className="card">
-                <p>Lectures</p>
-                <h2>{totalLectures()}</h2>
-              </div>
-
-              <div className="card">
-                <p>Students</p>
-                <h2>{totalStudents()}</h2>
-              </div>
+              <div className="card"><p>Courses</p><h2>{courses.length}</h2></div>
+              <div className="card"><p>Lectures</p><h2>{stats.lectures}</h2></div>
+              <div className="card"><p>Students</p><h2>{stats.students}</h2></div>
             </div>
 
             <div className="top-bar">
-              <button
-                className="enroll-btn"
-                onClick={() => {
-                  setShowModal(true);
-                  setEditIndex(null);
-                  setForm({ name: "", code: "", password: "" });
-                }}
-              >
+              <button className="enroll-btn" onClick={() => { setShowModal(true); setEditCourse(null); setForm({ name: "", code: "" }); setFormError(""); }}>
                 + Add Course
               </button>
             </div>
 
-            {/* GRID COURSES */}
-            <div className="courses-grid">
-              {courses.length === 0 ? (
-                <p>No courses yet</p>
-              ) : (
-                courses.map((c, i) => {
-                  const allStudents =
-                    JSON.parse(localStorage.getItem("students")) || [];
-                  const enrolled = allStudents.filter((student) => {
-                    const studentCourses =
-                      JSON.parse(
-                        localStorage.getItem(`studentCourses_${student.email}`)
-                      ) || [];
-                    return studentCourses.find((sc) => sc.code === c.code);
-                  });
-
-                  return (
+            {loading ? (
+              <p style={{ color: "#64748b", marginTop: 20 }}>Loading courses...</p>
+            ) : (
+              <div className="courses-grid">
+                {courses.length === 0 ? (
+                  <p>No courses yet</p>
+                ) : (
+                  courses.map((c, i) => (
                     <div
-                      key={i}
+                      key={c.id || i}
                       className="course-card"
-                      onClick={() => navigate(`/course/${i}`)}
+                      onClick={() => navigate(`/course/${c.id}`)}
                       style={{ cursor: "pointer" }}
                     >
                       <div className="course-header">
-                        <span className="course-code">{c.code}</span>
-
-                        <div
-                          className="actions"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            className="edit-btn"
-                            onClick={() => handleEdit(i)}
-                          >
-                            ✏️
-                          </button>
-
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDelete(i)}
-                          >
-                            🗑
-                          </button>
+                        <span className="course-code">{c.code || c.courseCode}</span>
+                        <div className="actions" onClick={(e) => e.stopPropagation()}>
+                          <button className="edit-btn" onClick={() => handleEdit(c)}>✏️</button>
+                          <button className="delete-btn" onClick={() => handleDelete(c.id)}>🗑</button>
                         </div>
                       </div>
-
-                      <h3>{c.name}</h3>
-                      <p>{enrolled.length} students enrolled</p>
+                      <h3>{c.name || c.courseName}</h3>
+                      <p>0 students enrolled</p>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </>
-        )}
-
-        {/* ========= ATTENDANCE ========= */}
-        {activePage === "attendance" && (
-          <>
-            <h1>Attendance Overview</h1>
-
-            <div className="cards">
-              <div className="card">
-                <p>Courses</p>
-                <h2>{courses.length}</h2>
+                  ))
+                )}
               </div>
-
-              <div className="card">
-                <p>Lectures</p>
-                <h2>{totalLectures()}</h2>
-              </div>
-
-              <div className="card">
-                <p>Students</p>
-                <h2>{totalStudents()}</h2>
-              </div>
-            </div>
-
-            <div className="table-box">
-              <h2>Attendance Across All Courses</h2>
-              <div className="empty-box">
-                <p>No students enrolled yet</p>
-              </div>
-            </div>
+            )}
           </>
         )}
       </div>
 
-      {/* ================= MODAL ================= */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>{editIndex !== null ? "Edit Course" : "Add Course"}</h3>
+              <h3>{editCourse ? "Edit Course" : "Add Course"}</h3>
               <span onClick={() => setShowModal(false)}>✖</span>
             </div>
-
             <form onSubmit={handleSubmit}>
-              <input
-                placeholder="Course Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-
-              <input
-                placeholder="Course Code"
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-
-              <button type="submit">
-                {editIndex !== null ? "Update" : "Save"}
+              <input placeholder="Course Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <input placeholder="Course Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
+              {formError && <p style={{ color: "red" }}>{formError}</p>}
+              <button type="submit" disabled={formLoading}>
+                {formLoading ? "Saving..." : editCourse ? "Update" : "Save"}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* ================= TOAST ================= */}
-      {toast.show && (
-        <div className={`toast ${toast.type}`}>
-          {toast.message}
-        </div>
-      )}
+      {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
     </div>
   );
 }

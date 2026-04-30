@@ -24,10 +24,7 @@ function Login() {
       <div className="login-left">
         <div className="logo-box">⌘</div>
         <h1>QR Attendance System</h1>
-        <p>
-          Prevent fake attendance using QR codes with location and time
-          verification.
-        </p>
+        <p>Prevent fake attendance using QR codes with location and time verification.</p>
         <div className="features">
           <span>✔ Location Verified</span>
           <span>✔ Time Tracked</span>
@@ -35,16 +32,12 @@ function Login() {
       </div>
 
       <div className="login-right" key={mode}>
-
-        {/* Login */}
         {mode === MODES.LOGIN && (
           <LoginForm
             goToReset={() => setMode(MODES.FORGET)}
             goToRegister={() => setMode(MODES.REGISTER)}
           />
         )}
-
-        {/* Register */}
         {mode === MODES.REGISTER && (
           <RegisterForm
             goBack={() => setMode(MODES.LOGIN)}
@@ -54,16 +47,12 @@ function Login() {
             }}
           />
         )}
-
-        {/* Verify Email بعد Register */}
         {mode === MODES.VERIFY_EMAIL && (
           <VerificationForm
             email={pendingEmail}
             goBack={() => setMode(MODES.LOGIN)}
           />
         )}
-
-        {/* Forget Password - إدخال الإيميل */}
         {mode === MODES.FORGET && (
           <ForgetPasswordForm
             goBack={() => setMode(MODES.LOGIN)}
@@ -73,8 +62,6 @@ function Login() {
             }}
           />
         )}
-
-        {/* ✅ New Password - كود من الإيميل + باسورد جديد */}
         {mode === MODES.NEW_PASSWORD && (
           <ResetPasswordForm
             email={pendingEmail}
@@ -82,7 +69,6 @@ function Login() {
             goToLogin={() => setMode(MODES.LOGIN)}
           />
         )}
-
       </div>
     </div>
   );

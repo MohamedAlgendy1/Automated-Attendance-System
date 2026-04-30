@@ -1,67 +1,114 @@
 import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import EnrollForm from "../components/EnrollForm";
+import api, { getErrorMessage } from "../services/api";
 
 function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
+  const [myCourses, setMyCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [enrollForm, setEnrollForm] = useState({
+    courseId: "",
+    courseCode: "",
+  });
+  const [enrollError, setEnrollError] = useState("");
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const [refresh, setRefresh] = useState(0);
+
   const navigate = useNavigate();
 
-  // ✅ البروفايل أولاً
-  const [profile, setProfile] = useState(() => {
-    const data = localStorage.getItem("profile");
-    return data
-      ? JSON.parse(data)
-      : {
-          firstName: "",
-          middleName: "",
-          lastName: "",
-          email: "",
-          ssn: "",
-          username: "",
-          section: "",
-          level: "",
-          department: "",
-        };
-  });
+  const token = localStorage.getItem("token");
+  const decoded = token ? JSON.parse(atob(token.split(".")[1])) : {};
 
-  // ✅ الإيميل من البروفايل
-  const studentEmail = profile.email || "unknown";
+  const studentName =
+    decoded?.[
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+    ] || "Student";
 
-  // ✅ كورسات الطالب بـ key مخصص بالإيميل
-  const [myCourses, setMyCourses] = useState(() => {
-    return JSON.parse(localStorage.getItem(`studentCourses_${studentEmail}`)) || [];
-  });
-
-  // ✅ حفظ كورسات الطالب
-useEffect(() => {
-  localStorage.setItem(`studentCourses_${studentEmail}`, JSON.stringify(myCourses));
-}, [myCourses, studentEmail]);
-
-  // ✅ Toast
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const studentEmail =
+    decoded?.[
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+    ] || "";
 
   const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
+    setToast({
+      show: true,
+      message,
+      type,
+    });
+
     setTimeout(() => {
-      setToast({ show: false, message: "", type: "success" });
+      setToast({
+        show: false,
+        message: "",
+        type: "success",
+      });
     }, 3000);
   };
 
+  // ==========================
+  // Load My Courses
+  // ==========================
+  useEffect(() => {
+    const loadCourses = async () => {
+      setLoading(true);
+
+      try {
+        const res = await api.get("/student/MyCourses");
+
+        setMyCourses(res.data.courses || []);
+      } catch (err) {
+        console.error(getErrorMessage(err));
+        setMyCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, [refresh]);
+
+  // ==========================
+  // Enroll Course
+  // ==========================
+  const handleEnroll = async (e) => {
+    e.preventDefault();
+
+    setEnrollError("");
+    setEnrollLoading(true);
+
+    try {
+      await api.post("/student/Enrollment", {
+        courseId: parseInt(enrollForm.courseId),
+        courseCode: enrollForm.courseCode,
+      });
+
+      showToast("Enrolled successfully 🎉");
+
+      setShowModal(false);
+
+      setEnrollForm({
+        courseId: "",
+        courseCode: "",
+      });
+
+      setRefresh((prev) => prev + 1);
+    } catch (err) {
+      setEnrollError(getErrorMessage(err));
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("role");
+    localStorage.clear();
     navigate("/");
-  };
-
-  const handleChange = (e) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
-  };
-
-  const handleSave = () => {
-    localStorage.setItem("profile", JSON.stringify(profile));
-    showToast("Profile updated successfully ✅", "success");
   };
 
   return (
@@ -70,6 +117,7 @@ useEffect(() => {
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+
           <ul className="menu">
             <li
               className={activePage === "courses" ? "active" : ""}
@@ -77,11 +125,12 @@ useEffect(() => {
             >
               📘 My Courses
             </li>
+
             <li
-              className={activePage === "profile" ? "active" : ""}
-              onClick={() => setActivePage("profile")}
+              className={activePage === "history" ? "active" : ""}
+              onClick={() => setActivePage("history")}
             >
-              👤 Profile
+              📊 Attendance History
             </li>
           </ul>
         </div>
@@ -89,13 +138,15 @@ useEffect(() => {
         <div className="user-box">
           <div className="user-info">
             <div className="avatar">
-              {profile.firstName?.[0]?.toUpperCase() || "U"}
+              {studentName?.[0]?.toUpperCase() || "S"}
             </div>
+
             <div>
-              <p>{profile.firstName || "User Name"}</p>
-              <span>Student</span>
+              <p>{studentName}</p>
+              <span>{studentEmail}</span>
             </div>
           </div>
+
           <button className="logout-btn" onClick={handleLogout}>
             Sign Out
           </button>
@@ -104,8 +155,6 @@ useEffect(() => {
 
       {/* Main */}
       <div className="main">
-
-        {/* ========= COURSES ========= */}
         {activePage === "courses" && (
           <>
             <h1>Student Dashboard</h1>
@@ -115,186 +164,70 @@ useEffect(() => {
                 <p>My Courses</p>
                 <h2>{myCourses.length}</h2>
               </div>
-<div className="card">
-  <p>Available Courses</p>
-  <h2>
-    {(() => {
-      const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
-      return lecturers.reduce((sum, l) => {
-        const c = JSON.parse(localStorage.getItem(`courses_${l.email}`)) || [];
-        return sum + c.length;
-      }, 0);
-    })()}
-  </h2>
-</div>
-
-              <div className="card">
-                <p>Overall Attendance</p>
-                <h2>
-                  {(() => {
-                    let totalLectures = 0;
-                    let totalAttended = 0;
-
-                    myCourses.forEach((course) => {
-                      const lectures =
-                        JSON.parse(localStorage.getItem(`lectures_${course.code}`)) || [];
-                      const attendance =
-                        JSON.parse(localStorage.getItem(`attendance_${course.code}_${studentEmail}`)) || [];
-
-                      totalLectures += lectures.length;
-                      totalAttended += attendance.length;
-                    });
-
-                    const percent =
-                      totalLectures === 0
-                        ? 0
-                        : Math.round((totalAttended / totalLectures) * 100);
-
-                    return percent + "%";
-                  })()}
-                </h2>
-              </div>
             </div>
 
             <div className="top-bar">
-              <button className="enroll-btn" onClick={() => setShowModal(true)}>
+              <button
+                className="enroll-btn"
+                onClick={() => setShowModal(true)}
+              >
                 📘 Enroll in Course
               </button>
             </div>
 
-            {myCourses.length === 0 ? (
+            {loading ? (
+              <p style={{ color: "#64748b", marginTop: 20 }}>
+                Loading...
+              </p>
+            ) : myCourses.length === 0 ? (
               <div className="empty-box">
                 <div className="icon">📖</div>
+
                 <p>You're not enrolled in any courses yet.</p>
-                <span>Use the "Enroll in Course" button to join a course.</span>
+
+                <span>
+                  Use the "Enroll in Course" button to join a course.
+                </span>
               </div>
             ) : (
               <div className="courses-grid">
-                {myCourses.map((course, index) => {
-                  const lectures =
-                    JSON.parse(localStorage.getItem(`lectures_${course.code}`)) || [];
-                  const records =
-                    JSON.parse(localStorage.getItem(`attendance_${course.code}_${studentEmail}`)) || [];
-
-                  const totalLectures = lectures.length;
-                  const attended = records.length;
-                  const percent =
-                    totalLectures === 0
-                      ? 0
-                      : Math.round((attended / totalLectures) * 100);
-
-                  return (
+                {Array.isArray(myCourses) &&
+                  myCourses.map((course) => (
                     <div
-                      key={index}
+                      key={course.id}
                       className="course-card"
-                      onClick={() => navigate(`/student/course/${course.code}`)}
+                      onClick={() =>
+                        navigate(`/student/course/${course.id}`)
+                      }
                       style={{ cursor: "pointer" }}
                     >
-                      <h3>{course.name}</h3>
-                      <span className="course-code">{course.code}</span>
+                      <h3>{course.name || course.courseName}</h3>
+
+                      <span className="course-code">
+                        {course.code || course.courseCode}
+                      </span>
 
                       <div className="attendance-box">
                         <div
                           className="progress-circle"
                           style={{
-                            background: `conic-gradient(
-                              #22c55e 0% ${percent}%,
-                              #e5e7eb ${percent}% 100%
-                            )`,
+                            background:
+                              "conic-gradient(#22c55e 0% 0%, #e5e7eb 0% 100%)",
                           }}
                         >
-                          <span>{percent}%</span>
+                          <span>0%</span>
                         </div>
+
                         <p>My Attendance</p>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
               </div>
             )}
           </>
         )}
 
-        {/* ========= PROFILE ========= */}
-        {activePage === "profile" && (
-          <>
-            <h1>My Profile</h1>
-
-            <div className="profile-card">
-              <div className="profile-header">
-                <div className="big-avatar">
-                  {profile.firstName?.[0]?.toUpperCase() || "U"}
-                </div>
-                <div>
-                  <h2>{profile.firstName || "User Name"}</h2>
-                  <p>Student</p>
-                </div>
-              </div>
-
-              <div className="form-grid">
-                <input
-                  name="firstName"
-                  value={profile.firstName}
-                  onChange={handleChange}
-                  placeholder="First Name"
-                />
-                <input
-                  name="middleName"
-                  value={profile.middleName}
-                  onChange={handleChange}
-                  placeholder="Middle Name"
-                />
-                <input
-                  name="lastName"
-                  value={profile.lastName}
-                  onChange={handleChange}
-                  placeholder="Last Name"
-                />
-                <input
-                  name="email"
-                  value={profile.email}
-                  className="full"
-                  disabled
-                />
-                <input
-                  name="ssn"
-                  value={profile.ssn}
-                  className="full"
-                  disabled
-                />
-                <input
-                  name="username"
-                  value={profile.username}
-                  onChange={handleChange}
-                  placeholder="Username"
-                  className="full"
-                />
-                <input
-                  name="section"
-                  value={profile.section}
-                  onChange={handleChange}
-                  placeholder="Section"
-                />
-                <input
-                  name="level"
-                  value={profile.level}
-                  onChange={handleChange}
-                  placeholder="Level"
-                />
-                <input
-                  name="department"
-                  value={profile.department}
-                  onChange={handleChange}
-                  placeholder="Department"
-                />
-              </div>
-
-              <button className="save-btn" onClick={handleSave}>
-                Save Changes
-              </button>
-            </div>
-          </>
-        )}
+        {activePage === "history" && <AttendanceHistory />}
       </div>
 
       {/* Modal */}
@@ -303,36 +236,144 @@ useEffect(() => {
           <div className="modal">
             <div className="modal-header">
               <h3>Enroll in a Course</h3>
+
               <span onClick={() => setShowModal(false)}>✖</span>
             </div>
 
-            <EnrollForm
-              onEnroll={(course) => {
-                if (!course) {
-                  showToast("Invalid course", "error");
-                  return;
+            <form onSubmit={handleEnroll}>
+              <input
+                type="number"
+                placeholder="Course ID"
+                value={enrollForm.courseId}
+                onChange={(e) =>
+                  setEnrollForm({
+                    ...enrollForm,
+                    courseId: e.target.value,
+                  })
                 }
+                required
+              />
 
-                const exists = myCourses.find((c) => c.code === course.code);
-                if (exists) {
-                  showToast("Already enrolled!", "error");
-                  return;
+              <input
+                placeholder="Course Code"
+                value={enrollForm.courseCode}
+                onChange={(e) =>
+                  setEnrollForm({
+                    ...enrollForm,
+                    courseCode: e.target.value,
+                  })
                 }
+                required
+              />
 
-                setMyCourses([...myCourses, course]);
-                setShowModal(false);
-                showToast("Enrolled successfully 🎉", "success");
-              }}
-            />
+              {enrollError && (
+                <p style={{ color: "red" }}>{enrollError}</p>
+              )}
+
+              <button type="submit" disabled={enrollLoading}>
+                {enrollLoading ? "Enrolling..." : "Enroll"}
+              </button>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Toast */}
       {toast.show && (
-        <div className={`toast ${toast.type}`}>{toast.message}</div>
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+        </div>
       )}
     </div>
+  );
+}
+
+// ===================================
+// Attendance History Component
+// ===================================
+function AttendanceHistory() {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/student/MyAttendanceHistory")
+      .then((res) => {
+        setHistory(res.data.history || []);
+      })
+      .catch(() => {
+        setHistory([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <>
+      <h1>Attendance History</h1>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div className="table-box">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Lecture</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {history.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    style={{
+                      textAlign: "center",
+                      padding: 20,
+                      color: "#888",
+                    }}
+                  >
+                    No attendance records yet
+                  </td>
+                </tr>
+              ) : (
+                Array.isArray(history) &&
+                history.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.courseName}</td>
+                    <td>{item.lectureTitle}</td>
+                    <td>
+                      {new Date(
+                        item.date || item.recordedAt
+                      ).toLocaleDateString()}
+                    </td>
+
+                    <td>
+                      <span
+                        style={{
+                          padding: "5px 12px",
+                          borderRadius: 20,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          background: "#dcfce7",
+                          color: "#16a34a",
+                        }}
+                      >
+                        ✅ Attended
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
 

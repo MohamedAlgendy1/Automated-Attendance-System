@@ -1,6 +1,7 @@
 import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   FaChalkboardTeacher,
   FaUserGraduate,
@@ -8,26 +9,38 @@ import {
   FaBook,
   FaEdit,
   FaTrash,
+  FaChartBar,
 } from "react-icons/fa";
 
 import FormModal from "../components/FormModal";
+
+import {
+  getLecturers,
+  addLecturer,
+  closeAccount,
+} from "../services/adminService";
+
+import {
+  getClassrooms,
+  addClassroom,
+  deleteClassroomApi,
+  editClassroom,
+} from "../services/classroomService";
+
+import api, { getUserIdFromToken } from "../services/api";
 
 function AdminDashboard() {
   const navigate = useNavigate();
 
   const [activePage, setActivePage] = useState("students");
 
-  const [lecturers, setLecturers] = useState(
-    JSON.parse(localStorage.getItem("lecturers")) || []
-  );
-
+  const [lecturers, setLecturers] = useState([]);
   const [students, setStudents] = useState(
     JSON.parse(localStorage.getItem("students")) || []
   );
+  const [classrooms, setClassrooms] = useState([]);
 
-  const [classrooms, setClassrooms] = useState(
-    JSON.parse(localStorage.getItem("classrooms")) || []
-  );
+  const [, setDashboard] = useState({});
 
   const [search, setSearch] = useState("");
   const [searchClass, setSearchClass] = useState("");
@@ -36,22 +49,48 @@ function AdminDashboard() {
   const [modalType, setModalType] = useState("");
   const [editData, setEditData] = useState(null);
 
-  // 💾 حفظ
+  const [loading, setLoading] = useState(true);
+
+  // ===================== LOAD DATA =====================
+  const loadData = async () => {
+    try {
+      setLoading(true);
+
+      const lecturersRes = await getLecturers({
+        pagenumber: 1,
+        pagesize: 100,
+        name: "",
+        sortBy: "id",
+        isDescindeng: false,
+      });
+
+      const classroomRes = await getClassrooms();
+
+      const dash = await api.get("/admin/SystemDashboard");
+
+      setLecturers(lecturersRes.items || lecturersRes || []);
+      setClassrooms(classroomRes.items || classroomRes || []);
+      setDashboard(dash.data || {});
+    } catch (error) {
+  console.log("ERROR FROM SERVER:", error.response?.data);
+} finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem("lecturers", JSON.stringify(lecturers));
-  }, [lecturers]);
+    Promise.resolve().then(loadData);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("students", JSON.stringify(students));
   }, [students]);
 
-  useEffect(() => {
-    localStorage.setItem("classrooms", JSON.stringify(classrooms));
-  }, [classrooms]);
-
-  // ================= FILTER =================
+  // ===================== FILTER =====================
   const filteredLecturers = lecturers.filter((l) =>
-    l.name?.toLowerCase().includes(search.toLowerCase())
+    `${l.firstName} ${l.lastName}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   const filteredStudents = students.filter((s) =>
@@ -62,58 +101,83 @@ function AdminDashboard() {
     c.name?.toLowerCase().includes(searchClass.toLowerCase())
   );
 
-  // ================= SAVE =================
-  const handleSave = (data) => {
+  // ===================== SAVE =====================
+const handleSave = async (data) => {
+  try {
     if (modalType === "lecturer") {
-      const fullName = `${data.firstName} ${data.middleName} ${data.lastName}`;
+      console.log("FORM DATA:", data);
 
-      if (editData) {
-        setLecturers(
-          lecturers.map((l) =>
-            l.id === editData.id ? { ...data, name: fullName, id: l.id } : l
-          )
-        );
-      } else {
-        setLecturers([
-          ...lecturers,
-          { ...data, name: fullName, id: Date.now() },
-        ]);
+      if (!data.password || data.password.length < 8) {
+        alert("Password must be at least 8 characters");
+        return;
       }
+
+      await addLecturer({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        password: data.password,
+        email: data.email || "test@test.com",
+        ssin: data.ssin || "0000",
+      });
     }
 
     if (modalType === "classroom") {
-      const newData = {
-        ...data,
-        lat: parseFloat(data.lat),
-        lng: parseFloat(data.lng),
-        radius: parseFloat(data.radius),
+      const payload = {
+        name: data.name,
+        buildingName: data.building,
+        latitude: Number(data.lat),
+        longitude: Number(data.lng),
+        radiusOfAcceptanceMeter: Number(data.radius),
       };
 
       if (editData) {
-        setClassrooms(
-          classrooms.map((c) =>
-            c.id === editData.id ? { ...newData, id: c.id } : c
-          )
-        );
+        await editClassroom(editData.id, payload);
       } else {
-        setClassrooms([...classrooms, { ...newData, id: Date.now() }]);
+        await addClassroom(payload);
       }
     }
+
+    setOpenModal(false);
+    setEditData(null);
+    loadData();
+  } catch (error) {
+    console.log("ERROR FROM SERVER:", error.response?.data);
+  }
+};
+
+  // ===================== DELETE =====================
+  const deleteLecturer = async (id) => {
+    const userId = getUserIdFromToken();
+    await closeAccount(id, userId);
+    loadData();
   };
 
-  // ================= DELETE =================
-  const deleteLecturer = (id) =>
-    setLecturers(lecturers.filter((l) => l.id !== id));
-
-  const deleteStudent = (id) =>
+  const deleteStudent = (id) => {
     setStudents(students.filter((s) => s.id !== id));
+  };
 
-  const deleteClassroom = (id) =>
-    setClassrooms(classrooms.filter((c) => c.id !== id));
+  const deleteClassroom = async (id) => {
+    await deleteClassroomApi(id);
+    loadData();
+  };
+
+  // ===================== REPORT DATA =====================
+  const totalCourses = lecturers.reduce((sum, l) => {
+    const c =
+      JSON.parse(localStorage.getItem(`courses_${l.email}`)) || [];
+    return sum + c.length;
+  }, 0);
+
+  const logout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
+  if (loading) return <h2 style={{ padding: 30 }}>Loading...</h2>;
 
   return (
     <div className="dashboard">
-      {/* Sidebar */}
+      {/* ================= SIDEBAR ================= */}
       <div className="sidebar">
         <h2 className="logo">QR Attend</h2>
 
@@ -138,67 +202,35 @@ function AdminDashboard() {
           >
             <FaMapMarkerAlt /> Classrooms
           </li>
+
+          <li
+            className={activePage === "reports" ? "active" : ""}
+            onClick={() => setActivePage("reports")}
+          >
+            <FaChartBar /> Reports
+          </li>
         </ul>
 
         <div className="user-box">
-          <div className="user-info">
-            <div className="avatar">S</div>
-            <div>
-              <p>System Administrator</p>
-              <span>Admin</span>
-            </div>
-          </div>
-
-          <button className="logout-btn" onClick={() => navigate("/")}>
+          <button className="logout-btn" onClick={logout}>
             Sign Out
           </button>
         </div>
       </div>
 
-      {/* Main */}
+      {/* ================= MAIN ================= */}
       <div className="main">
         <h1>Admin Dashboard</h1>
 
-        {/* 🔥 Cards رجعناها */}
-        <div className="cards">
-          <div className="card">
-            <FaChalkboardTeacher />
-            <h2>{lecturers.length}</h2>
-            <p>Lecturers</p>
-          </div>
+        {/* CARDS */}
+       
 
-          <div className="card">
-            <FaUserGraduate />
-            <h2>{students.length}</h2>
-            <p>Students</p>
-          </div>
-
-          <div className="card">
-  <FaBook />
-  <h2>
-    {(() => {
-      const lecturers = JSON.parse(localStorage.getItem("lecturers")) || [];
-      return lecturers.reduce((sum, l) => {
-        const c = JSON.parse(localStorage.getItem(`courses_${l.email}`)) || [];
-        return sum + c.length;
-      }, 0);
-    })()}
-  </h2>
-  <p>Courses</p>
-</div>
-
-          <div className="card">
-            <FaMapMarkerAlt />
-            <h2>{classrooms.length}</h2>
-            <p>Classrooms</p>
-          </div>
-        </div>
-
-   {/* ================= LECTURERS ================= */}
+        {/* ================= LECTURERS ================= */}
         {activePage === "lecturers" && (
           <div className="table-box">
             <div className="table-header">
               <h2>Manage Lecturers</h2>
+
               <button
                 className="enroll-btn"
                 onClick={() => {
@@ -223,7 +255,6 @@ function AdminDashboard() {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Username</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -231,18 +262,13 @@ function AdminDashboard() {
               <tbody>
                 {filteredLecturers.map((l) => (
                   <tr key={l.id}>
-                    <td>{l.name}</td>
+                    <td>{l.firstName} {l.lastName}</td>
                     <td>{l.email}</td>
-                    <td>{l.username}</td>
                     <td>
-                      <FaEdit
-                        onClick={() => {
-                          setModalType("lecturer");
-                          setEditData(l);
-                          setOpenModal(true);
-                        }}
+                      <FaTrash
+                        onClick={() => deleteLecturer(l.id)}
+                        style={{ cursor: "pointer" }}
                       />
-                      <FaTrash onClick={() => deleteLecturer(l.id)} />
                     </td>
                   </tr>
                 ))}
@@ -251,17 +277,14 @@ function AdminDashboard() {
           </div>
         )}
 
-
         {/* ================= STUDENTS ================= */}
         {activePage === "students" && (
           <div className="table-box">
-            <div className="table-header">
-              <h2>Manage Students</h2>
-            </div>
+            <h2>Manage Students</h2>
 
             <input
               className="search"
-              placeholder="Filter students by name, email..."
+              placeholder="Filter students..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -271,10 +294,8 @@ function AdminDashboard() {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>SSIN</th>
                   <th>Section</th>
                   <th>Level</th>
-                  <th>Department</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -284,13 +305,13 @@ function AdminDashboard() {
                   <tr key={s.id}>
                     <td>{s.name}</td>
                     <td>{s.email}</td>
-                    <td>{s.ssin || "-"}</td>
                     <td>{s.section || "-"}</td>
                     <td>{s.level || "-"}</td>
-                    <td>{s.department || "-"}</td>
                     <td>
-                      <FaEdit />
-                      <FaTrash onClick={() => deleteStudent(s.id)} />
+                      <FaTrash
+                        onClick={() => deleteStudent(s.id)}
+                        style={{ cursor: "pointer" }}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -304,6 +325,7 @@ function AdminDashboard() {
           <div className="table-box">
             <div className="table-header">
               <h2>Manage Classrooms</h2>
+
               <button
                 className="enroll-btn"
                 onClick={() => {
@@ -338,9 +360,9 @@ function AdminDashboard() {
                 {filteredClassrooms.map((c) => (
                   <tr key={c.id}>
                     <td>{c.name}</td>
-                    <td>{c.building}</td>
-                    <td>{c.lat}, {c.lng}</td>
-                    <td>{c.radius}</td>
+                    <td>{c.buildingName}</td>
+                    <td>{c.latitude}, {c.longitude}</td>
+                    <td>{c.radiusOfAcceptanceMeter}m</td>
                     <td>
                       <FaEdit
                         onClick={() => {
@@ -348,8 +370,13 @@ function AdminDashboard() {
                           setEditData(c);
                           setOpenModal(true);
                         }}
+                        style={{ cursor: "pointer", marginRight: 10 }}
                       />
-                      <FaTrash onClick={() => deleteClassroom(c.id)} />
+
+                      <FaTrash
+                        onClick={() => deleteClassroom(c.id)}
+                        style={{ cursor: "pointer" }}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -357,9 +384,69 @@ function AdminDashboard() {
             </table>
           </div>
         )}
+
+        {/* ================= REPORTS ================= */}
+        {activePage === "reports" && (
+          <div>
+            <div className="table-box" style={{ marginBottom: 20 }}>
+              <h2>📊 System Reports</h2>
+              <p style={{ color: "#64748b" }}>
+                Overview of lecturers, students, classrooms & courses
+              </p>
+            </div>
+
+            <div className="cards">
+              <div className="card">
+                <FaChalkboardTeacher />
+                <h2>{lecturers.length}</h2>
+                <p>Total Lecturers</p>
+              </div>
+
+              <div className="card">
+                <FaUserGraduate />
+                <h2>{students.length}</h2>
+                <p>Total Students</p>
+              </div>
+
+              <div className="card">
+                <FaBook />
+                <h2>{totalCourses}</h2>
+                <p>Total Courses</p>
+              </div>
+
+              <div className="card">
+                <FaMapMarkerAlt />
+                <h2>{classrooms.length}</h2>
+                <p>Total Classrooms</p>
+              </div>
+            </div>
+
+            <div className="table-box">
+              <h3>Lecturer Overview</h3>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {lecturers.map((l) => (
+                    <tr key={l.id}>
+                      <td>{l.firstName} {l.lastName}</td>
+                      <td>{l.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal */}
+      {/* ================= MODAL ================= */}
       <FormModal
         isOpen={openModal}
         onClose={() => setOpenModal(false)}
