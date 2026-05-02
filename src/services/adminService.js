@@ -1,31 +1,27 @@
 import api from "./api";
 
-// ================= GET LECTURERS =================
-export const getLecturers = async (filters = {}) => {
-  const res = await api.get("/admin/GetLecturers", {
+export const getLecturers = (data = {}) =>
+  api.get("/admin/GetLecturers", {
     params: {
-      pagenumber: filters.pagenumber ?? 1,
-      pagesize: filters.pagesize ?? 100,
-      name: filters.name ?? "",
-      sortBy: filters.sortBy ?? "id",
-      isDescindeng: filters.isDescindeng ?? false,
+      pagenumber: data.pagenumber || 1,
+      pagesize: data.pagesize || 100,
+      name: data.name || "",
+      sortBy: data.sortBy || "",
+      isDescindeng: data.isDescindeng ?? true,
     },
   });
 
-  return res.data;
-};
+export const addLecturer = (data) =>
+  api.post("/admin/AddLecturer", {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email,
+    password: data.password,
+  });
 
-// ================= ADD LECTURER =================
-export const addLecturer = async (data) => {
-  const res = await api.post("/admin/AddLecturer", data);
-  return res.data;
-};
+export const closeAccount = (id) =>
+  api.put(`/admin/CloseAccount/${id}`);
 
-// ================= CLOSE ACCOUNT =================
-export const closeAccount = async (id, userId) => {
-  const res = await api.put(
-    `/admin/CloseAccount/${id}?userid=${userId}`,
-    {}
-  );
-  return res.data;
-};
+export const getSystemDashboard = () =>
+  api.get("/admin/SystemDashboard");
+

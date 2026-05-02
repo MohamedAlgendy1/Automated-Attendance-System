@@ -1,133 +1,118 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { addLecturer } from "../services/adminService";
+import { createClassroom, editClassroom } from "../services/classroomService";
+import { getErrorMessage } from "../services/api";
 
-function FormModal({ isOpen, onClose, onSave, type, initialData }) {
-  const [form, setForm] = useState(initialData || {});
+function FormModal({ isOpen, onClose, onSaved, type, initialData }) {
+  const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState("");
 
-  if (isOpen && Object.keys(form).length === 0 && initialData) {
-    setForm(initialData);
-  }
+  useEffect(() => {
+    if (isOpen) {
+      setForm(initialData || {});
+      setError("");
+      setLocError("");
+    }
+  }, [isOpen, initialData]);
+
 
   if (!isOpen) return null;
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = () => {
-    onSave(form);
-    setForm({});
-    onClose();
-  };
-
-  // ✅ جيب الموقع تلقائي
   const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      setLocError("Geolocation not supported on this device");
-      return;
-    }
-
+    if (!navigator.geolocation) { setLocError("Geolocation not supported"); return; }
     setLocLoading(true);
     setLocError("");
-
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      (pos) => {
         setForm((prev) => ({
           ...prev,
-          lat: position.coords.latitude.toFixed(6),
-          lng: position.coords.longitude.toFixed(6),
+          lat: pos.coords.latitude.toFixed(6),
+          lng: pos.coords.longitude.toFixed(6),
         }));
         setLocLoading(false);
       },
-      () => {
-        setLocError("Failed to get location. Please allow location access.");
-        setLocLoading(false);
-      },
+      () => { setLocError("Failed to get location."); setLocLoading(false); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      if (type === "lecturer") {
+        await addLecturer({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          password: form.password,
+          email: form.email,
+          ssin: form.ssin,
+        });
+      }
+      if (type === "classroom") {
+        const payload = {
+          name: form.name,
+          buildingName: form.building || form.buildingName,
+          latitude: parseFloat(form.lat || form.latitude),
+          longitude: parseFloat(form.lng || form.longitude),
+          radiusOfAcceptanceMeter: parseInt(form.radius || form.radiusOfAcceptanceMeter),
+        };
+        if (initialData?.id) {
+          await editClassroom(initialData.id, payload);
+        } else {
+          await createClassroom(payload);
+        }
+      }
+      onSaved && onSaved();
+      onClose();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal">
         <div className="modal-header">
-          <h2>
-            {type === "lecturer"
-              ? initialData ? "Edit Lecturer" : "Add Lecturer"
-              : initialData ? "Edit Classroom" : "Add Classroom"}
-          </h2>
-          <span onClick={onClose}>✖</span>
+          <h2>{type === "lecturer" ? (initialData ? "Edit Lecturer" : "Add Lecturer") : (initialData ? "Edit Classroom" : "Add Classroom")}</h2>
+          <span onClick={onClose} style={{ cursor: "pointer" }}>✖</span>
         </div>
 
         {type === "lecturer" && (
           <>
-            <div className="form-row">
-              <input name="firstName" placeholder="First Name" onChange={handleChange} value={form.firstName || ""} />
-              <input name="middleName" placeholder="Middle Name" onChange={handleChange} value={form.middleName || ""} />
-              <input name="lastName" placeholder="Last Name" onChange={handleChange} value={form.lastName || ""} />
-            </div>
+            <input name="firstName" placeholder="First Name" onChange={handleChange} value={form.firstName || ""} />
+            <input name="lastName" placeholder="Last Name" onChange={handleChange} value={form.lastName || ""} />
             <input name="email" placeholder="Email" onChange={handleChange} value={form.email || ""} />
-            <input name="username" placeholder="Username" onChange={handleChange} value={form.username || ""} />
-            <input name="password" placeholder="Password" onChange={handleChange} value={form.password || ""} />
+            <input name="ssin" placeholder="SSIN" onChange={handleChange} value={form.ssin || ""} />
+            <input name="password" type="password" placeholder="Password" onChange={handleChange} value={form.password || ""} />
           </>
         )}
 
         {type === "classroom" && (
           <>
             <input name="name" placeholder="Classroom Name" onChange={handleChange} value={form.name || ""} />
-            <input name="building" placeholder="Building" onChange={handleChange} value={form.building || ""} />
-
-            {/* ✅ زرار الموقع التلقائي */}
-            <button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={locLoading}
-              style={{
-                width: "100%",
-                padding: "10px",
-                marginBottom: "10px",
-                background: locLoading ? "#94a3b8" : "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: locLoading ? "not-allowed" : "pointer",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-              }}
-            >
+            <input name="building" placeholder="Building" onChange={handleChange} value={form.building || form.buildingName || ""} />
+            <button type="button" onClick={handleGetLocation} disabled={locLoading}
+              style={{ width: "100%", padding: "10px", marginBottom: "10px", background: locLoading ? "#94a3b8" : "#2563eb", color: "white", border: "none", borderRadius: "8px", cursor: locLoading ? "not-allowed" : "pointer", fontWeight: 600 }}>
               {locLoading ? "🌀 Getting location..." : "📍 Get Current Location"}
             </button>
-
-            {/* ✅ رسالة خطأ الموقع */}
-            {locError && (
-              <p style={{ color: "red", fontSize: 13, marginBottom: 8 }}>{locError}</p>
-            )}
-
-            {/* ✅ Latitude و Longitude بيتملوا تلقائي */}
-            <input
-              name="lat"
-              placeholder="Latitude"
-              onChange={handleChange}
-              value={form.lat || ""}
-              style={{ background: form.lat ? "#f0fdf4" : "" }}
-            />
-            <input
-              name="lng"
-              placeholder="Longitude"
-              onChange={handleChange}
-              value={form.lng || ""}
-              style={{ background: form.lng ? "#f0fdf4" : "" }}
-            />
-            <input name="radius" placeholder="Radius (m)" onChange={handleChange} value={form.radius || ""} />
+            {locError && <p style={{ color: "red", fontSize: 13 }}>{locError}</p>}
+            <input name="lat" placeholder="Latitude" onChange={handleChange} value={form.lat || form.latitude || ""} />
+            <input name="lng" placeholder="Longitude" onChange={handleChange} value={form.lng || form.longitude || ""} />
+            <input name="radius" placeholder="Radius (m)" onChange={handleChange} value={form.radius || form.radiusOfAcceptanceMeter || ""} />
           </>
         )}
 
-        <button className="save-btn" onClick={handleSubmit}>
-          Save
+        {error && <p style={{ color: "red", marginTop: 8 }}>{error}</p>}
+        <button className="save-btn" onClick={handleSubmit} disabled={loading}>
+          {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
@@ -135,3 +120,4 @@ function FormModal({ isOpen, onClose, onSave, type, initialData }) {
 }
 
 export default FormModal;
+

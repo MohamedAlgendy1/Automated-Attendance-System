@@ -25,8 +25,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 14px;
-  flex-wrap: wrap; /* ✅ مهم للموبايل */
-  gap: 10px;
 }
 
 .rate-header h3 {
@@ -40,7 +38,6 @@
   font-weight: 800;
 }
 
-/* Progress Bar */
 .rate-bar-bg {
   width: 100%;
   height: 10px;
@@ -67,7 +64,6 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap; /* ✅ يمنع الكسر */
 }
 
 .status-badge.attended {
@@ -85,9 +81,8 @@
 .scan-btn {
   display: flex;
   align-items: center;
-  justify-content: center; /* ✅ مهم للموبايل */
   gap: 6px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   border: none;
   border-radius: 10px;
   background: #2563eb;
@@ -96,7 +91,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
-  width: fit-content;
 }
 
 .scan-btn:hover {
@@ -111,8 +105,6 @@
   padding: 25px;
   width: 480px;
   max-width: 95vw;
-  max-height: 90vh; /* ✅ مهم */
-  overflow-y: auto; /* ✅ يمنع خروج المحتوى */
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   animation: fadeIn 0.3s ease;
 }
@@ -147,12 +139,10 @@
   background: #f1f5f9;
   padding: 5px;
   border-radius: 12px;
-  flex-wrap: wrap; /* ✅ */
 }
 
 .scan-toggle button {
   flex: 1;
-  min-width: 120px; /* ✅ يمنع الانكماش */
   padding: 10px;
   border: none;
   border-radius: 10px;
@@ -176,15 +166,8 @@
   border-radius: 12px;
   overflow: hidden;
   background: #000;
-  width: 100%;
 }
 
-.camera-box video {
-  width: 100%;
-  height: auto;
-}
-
-/* Scan Frame */
 .scan-frame {
   position: absolute;
   top: 50%;
@@ -195,7 +178,6 @@
   pointer-events: none;
 }
 
-/* corners */
 .corner {
   position: absolute;
   width: 25px;
@@ -249,8 +231,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* ✅ */
-  gap: 10px;
   padding: 14px 20px;
   border-radius: 12px;
   margin-bottom: 16px;
@@ -270,12 +250,16 @@
   border: 1px solid #fecaca;
 }
 
+.scan-toast span {
+  cursor: pointer;
+  margin-left: 10px;
+}
+
 /* ===== Location Checking ===== */
 .location-checking {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap; /* ✅ */
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   color: #1d4ed8;
@@ -291,62 +275,7 @@
   display: inline-block;
 }
 
-/* ===== Animations ===== */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-/* =======================================
-   🔥 RESPONSIVE BREAKPOINTS
-======================================= */
-
-/* Tablet */
-@media (max-width: 768px) {
-  .attendance-rate-card {
-    padding: 18px;
-  }
-
-  .rate-percent {
-    font-size: 22px;
-  }
-
-  .scan-frame {
-    width: 150px;
-    height: 150px;
-  }
-
-  .scanner-modal {
-    padding: 20px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .rate-header h3 {
-    font-size: 16px;
-  }
-
-  .rate-percent {
-    font-size: 20px;
-  }
-
-  .scan-btn {
-    width: 100%; /* ✅ زر كامل العرض */
-  }
-
-  .scanner-modal {
-    width: 95%;
-    border-radius: 15px;
-  }
-
-  .scan-frame {
-    width: 120px;
-    height: 120px;
-  }
-
-  .corner {
-    width: 18px;
-    height: 18px;
-  }
 }

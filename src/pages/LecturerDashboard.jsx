@@ -1,7 +1,10 @@
 import "./../styles/dashboardLecturer.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api, { getErrorMessage, getUserIdFromToken } from "../services/api";
+import { useRealtime } from "../hooks/useRealtime";
+import { EVENTS } from "../realtime";
+import { parseJwt, getErrorMessage, getUserIdFromToken } from "../services/api";
+import { getAllCourses, createCourse, editCourse, deleteCourse } from "../services/courseService";
 
 function LecturerDashboard() {
   const navigate = useNavigate();
@@ -9,72 +12,76 @@ function LecturerDashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editCourse, setEditCourse] = useState(null);
-  const [stats, setStats] = useState({ lectures: 0, students: 0 });
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [editCourseData, setEditCourseData] = useState(null);
   const [refresh, setRefresh] = useState(0);
+  const [realtimeCount, setRealtimeCount] = useState(0);
 
-  const [form, setForm] = useState({ name: "", code: "" });
+  const [form, setForm] = useState({ code: "", name: "" });
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  const lecturerId = getUserIdFromToken();
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
-  // ✅ جيب profile من الـ token
-  const token = localStorage.getItem("token");
-  const decoded = token ? JSON.parse(atob(token.split(".")[1])) : {};
-  const lecturerName = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Lecturer";
+  const decoded = parseJwt(localStorage.getItem("token")) || {};
+  const lecturerName =
+    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+    decoded?.name ||
+    "Lecturer";
+  const lecturerId = parseInt(getUserIdFromToken()) || 0;
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // ✅ جيب الكورسات
+  useRealtime((msg) => {
+    if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
+      setRealtimeCount((prev) => prev + 1);
+    }
+  });
+
   useEffect(() => {
-    const loadCourses = async () => {
+    const load = async () => {
       setLoading(true);
       try {
-        const res = await api.get("/course/AllCourses", {
-          params: { pagenumber: 1, pagesize: 100 }
-        });
-        setCourses(res.data?.items || res.data || []);
+        const data = await getAllCourses();
+        setCourses(data);
       } catch (err) {
         showToast(getErrorMessage(err), "error");
+        setCourses([]);
       } finally {
         setLoading(false);
       }
     };
-    loadCourses();
+    load();
   }, [refresh]);
 
-  // ✅ إضافة / تعديل كورس
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
-    setFormLoading(true);
 
+    if (!form.code || !form.name) {
+      setFormError("Please fill all fields");
+      return;
+    }
+
+    if (!lecturerId) {
+      setFormError("Invalid user session");
+      return;
+    }
+
+    setFormLoading(true);
     try {
-      if (editCourse) {
-        // تعديل
-        await api.put(`/course/Edit/${editCourse.id}`, {
-          courseCode: form.code,
-          courseName: form.name,
-        });
+      if (editCourseData) {
+        await editCourse(editCourseData.courseId, form.code, form.name);
         showToast("Course updated ✅");
       } else {
-        // إضافة
-        await api.post("/course/Create", {
-          name: form.name,
-          code: form.code,
-          lecturerId: parseInt(lecturerId),
-        });
+        await createCourse(form.name, form.code, lecturerId);
         showToast("Course added 🎉");
       }
-
       setShowModal(false);
-      setEditCourse(null);
-      setForm({ name: "", code: "" });
+      setEditCourseData(null);
+      setForm({ code: "", name: "" });
       setRefresh((r) => r + 1);
     } catch (err) {
       setFormError(getErrorMessage(err));
@@ -83,12 +90,12 @@ function LecturerDashboard() {
     }
   };
 
-  // ✅ حذف كورس
+  // ✅ الحل — id هو اللي بييجي من الـ button
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this course?")) return;
     try {
-      await api.delete(`/course/Delete/${id}`);
-      showToast("Course deleted", "error");
+      await deleteCourse(id);
+      showToast("Course deleted ❌", "error");
       setRefresh((r) => r + 1);
     } catch (err) {
       showToast(getErrorMessage(err), "error");
@@ -96,8 +103,12 @@ function LecturerDashboard() {
   };
 
   const handleEdit = (course) => {
-    setEditCourse(course);
-    setForm({ name: course.name || course.courseName, code: course.code || course.courseCode });
+    setEditCourseData(course);
+    setForm({
+      name: course.courseName || course.name || "",
+      code: course.courseCode || course.code || "",
+    });
+    setFormError("");
     setShowModal(true);
   };
 
@@ -106,43 +117,81 @@ function LecturerDashboard() {
     navigate("/");
   };
 
+  const totalLectures = () => 0;
+  const totalStudents = () => 0;
+
   return (
     <div className="dashboard lecturer-page">
+      {/* SIDEBAR */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
           <ul className="menu">
-            <li className={activePage === "courses" ? "active" : ""} onClick={() => setActivePage("courses")}>
+            <li
+              className={activePage === "courses" ? "active" : ""}
+              onClick={() => setActivePage("courses")}
+            >
               📘 My Courses
             </li>
-            <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>
+            <li onClick={() => navigate("/attendance")}>
+              📊 Attendance Overview
+            </li>
           </ul>
         </div>
+
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">{lecturerName?.[0]?.toUpperCase() || "L"}</div>
+            <div className="avatar">
+              {lecturerName?.[0]?.toUpperCase() || "L"}
+            </div>
             <div>
               <p>{lecturerName}</p>
               <span>Lecturer</span>
             </div>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>Sign Out</button>
+          <button className="logout-btn" onClick={handleLogout}>
+            Sign Out
+          </button>
         </div>
       </div>
 
+      {/* MAIN */}
       <div className="main">
         {activePage === "courses" && (
           <>
             <h1>Lecturer Dashboard</h1>
 
             <div className="cards">
-              <div className="card"><p>Courses</p><h2>{courses.length}</h2></div>
-              <div className="card"><p>Lectures</p><h2>{stats.lectures}</h2></div>
-              <div className="card"><p>Students</p><h2>{stats.students}</h2></div>
+              <div className="card">
+                <p>Courses</p>
+                <h2>{courses.length}</h2>
+              </div>
+              <div className="card">
+                <p>Lectures</p>
+                <h2>{totalLectures()}</h2>
+              </div>
+              <div className="card">
+                <p>Students</p>
+                <h2>{totalStudents()}</h2>
+              </div>
+              {realtimeCount > 0 && (
+                <div className="card" style={{ borderLeft: "4px solid #22c55e" }}>
+                  <p>Live Attendance Today</p>
+                  <h2 style={{ color: "#16a34a" }}>+{realtimeCount}</h2>
+                </div>
+              )}
             </div>
 
             <div className="top-bar">
-              <button className="enroll-btn" onClick={() => { setShowModal(true); setEditCourse(null); setForm({ name: "", code: "" }); setFormError(""); }}>
+              <button
+                className="enroll-btn"
+                onClick={() => {
+                  setShowModal(true);
+                  setEditCourseData(null);
+                  setForm({ name: "", code: "" });
+                  setFormError("");
+                }}
+              >
                 + Add Course
               </button>
             </div>
@@ -154,21 +203,31 @@ function LecturerDashboard() {
                 {courses.length === 0 ? (
                   <p>No courses yet</p>
                 ) : (
-                  courses.map((c, i) => (
+                  courses.map((c) => (
                     <div
-                      key={c.id || i}
+                      key={c.courseId}
                       className="course-card"
-                      onClick={() => navigate(`/course/${c.id}`)}
+                      onClick={() => navigate(`/course/${c.courseId}`)}
                       style={{ cursor: "pointer" }}
                     >
                       <div className="course-header">
-                        <span className="course-code">{c.code || c.courseCode}</span>
-                        <div className="actions" onClick={(e) => e.stopPropagation()}>
+                        {/* ✅ courseCode */}
+                        <span className="course-code">
+                          {c.courseCode || c.code}
+                        </span>
+
+                        <div
+                          className="actions"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button className="edit-btn" onClick={() => handleEdit(c)}>✏️</button>
-                          <button className="delete-btn" onClick={() => handleDelete(c.id)}>🗑</button>
+                          {/* ✅ بنبعت c.courseId */}
+                          <button className="delete-btn" onClick={() => handleDelete(c.courseId)}>🗑</button>
                         </div>
                       </div>
-                      <h3>{c.name || c.courseName}</h3>
+
+                      {/* ✅ courseName */}
+                      <h3>{c.courseName || c.name}</h3>
                       <p>0 students enrolled</p>
                     </div>
                   ))
@@ -179,26 +238,39 @@ function LecturerDashboard() {
         )}
       </div>
 
+      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>{editCourse ? "Edit Course" : "Add Course"}</h3>
+              <h3>{editCourseData ? "Edit Course" : "Add Course"}</h3>
               <span onClick={() => setShowModal(false)}>✖</span>
             </div>
+
             <form onSubmit={handleSubmit}>
-              <input placeholder="Course Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              <input placeholder="Course Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
+              <input
+                placeholder="Course Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <input
+                placeholder="Course Code"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+              />
               {formError && <p style={{ color: "red" }}>{formError}</p>}
               <button type="submit" disabled={formLoading}>
-                {formLoading ? "Saving..." : editCourse ? "Update" : "Save"}
+                {formLoading ? "Saving..." : editCourseData ? "Update" : "Save"}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+      {/* TOAST */}
+      {toast.show && (
+        <div className={`toast ${toast.type}`}>{toast.message}</div>
+      )}
     </div>
   );
 }

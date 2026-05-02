@@ -1,10 +1,10 @@
 .login-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* ================= LEFT ================= */
+/* LEFT */
 .login-left {
   flex: 1;
   background: linear-gradient(135deg, #1e90ff, #2ecc71);
@@ -14,7 +14,6 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  overflow: hidden;
   padding: 40px;
 }
 
@@ -39,35 +38,30 @@
   max-width: 400px;
   opacity: 0.9;
   margin-bottom: 25px;
-  line-height: 1.6;
 }
 
 .features {
   display: flex;
   gap: 20px;
   font-size: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
-/* ================= RIGHT ================= */
+/* RIGHT */
 .login-right {
   flex: 1;
   background: #f5f7fa;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
 }
 
-/* ================= FORM ================= */
+/* FORM */
 .form-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   padding: 40px;
   border-radius: 15px;
-  width: 100%;
-  max-width: 380px;
+  width: 350px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   animation: fadeIn 0.4s ease;
 }
@@ -88,11 +82,13 @@
   border-radius: 8px;
   border: 1px solid #ddd;
   outline: none;
-  font-size: 14px;
 }
 
 .form-card input:focus {
   border-color: #1e90ff;
+}
+.form-card button:active {
+  transform: scale(0.97);
 }
 
 .form-card button {
@@ -104,51 +100,12 @@
   font-weight: bold;
   cursor: pointer;
   border: none;
-  transition: 0.2s;
 }
 
 .form-card button:hover {
   background: #187bcd;
 }
 
-.form-card button:active {
-  transform: scale(0.97);
-}
-
-/* ================= LINKS ================= */
-.forgot,
-.back,
-.register {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-.forgot,
-.back,
-.register span {
-  color: #1e90ff;
-  cursor: pointer;
-}
-
-.forgot:hover,
-.back:hover,
-.register span:hover {
-  text-decoration: underline;
-}
-
-/* ================= ROW ================= */
-.row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.row input {
-  flex: 1;
-}
-
-/* ================= ANIMATION ================= */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -160,62 +117,63 @@
   }
 }
 
-/* ================= RESPONSIVE ================= */
-
-/* Tablet */
-@media (max-width: 900px) {
-  .login-left h1 {
-    font-size: 26px;
-  }
-
-  .features {
-    gap: 10px;
-  }
+.forgot {
+  display: block;
+  margin-top: 15px;
+  text-align: center;
+  color: #1e90ff;
+  font-size: 14px;
+  cursor: pointer;
 }
 
-/* Mobile */
+.back {
+  margin-top: 15px;
+  text-align: center;
+  color: #1e90ff;
+  cursor: pointer;
+}
+
+.register {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.register span {
+  color: #1e90ff;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.row input {
+  flex: 1;
+}
+
+.forgot:hover,
+.back:hover,
+.register span:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;
   }
 
   .login-left {
-    height: auto;
-    padding: 25px 15px;
-  }
-
-  .login-right {
-    height: auto;
-  }
-
-  .form-card {
-    padding: 25px;
-  }
-
-  .row {
-    flex-direction: column;
-  }
-}
-
-/* Small Mobile */
-@media (max-width: 480px) {
-  .login-left h1 {
-    font-size: 22px;
-  }
-
-  .login-left p {
-    font-size: 14px;
-  }
-
-  .form-card {
+    height: 40%;
     padding: 20px;
   }
 
-  .form-card input {
-    padding: 10px;
+  .login-right {
+    height: 60%;
   }
 
-  .form-card button {
-    padding: 10px;
+  .form-card {
+    width: 90%;
   }
 }

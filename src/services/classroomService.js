@@ -1,40 +1,37 @@
 import api from "./api";
 
-// Get all classrooms
-export const getClassrooms = async (
-  pagenumber = 1,
-  pagesize = 50,
-  Name = "",
-  BuildingName = ""
-) => {
-  const res = await api.get("/classroom/AllClassRoom", {
-    params: {
-      pagenumber,
-      pagesize,
-      Name,
-      BuildingName,
-      SortBy: "id",
-      IsDescindeng: false,
-    },
+// ---------------- GET ONE ----------------
+export const getClassroom = (id) =>
+  api.get(`/classroom/GetOne/${id}`);
+
+// ---------------- GET ALL ----------------
+export const getAllClassrooms = (params = {}) =>
+  api.get("/classroom/AllClassRoom", { params });
+
+// ---------------- CREATE ----------------
+export const createClassroom = (data = {}) =>
+  api.post("/classroom/CreateClassRoom", {
+    name: data.name,
+    buildingName: data.buildingName ?? data.building,
+    latitude: Number(data.latitude ?? data.lat),
+    longitude: Number(data.longitude ?? data.lng),
+    radiusOfAcceptanceMeter: Number(
+      data.radiusOfAcceptanceMeter ?? data.radius
+    ),
   });
 
-  return res.data;
-};
+// ---------------- EDIT ----------------
+export const editClassroom = (id, data = {}) =>
+  api.put(`/classroom/Edit/${id}`, {
+    name: data.name,
+    buildingName: data.buildingName ?? data.building,
+    latitude: Number(data.latitude ?? data.lat),
+    longitude: Number(data.longitude ?? data.lng),
+    radiusOfAcceptanceMeter: Number(
+      data.radiusOfAcceptanceMeter ?? data.radius
+    ),
+  });
 
-// Add classroom
-export const addClassroom = async (data) => {
-  const res = await api.post("/classroom/CreateClassRoom", data);
-  return res.data;
-};
-
-// Delete classroom
-export const deleteClassroomApi = async (id) => {
-  const res = await api.delete(`/classroom/Delete/${id}`);
-  return res.data;
-};
-
-// Edit classroom
-export const editClassroom = async (id, data) => {
-  const res = await api.put(`/classroom/Edit/${id}`, data);
-  return res.data;
-};
+// ---------------- DELETE ----------------
+export const deleteClassroom = (id) =>
+  api.delete(`/classroom/Delete/${id}`);

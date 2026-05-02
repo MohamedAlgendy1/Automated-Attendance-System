@@ -1,9 +1,13 @@
+import { useRealtime } from "../hooks/useRealtime";
+import { EVENTS } from "../realtime";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { BrowserQRCodeReader } from "@zxing/browser";
 import "./../styles/dashboard.css";
 import "./../styles/studentCourseDetails.css";
-import api, { getErrorMessage } from "../services/api";
+import { parseJwt, getErrorMessage } from "../services/api";
+import { getMyCourses, getMyAttendanceHistory, scanQR } from "../services/studentService";
+import { getLecturesByCourse } from "../services/lectureService";
 
 function StudentCourseDetails() {
   const { courseCode } = useParams();
@@ -13,44 +17,58 @@ function StudentCourseDetails() {
   const [lectures, setLectures] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0);
+
   const [showScanner, setShowScanner] = useState(false);
   const [scanMode, setScanMode] = useState("camera");
   const [manualInput, setManualInput] = useState("");
   const [scanResult, setScanResult] = useState(null);
   const [scanMessage, setScanMessage] = useState("");
   const [locationStatus, setLocationStatus] = useState("idle");
-  const [refresh, setRefresh] = useState(0);
 
   const videoRef = useRef(null);
   const readerRef = useRef(null);
 
   const token = localStorage.getItem("token");
-  const decoded = token ? JSON.parse(atob(token.split(".")[1])) : {};
+  const decoded = token ? parseJwt(token) : {};
   const studentName = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Student";
+  const firstName = studentName.split(" ")[0] || "Student";
+
+  // ✅ real-time — لو الدكتور أضاف محاضرة جديدة
+  useRealtime((msg) => {
+    if (
+      msg.event === EVENTS.LECTURE_ADDED &&
+      msg.data.courseCode === (course?.code || course?.courseCode)
+    ) {
+      setRefresh((r) => r + 1);
+    }
+  });
 
   // ✅ جيب بيانات الكورس والمحاضرات والحضور
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const [coursesRes, lecturesRes, historyRes] = await Promise.all([
-          api.get("/student/MyCourses"),
-          api.get("/courselecture/AllCourseLectures", { params: { pagenumber: 1, pagesize: 100 } }),
-          api.get("/student/MyAttendanceHistory"),
+        const [coursesData, historyData] = await Promise.all([
+          getMyCourses(),
+          getMyAttendanceHistory(),
         ]);
 
-        const allCourses = coursesRes.data || [];
-        const found = allCourses.find(
-          (c) => c.id === parseInt(courseCode) || c.code === courseCode || c.courseCode === courseCode
+        // دور على الكورس بالـ id أو الـ code
+        const found = coursesData.find(
+          (c) =>
+            c.id === parseInt(courseCode) ||
+            c.code === courseCode ||
+            c.courseCode === courseCode
         );
+
         setCourse(found || null);
+        setAttendance(historyData);
 
         if (found) {
-          const allLectures = lecturesRes.data?.items || lecturesRes.data || [];
-          setLectures(allLectures.filter((l) => l.courseId === found.id));
+          const lecturesData = await getLecturesByCourse(found.id);
+          setLectures(lecturesData);
         }
-
-        setAttendance(historyRes.data || []);
       } catch (err) {
         console.error(getErrorMessage(err));
       } finally {
@@ -61,12 +79,13 @@ function StudentCourseDetails() {
   }, [courseCode, refresh]);
 
   const totalLectures = lectures.length;
-  const attended = attendance.filter((a) => a.courseId === course?.id).length;
+  const attended = attendance.filter(
+    (a) => a.courseId === course?.id
+  ).length;
   const percent = totalLectures === 0 ? 0 : Math.round((attended / totalLectures) * 100);
 
-  const isLectureAttended = (lectureId) => {
-    return attendance.some((a) => a.courseLectureId === lectureId || a.lectureId === lectureId);
-  };
+  const isLectureAttended = (lectureId) =>
+    attendance.some((a) => a.courseLectureId === lectureId || a.lectureId === lectureId);
 
   const showError = (msg) => {
     setScanResult("error");
@@ -83,13 +102,9 @@ function StudentCourseDetails() {
   };
 
   // ✅ تسجيل الحضور بالـ Backend
-  const recordAttendance = async (qrToken, location) => {
+  const recordAttendance = async (qrToken, lat, lng) => {
     try {
-      await api.post("/student/ScanQr", {
-        token: qrToken,
-        studentLatitude: location?.lat || 0,
-        studentLongitude: location?.lng || 0,
-      });
+      await scanQR(qrToken, lat || 0, lng || 0);
       setScanResult("success");
       setScanMessage("✅ Attendance recorded successfully!");
       setLocationStatus("idle");
@@ -104,7 +119,7 @@ function StudentCourseDetails() {
     closeScanner();
 
     if (!navigator.geolocation) {
-      recordAttendance(text, null);
+      recordAttendance(text, 0, 0);
       return;
     }
 
@@ -112,14 +127,11 @@ function StudentCourseDetails() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocationStatus("approved");
-        recordAttendance(text, {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
+        recordAttendance(text, position.coords.latitude, position.coords.longitude);
       },
       () => {
         // لو رفض الموقع، سجل بدون موقع
-        recordAttendance(text, null);
+        recordAttendance(text, 0, 0);
         setLocationStatus("idle");
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -150,28 +162,36 @@ function StudentCourseDetails() {
   if (loading) return <p style={{ padding: 20 }}>Loading...</p>;
   if (!course) return <h2 style={{ padding: 20 }}>Course not found</h2>;
 
+  const courseName = course.name || course.courseName || "";
+
   return (
     <div className="dashboard student-page">
+      {/* Sidebar */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
           <ul className="menu">
             <li onClick={() => navigate("/student")}>📘 My Courses</li>
+            <li onClick={() => navigate("/student")}>👤 Profile</li>
           </ul>
         </div>
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">{studentName?.[0]?.toUpperCase() || "S"}</div>
-            <div><p>{studentName}</p><span>Student</span></div>
+            <div className="avatar">{firstName?.[0]?.toUpperCase() || "S"}</div>
+            <div><p>{firstName}</p><span>Student</span></div>
           </div>
-          <button className="logout-btn" onClick={() => { localStorage.clear(); navigate("/"); }}>Sign Out</button>
+          <button className="logout-btn" onClick={() => { localStorage.clear(); navigate("/"); }}>
+            Sign Out
+          </button>
         </div>
       </div>
 
+      {/* Main */}
       <div className="main">
-        <h1>{course.name || course.courseName}</h1>
+        <h1>{courseName}</h1>
         <p className="back-btn" onClick={() => navigate("/student")}>← Back</p>
 
+        {/* Toast */}
         {scanResult && (
           <div className={`scan-toast ${scanResult}`}>
             {scanMessage}
@@ -179,6 +199,7 @@ function StudentCourseDetails() {
           </div>
         )}
 
+        {/* Location Checking */}
         {locationStatus === "checking" && (
           <div className="location-checking">
             <span className="spinner">🌀</span>
@@ -186,35 +207,51 @@ function StudentCourseDetails() {
           </div>
         )}
 
+        {/* Attendance Rate */}
         <div className="attendance-rate-card">
           <div className="rate-header">
             <h3>Attendance Rate</h3>
-            <span className="rate-percent" style={{ color: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444" }}>
+            <span className="rate-percent" style={{
+              color: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444"
+            }}>
               {percent}%
             </span>
           </div>
           <div className="rate-bar-bg">
-            <div className="rate-bar-fill" style={{ width: `${percent}%`, background: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444" }} />
+            <div className="rate-bar-fill" style={{
+              width: `${percent}%`,
+              background: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444",
+            }} />
           </div>
           <p className="rate-sub">{attended} / {totalLectures} lectures attended</p>
         </div>
 
+        {/* Lectures Table */}
         <div className="table-box" style={{ marginTop: 20 }}>
           <h2>Lectures</h2>
           <table className="table" style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
             <thead>
-              <tr><th>Lecture</th><th>Date</th><th>Status</th><th>Action</th></tr>
+              <tr>
+                <th>Lecture</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
             </thead>
             <tbody>
               {lectures.length === 0 ? (
-                <tr><td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>No lectures yet</td></tr>
+                <tr>
+                  <td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>
+                    No lectures yet
+                  </td>
+                </tr>
               ) : (
                 lectures.map((lec) => {
                   const isAttended = isLectureAttended(lec.id);
                   return (
                     <tr key={lec.id}>
                       <td>{lec.title}</td>
-                      <td>{new Date(lec.startTime).toLocaleString()}</td>
+                      <td>{lec.startTime ? new Date(lec.startTime).toLocaleString() : "-"}</td>
                       <td>
                         <span className={`status-badge ${isAttended ? "attended" : "not-recorded"}`}>
                           {isAttended ? "✅ Attended" : "Not Recorded"}
@@ -222,7 +259,10 @@ function StudentCourseDetails() {
                       </td>
                       <td>
                         {!isAttended && (
-                          <button className="scan-btn" onClick={() => { setScanResult(null); setShowScanner(true); }}>
+                          <button
+                            className="scan-btn"
+                            onClick={() => { setScanResult(null); setShowScanner(true); }}
+                          >
                             📷 Scan QR
                           </button>
                         )}
@@ -236,6 +276,7 @@ function StudentCourseDetails() {
         </div>
       </div>
 
+      {/* QR Scanner Modal */}
       {showScanner && (
         <div className="modal-overlay">
           <div className="scanner-modal">
@@ -243,10 +284,22 @@ function StudentCourseDetails() {
               <h3>Scan QR Code</h3>
               <span onClick={closeScanner}>✖</span>
             </div>
+
             <div className="scan-toggle">
-              <button className={scanMode === "camera" ? "active" : ""} onClick={() => setScanMode("camera")}>📷 Camera</button>
-              <button className={scanMode === "manual" ? "active" : ""} onClick={() => setScanMode("manual")}>⌨️ Manual</button>
+              <button
+                className={scanMode === "camera" ? "active" : ""}
+                onClick={() => setScanMode("camera")}
+              >
+                📷 Camera
+              </button>
+              <button
+                className={scanMode === "manual" ? "active" : ""}
+                onClick={() => setScanMode("manual")}
+              >
+                ⌨️ Manual
+              </button>
             </div>
+
             {scanMode === "camera" && (
               <div className="camera-box">
                 <video ref={videoRef} style={{ width: "100%", borderRadius: 12 }} />
@@ -256,9 +309,15 @@ function StudentCourseDetails() {
                 </div>
               </div>
             )}
+
             {scanMode === "manual" && (
               <form onSubmit={handleManualSubmit} className="manual-form">
-                <textarea placeholder="Paste QR token here..." value={manualInput} onChange={(e) => setManualInput(e.target.value)} rows={4} />
+                <textarea
+                  placeholder="Paste QR token here..."
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  rows={4}
+                />
                 <button type="submit">Submit</button>
               </form>
             )}

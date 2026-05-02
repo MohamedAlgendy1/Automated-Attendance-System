@@ -1,41 +1,29 @@
 .attendance-page .main h1 {
   margin-bottom: 10px;
-  font-size: 24px;
 }
 
-/* Back */
 .back {
   cursor: pointer;
   margin-bottom: 20px;
   display: inline-block;
   color: #555;
-  font-size: 14px;
 }
 
-.back:hover {
-  text-decoration: underline;
-}
-
-/* Table Box */
 .table-box {
   background: #fff;
   padding: 20px;
-  border-radius: 14px;
+  border-radius: 12px;
   margin-top: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  overflow-x: auto; /* 🔥 مهم للموبايل */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .table-box h2 {
   margin-bottom: 15px;
-  font-size: 18px;
 }
 
-/* Table */
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px; /* 🔥 يخلي الجدول ميكسرش */
 }
 
 .table th,
@@ -43,65 +31,9 @@
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #eee;
-  font-size: 14px;
 }
 
 .table th {
   color: #777;
-  font-weight: 600;
-}
-
-/* تحسين الصفوف */
-.table tbody tr:hover {
-  background: #f8fafc;
-}
-
-/* =========================
-   MOBILE DESIGN 🔥
-========================= */
-@media (max-width: 768px) {
-
-  .attendance-page .main {
-    padding: 15px;
-  }
-
-  .attendance-page .main h1 {
-    font-size: 20px;
-  }
-
-  .table-box {
-    padding: 15px;
-  }
-
-  /* 🔥 نحول الجدول لكروت */
-  .table {
-    min-width: unset;
-  }
-
-  .table thead {
-    display: none;
-  }
-
-  .table tr {
-    display: block;
-    background: #fff;
-    margin-bottom: 15px;
-    border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-  }
-
-  .table td {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border: none;
-    font-size: 13px;
-  }
-
-  .table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #64748b;
-  }
+  font-weight: 500;
 }
