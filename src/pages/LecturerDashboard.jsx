@@ -27,7 +27,7 @@ function LecturerDashboard() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     decoded?.name ||
     "Lecturer";
-  const lecturerId = parseInt(getUserIdFromToken()) || 0;
+
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -65,10 +65,7 @@ function LecturerDashboard() {
       return;
     }
 
-    if (!lecturerId) {
-      setFormError("Invalid user session");
-      return;
-    }
+   
 
     setFormLoading(true);
     try {
@@ -76,7 +73,7 @@ function LecturerDashboard() {
         await editCourse(editCourseData.courseId, form.code, form.name);
         showToast("Course updated ✅");
       } else {
-        await createCourse(form.name, form.code, lecturerId);
+        await createCourse(form.name, form.code);
         showToast("Course added 🎉");
       }
       setShowModal(false);

@@ -1,3 +1,5 @@
+
+
 import { useRealtime } from "../hooks/useRealtime";
 import { broadcast, EVENTS } from "../realtime";
 import { useParams, useNavigate } from "react-router-dom";
@@ -5,17 +7,13 @@ import { useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import "./../styles/courseDetails.css";
 import { parseJwt, getErrorMessage } from "../services/api";
-import {
-  getCourseById,
- // getAllCourses,
-} from "../services/courseService";
+import { getCourseById } from "../services/courseService";
 import {
   getLecturesByCourse,
   createLecture,
   editLecture,
   deleteLecture,
   generateQR,
-  //getAttendanceReport,
 } from "../services/lectureService";
 import api from "../services/api";
 
@@ -26,7 +24,6 @@ function CourseDetails() {
   const [course, setCourse] = useState(null);
   const [lectures, setLectures] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
-  const [attendanceReport, setAttendanceReport] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -48,7 +45,9 @@ function CourseDetails() {
 
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
-  const lecturerName = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Lecturer";
+  const lecturerName =
+    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+    "Lecturer";
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -73,63 +72,45 @@ function CourseDetails() {
   });
 
   // ✅ جيب بيانات الكورس والمحاضرات والكلاسروم
- useEffect(() => {
-  const load = async () => {
-    setLoading(true);
-    try {
-      const [courseRes, lecturesData, classroomsRes] = await Promise.all([
-        getCourseById(id),
-        getLecturesByCourse(id),
-        api.get("/classroom/AllClassRoom", {
-          params: { pagenumber: 1, pagesize: 100 },
-        }),
-      ]);
-
-      setCourse(courseRes);
-      setLectures(lecturesData);
-
-      // ✅ تعامل مع كل أشكال الـ response
-      const classData = classroomsRes.data;
-      console.log("CLASSROOM SHAPE:", classData); // 👈 مؤقت
-     if (Array.isArray(classData?.data)) setClassrooms(classData.data);
-else if (Array.isArray(classData?.items)) setClassrooms(classData.items);
-else if (Array.isArray(classData)) setClassrooms(classData);
-else setClassrooms([]);
-
-      // ✅ AttendanceReport اختياري — مش بيوقف الصفحة لو فشل
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
       try {
-        const reportRes = await api.get(`/lecturer/AttendanceReport/${id}`);
-        const report = reportRes?.data;
-        if (Array.isArray(report)) setAttendanceReport(report);
-        else if (Array.isArray(report?.students)) setAttendanceReport(report.students);
-        else setAttendanceReport([]);
-      } catch {
-        setAttendanceReport([]);
-      }
+        const [courseRes, lecturesData, classroomsRes] = await Promise.all([
+          getCourseById(id),
+          getLecturesByCourse(id),
+          api.get("/classroom/AllClassRoom", {
+            params: { pagenumber: 1, pagesize: 100 },
+          }),
+        ]);
 
-    } catch (err) {
-      showToast(getErrorMessage(err), "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-  load();
-}, [id, refresh]);
+        setCourse(courseRes);
+        setLectures(lecturesData);
+
+        const classData = classroomsRes.data;
+        if (Array.isArray(classData?.data)) setClassrooms(classData.data);
+        else if (Array.isArray(classData?.items)) setClassrooms(classData.items);
+        else if (Array.isArray(classData)) setClassrooms(classData);
+        else setClassrooms([]);
+
+      } catch (err) {
+        showToast(getErrorMessage(err), "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id, refresh]);
 
   // ✅ إضافة / تعديل محاضرة
   const handleAddLecture = async (e) => {
-  e.preventDefault();
-  
-  // ✅ تحقق من الـ token
-  const token = localStorage.getItem("token");
-  console.log("TOKEN EXISTS:", !!token);
-  console.log("FORM DATA:", form);
-  console.log("COURSE ID:", id);
-  
-  if (!form.title || !form.classRoomId || !form.startTime || !form.endTime) {
-    setFormError("Please fill all fields");
-    return;
-  }
+    e.preventDefault();
+
+    if (!form.title || !form.classRoomId || !form.startTime || !form.endTime) {
+      setFormError("Please fill all fields");
+      return;
+    }
+
     setFormError("");
     setFormLoading(true);
 
@@ -181,13 +162,15 @@ else setClassrooms([]);
     }
   };
 
-  // ✅ توليد QR من الـ Backend
+  // ✅ توليد QR
   const handleGenerateQR = async (lecture) => {
     try {
       const res = await generateQR(lecture.id);
-      // الـ Backend بيرجع token نصي
-      const token = typeof res === "string" ? res : res?.token || res?.qrToken || JSON.stringify(res);
-      setQrToken(token);
+      const qr =
+        typeof res === "string"
+          ? res
+          : res?.token || res?.qrToken || JSON.stringify(res);
+      setQrToken(qr);
       setSelectedQR(lecture);
     } catch (err) {
       showToast(getErrorMessage(err), "error");
@@ -256,9 +239,10 @@ else setClassrooms([]);
               <div
                 key={n.id}
                 style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  background: "#f0fdf4", border: "1px solid #bbf7d0",
-                  borderRadius: 10, padding: "10px 15px", marginBottom: 8,
+                  display: "flex", justifyContent: "space-between",
+                  alignItems: "center", background: "#f0fdf4",
+                  border: "1px solid #bbf7d0", borderRadius: 10,
+                  padding: "10px 15px", marginBottom: 8,
                 }}
               >
                 <span style={{ color: "#16a34a", fontWeight: 600 }}>{n.message}</span>
@@ -272,7 +256,6 @@ else setClassrooms([]);
         <div className="cards">
           <div className="card"><p>Course Code</p><h2>{courseCode}</h2></div>
           <div className="card"><p>Total Lectures</p><h2>{lectures.length}</h2></div>
-          <div className="card"><p>Enrolled Students</p><h2>{attendanceReport.length}</h2></div>
         </div>
 
         {/* Lectures Table */}
@@ -335,63 +318,11 @@ else setClassrooms([]);
             <h2>Scan this QR Code</h2>
             <QRCodeCanvas value={qrToken} size={200} />
             <p style={{ color: "#888", fontSize: 13 }}>Expires in 10 minutes</p>
-            <button onClick={() => { setSelectedQR(null); setQrToken(null); }}>Close</button>
+            <button onClick={() => { setSelectedQR(null); setQrToken(null); }}>
+              Close
+            </button>
           </div>
         )}
-
-        {/* Enrolled Students & Attendance */}
-        <div className="table-box">
-          <h2>Enrolled Students & Attendance</h2>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Attended</th>
-                <th>Total</th>
-                <th>Percentage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendanceReport.length === 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>
-                    No students enrolled yet
-                  </td>
-                </tr>
-              ) : (
-                attendanceReport.map((s, i) => {
-                  const attended = s.attendedLectures ?? s.attended ?? 0;
-                  const total = s.totalLectures ?? s.total ?? lectures.length;
-                  const percent = total === 0 ? 0 : Math.round((attended / total) * 100);
-                  return (
-                    <tr key={i}>
-                      <td>{s.studentName || s.name || "-"}</td>
-                      <td>{attended}</td>
-                      <td>{total}</td>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ flex: 1, height: 8, background: "#e5e7eb", borderRadius: 999, overflow: "hidden" }}>
-                            <div style={{
-                              width: `${percent}%`, height: "100%",
-                              background: percent >= 75 ? "#22c55e" : percent >= 50 ? "#f59e0b" : "#ef4444",
-                              borderRadius: 999,
-                            }} />
-                          </div>
-                          <span style={{
-                            fontWeight: 700,
-                            color: percent >= 75 ? "#16a34a" : percent >= 50 ? "#d97706" : "#dc2626",
-                          }}>
-                            {percent}%
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
 
       {/* Modal */}

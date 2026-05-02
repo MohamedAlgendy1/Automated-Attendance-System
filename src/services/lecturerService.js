@@ -1,9 +1,10 @@
 import api from "./api";
 
 // ---------------- ATTENDANCE REPORT ----------------
-export const getAttendanceReport = (courseId) =>
-  api.get(`/lecturer/AttendanceReport/${courseId}`);
-
+export const getAttendanceReport = async (courseId) => {
+  const res = await api.get(`/lecturer/AttendanceReport/${courseId}`);
+  return res.data;
+};
 // ---------------- COURSE OVERVIEW ----------------
 export const getCourseOverview = (courseId) =>
   api.get(`/lecturer/CourseOverview/${courseId}`);
