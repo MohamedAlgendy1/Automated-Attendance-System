@@ -91,50 +91,49 @@ useRealtime(EVENTS.ATTENDANCE_RECORDED, (msg) => {
 // });
 
 useEffect(() => {
- const load = async () => {
-  setLoading(true);
+  const load = async () => {
+    setLoading(true);
 
-  try {
-    const [courseRes, lecturesRes, classroomsRes] = await Promise.all([
-      getCourseById(id),
-      getLecturesByCourse(id),
-      api.get("/classroom/AllClassRoom", {
-        params: {
-          pagenumber: 1,
-          pagesize: 100,
-        },
-      }),
-    ]);
+    try {
+      const [courseRes, lecturesRes, classroomsRes] = await Promise.all([
+        getCourseById(id),
+        getLecturesByCourse(id),
+        api.get("/classroom/AllClassRoom", {
+          params: { pagenumber: 1, pagesize: 100 },
+        }),
+      ]);
 
-    setCourse(courseRes);
+      setCourse(courseRes);
 
-    // lectures
-    const lecturesData = lecturesRes?.courseLectures?.data || [];
-    setLectures([...lecturesData].sort((a, b) => b.id - a.id));
+      const lectures = lecturesRes || [];
 
-    // classrooms
-    const classData = classroomsRes?.data;
+      console.log("FINAL LECTURES =", lectures);
 
-    if (Array.isArray(classData?.data)) {
-      setClassrooms(classData.data);
-    } else if (Array.isArray(classData?.items)) {
-      setClassrooms(classData.items);
-    } else if (Array.isArray(classData)) {
-      setClassrooms(classData);
-    } else {
-      setClassrooms([]);
+      setLectures(
+        [...lectures].sort((a, b) => b.id - a.id)
+      );
+
+      const classData = classroomsRes?.data;
+
+      setClassrooms(
+        Array.isArray(classData?.data)
+          ? classData.data
+          : Array.isArray(classData?.items)
+          ? classData.items
+          : Array.isArray(classData)
+          ? classData
+          : []
+      );
+
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
-console.log(lecturesRes)
-  } catch (err) {
-    showToast(getErrorMessage(err), "error");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   load();
 }, [id, refresh]);
-
 // useEffect(() => {
 //   const load = async () => {
 //     setLoading(true);
