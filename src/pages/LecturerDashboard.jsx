@@ -251,12 +251,13 @@ function LecturerDashboard() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
+
               <input
                 placeholder="Course Code"
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value })}
               />
-              {formError && <p style={{ color: "red" }}>{formError}</p>}
+              {formError && <p style={{ color: "red" }}>{formError}</p>} 
               <button type="submit" disabled={formLoading}>
                 {formLoading ? "Saving..." : editCourseData ? "Update" : "Save"}
               </button>
