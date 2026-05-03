@@ -112,10 +112,10 @@ useEffect(() => {
       console.log("LECTURES RAW:", lecturesData);
 
       setLectures(
-        Array.isArray(lecturesData?.data)
-          ? lecturesData.data
-          : []
-      );
+  Array.isArray(lecturesData?.data)
+    ? [...lecturesData.data].sort((a, b) => b.id - a.id)
+    : []
+);
 
       // Classrooms
       const classData = classroomsRes.data;
