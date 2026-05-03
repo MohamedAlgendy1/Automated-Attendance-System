@@ -17,9 +17,9 @@ export const getMyCourses = async () => {
 // };
 
 export const enrollInCourse = async (courseId, courseCode) => {
-  const res = await api.post("/Student/Enrollment", {
-    courseId: 9,
-  courseCode: "1"
+  const res = await api.post("/student/Enrollment", {
+    courseId: courseId ? Number(courseId) : 0,
+    courseCode: courseCode?.trim()
   });
 
   return res.data;
