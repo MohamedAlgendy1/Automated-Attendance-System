@@ -91,42 +91,49 @@ useRealtime(EVENTS.ATTENDANCE_RECORDED, (msg) => {
 // });
 
 useEffect(() => {
-  const load = async () => {
-    setLoading(true);
+ const load = async () => {
+  setLoading(true);
 
-    try {
-      const [courseRes, lecturesRes, classroomsRes] = await Promise.all([
-        getCourseById(id),
-        getLecturesByCourse(id),
-        api.get("/classroom/AllClassRoom", {
-          params: { pagenumber: 1, pagesize: 100 },
-        }),
-      ]);
+  try {
+    const [courseRes, lecturesRes, classroomsRes] = await Promise.all([
+      getCourseById(id),
+      getLecturesByCourse(id),
+      api.get("/classroom/AllClassRoom", {
+        params: {
+          pagenumber: 1,
+          pagesize: 100,
+        },
+      }),
+    ]);
 
-      setCourse(courseRes);
+    setCourse(courseRes);
 
-      const lecturesArray = lecturesRes?.courseLectures?.data || [];
+    // lectures
+    const lecturesData = lecturesRes?.courseLectures?.data || [];
+    setLectures([...lecturesData].sort((a, b) => b.id - a.id));
 
-      setLectures(
-        lecturesArray.sort((a, b) => b.id - a.id)
-      );
+    // classrooms
+    const classData = classroomsRes?.data;
 
-      const classData = classroomsRes.data;
-
-      setClassrooms(
-        classData?.data || classData?.items || classData || []
-      );
-
-    } catch (err) {
-      showToast(getErrorMessage(err), "error");
-    } finally {
-      setLoading(false);
+    if (Array.isArray(classData?.data)) {
+      setClassrooms(classData.data);
+    } else if (Array.isArray(classData?.items)) {
+      setClassrooms(classData.items);
+    } else if (Array.isArray(classData)) {
+      setClassrooms(classData);
+    } else {
+      setClassrooms([]);
     }
-  };
+
+  } catch (err) {
+    showToast(getErrorMessage(err), "error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   load();
 }, [id, refresh]);
-
 
 // useEffect(() => {
 //   const load = async () => {
