@@ -7,20 +7,43 @@ function EnrollForm({ onEnroll }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!courseCode) { setError("Please enter a course code"); return; }
-    setError("");
-    setLoading(true);
-    try {
-      const res = await enrollInCourse({ courseCode });
-      onEnroll(res.data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!courseCode) { setError("Please enter a course code"); return; }
+  //   setError("");
+  //   setLoading(true);
+  //   try {
+  //     const res = await enrollInCourse({ courseCode });
+  //     onEnroll(res.data);
+  //   } catch (err) {
+  //     setError(getErrorMessage(err));
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!courseCode) {
+    setError("Please enter a course code");
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  try {
+    const result = await enrollInCourse(courseCode);
+
+    onEnroll?.(result); // optional safe call
+
+  } catch (err) {
+    setError(getErrorMessage(err));
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <form onSubmit={handleSubmit}>
