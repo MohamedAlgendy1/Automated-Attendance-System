@@ -25,6 +25,10 @@ function EnrollForm({ onEnroll }) {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
+  console.log("ENROLL PAYLOAD:", {
+    courseCode: courseCode
+  }); // 👈 هنا
+
   if (!courseCode) {
     setError("Please enter a course code");
     return;
@@ -34,10 +38,8 @@ const handleSubmit = async (e) => {
   setLoading(true);
 
   try {
-    const result = await enrollInCourse(courseCode);
-
-    onEnroll?.(result); // optional safe call
-
+    const res = await enrollInCourse(courseCode);
+    onEnroll(res);
   } catch (err) {
     setError(getErrorMessage(err));
   } finally {

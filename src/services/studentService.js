@@ -18,12 +18,11 @@ export const getMyCourses = async () => {
 
 export const enrollInCourse = async (courseCode) => {
   const res = await api.post("/student/Enrollment", {
-    courseCode,
+    courseCode: courseCode?.trim()
   });
 
   return res.data;
 };
-
 export const getMyAttendanceHistory = async () => {
   const res = await api.get("/student/MyAttendanceHistory");
   const data = res.data;
