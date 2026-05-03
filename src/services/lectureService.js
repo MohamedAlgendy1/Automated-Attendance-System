@@ -103,15 +103,34 @@ export const getLecturesByCourse = async (courseId) => {
   return all.filter((l) => l.courseId === parseInt(courseId));
 };
 
-export const createLecture = async (title, startTime, endTime, courseId, classRoomId) => {
+// export const createLecture = async (title, startTime, endTime, courseId, classRoomId) => {
+//   const res = await api.post("/courselecture/Create", {
+//     title,
+//     startTime,
+//     endTime,
+//     courseId: parseInt(courseId),
+//     classRoomId: parseInt(classRoomId),
+//   });
+//   return res.data;
+// };
+
+
+export const createLecture = async (
+  title,
+  startTime,
+  endTime,
+  courseId,
+  classRoomId
+) => {
   const res = await api.post("/courselecture/Create", {
     title,
     startTime,
     endTime,
-    courseId: parseInt(courseId),
-    classRoomId: parseInt(classRoomId),
+    courseId: Number(courseId),
+    classRoomId: Number(classRoomId),
   });
-  return res.data;
+
+  return res;
 };
 
 export const editLecture = async (id, title, startTime, endTime, courseId, classRoomId) => {
