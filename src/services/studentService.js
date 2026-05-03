@@ -8,11 +8,24 @@ export const getMyCourses = async () => {
   return [];
 };
 
+// export const enrollInCourse = async (courseId, courseCode) => {
+//   const res = await api.post("/student/Enrollment", {
+//     courseId: courseId ? parseInt(courseId) : undefined,
+//     courseCode,
+//   });
+//   return res.data;
+// };
+
 export const enrollInCourse = async (courseId, courseCode) => {
-  const res = await api.post("/student/Enrollment", {
-    courseId: courseId ? parseInt(courseId) : undefined,
+  const body = {
     courseCode,
-  });
+  };
+
+  if (courseId) {
+    body.courseId = parseInt(courseId);
+  }
+
+  const res = await api.post("/student/Enrollment", body);
   return res.data;
 };
 
