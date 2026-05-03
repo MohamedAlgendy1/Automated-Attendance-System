@@ -59,9 +59,13 @@ function StudentDashboard() {
     setEnrollLoading(true);
     try {
       await enrollInCourse(
-        enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
-        enrollForm.courseCode
-      );
+  enrollForm.courseId || 0,
+  enrollForm.courseCode
+);
+      // await enrollInCourse(
+      //   enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
+      //   enrollForm.courseCode
+      // );
       showToast("Enrolled successfully 🎉");
       setShowModal(false);
       setEnrollForm({ courseId: "", courseCode: "" });

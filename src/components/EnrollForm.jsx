@@ -38,8 +38,8 @@ const handleSubmit = async (e) => {
   setLoading(true);
 
   try {
-    const res = await enrollInCourse(courseCode);
-    onEnroll(res);
+  const res = await enrollInCourse(null, courseCode);
+  onEnroll(res);
   } catch (err) {
     setError(getErrorMessage(err));
   } finally {
@@ -47,13 +47,13 @@ const handleSubmit = async (e) => {
   }
 };
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <input placeholder="Course Code" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} />
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <button type="submit" disabled={loading}>{loading ? "Enrolling..." : "Enroll"}</button>
-    </form>
-  );
+  // return (
+  //   // <form onSubmit={handleSubmit}>
+  //   //   <input placeholder="Course Code" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} />
+  //   //   {error && <p style={{ color: "red" }}>{error}</p>}
+  //   //   <button type="submit" disabled={loading}>{loading ? "Enrolling..." : "Enroll"}</button>
+  //   // </form>
+  // );
 }
 
 export default EnrollForm;

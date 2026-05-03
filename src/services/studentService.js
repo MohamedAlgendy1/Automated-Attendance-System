@@ -16,11 +16,10 @@ export const getMyCourses = async () => {
 //   return res.data;
 // };
 
-export const enrollInCourse = async (courseCode) => {
-  console.log("COURSE CODE INSIDE SERVICE:", courseCode);
-
+export const enrollInCourse = async (courseId, courseCode) => {
   const res = await api.post("/student/Enrollment", {
-    courseCode
+    courseId: courseId ? Number(courseId) : 0,
+    courseCode: courseCode?.trim()
   });
 
   return res.data;
