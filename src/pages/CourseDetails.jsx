@@ -53,21 +53,29 @@ function CourseDetails() {
   };
 
   // ✅ real-time notifications
-  useRealtime((msg) => {
+useRealtime((msg) => {
   if (msg.event === EVENTS.LECTURE_ADDED) {
-    setLectures((prev) => [...prev, msg.data.lecture]);
+    const lecture = msg.data?.lecture;
+    if (!lecture) return;
+
+    setLectures((prev) => {
+      const exists = prev.some(l => l.id === lecture.id);
+      if (exists) return prev;
+      return [...prev, lecture];
+    });
   }
-}); {
-      setNotifications((prev) => [
-        {
-          id: Date.now(),
-          message: `✅ ${msg.data.studentName} recorded attendance`,
-          time: msg.data.timestamp,
-        },
-        ...prev.slice(0, 4),
-      ]);
-    }
-  });
+
+  if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
+    setNotifications((prev) => [
+      {
+        id: Date.now(),
+        message: `✅ ${msg.data.studentName} recorded attendance`,
+        time: msg.data.timestamp,
+      },
+      ...prev.slice(0, 4),
+    ]);
+  }
+});
 
   // ✅ جيب بيانات الكورس والمحاضرات والكلاسروم
   useEffect(() => {
@@ -136,29 +144,42 @@ if (Array.isArray(lecturesData)) {
         );
         showToast("Lecture updated ✅");
       } else {
-        await createLecture(
-          form.title,
-          form.startTime,
-          form.endTime,
-          parseInt(id),
-          parseInt(form.classRoomId)
-        );
+
+        const created = await createLecture(
+  form.title,
+  form.startTime,
+  form.endTime,
+  parseInt(id),
+  parseInt(form.classRoomId)
+);
+
+broadcast(EVENTS.LECTURE_ADDED, {
+  courseCode: course?.code || course?.courseCode,
+  lecture: created,
+});
+        // await createLecture(
+        //   form.title,
+        //   form.startTime,
+        //   form.endTime,
+        //   parseInt(id),
+        //   parseInt(form.classRoomId)
+        // );
         // broadcast(EVENTS.LECTURE_ADDED, {
         //   courseCode: course?.code || course?.courseCode,
         //   lecture: form,
         // });
-try {
-  console.log("Before Broadcast");
+// try {
+//   console.log("Before Broadcast");
   
-  broadcast(EVENTS.LECTURE_ADDED, {
-    courseCode: course?.code || course?.courseCode,
-    lecture: form,
-  });
+//   broadcast(EVENTS.LECTURE_ADDED, {
+//     courseCode: course?.code || course?.courseCode,
+//     lecture: form,
+//   });
 
-  console.log("Broadcast Success");
-} catch (err) {
-  console.error("Broadcast Error:", err);
-}
+//   console.log("Broadcast Success");
+// }catch (err) {
+ // console.error("Broadcast Error:", err);
+//}
 
         showToast("Lecture added 🎉");
       }
@@ -420,4 +441,3 @@ try {
 }
 
 export default CourseDetails;
-
