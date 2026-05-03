@@ -431,7 +431,33 @@ useEffect(() => {
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
+ <tbody>
+  {console.log("LECTURES STATE =", lectures)}
+
+  {lectures && lectures.length > 0 ? (
+    lectures.map((l) => (
+      <tr key={l.id}>
+        <td>{l.title || "-"}</td>
+        <td>{l.classRoomName || l.classroom || "-"}</td>
+        <td>{l.startTime ? l.startTime.replace("T", " ") : "-"}</td>
+        <td>{l.endTime ? l.endTime.replace("T", " ") : "-"}</td>
+        <td className="actions">
+          <span onClick={() => handleGenerateQR(l)}>📷</span>
+          <span onClick={() => navigate(`/attendance-records/${id}/${l.id}`)}>📊</span>
+          <span onClick={() => handleEdit(l)}>✏️</span>
+          <span onClick={() => handleDelete(l.id)}>🗑️</span>
+        </td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="5" style={{ textAlign: "center", padding: 20 }}>
+        No lectures yet
+      </td>
+    </tr>
+  )}
+</tbody>
+             {/* <tbody>
               {lectures.length === 0 ? (
                 <tr>
                   <td colSpan="5" style={{ textAlign: "center", padding: 20 }}>
@@ -454,7 +480,7 @@ useEffect(() => {
                   </tr>
                 ))
               )}
-            </tbody>
+            </tbody>  */}
           </table>
         </div>
 
