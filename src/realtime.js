@@ -45,15 +45,26 @@ export const EVENTS = {
 };
 
 // إرسال
-export const broadcast = (event, data = {}) => {
+// export const broadcast = (event, data = {}) => {
+//   try {
+//     getChannel().postMessage({
+//       event,
+//       data,
+//       timestamp: Date.now(),
+//     });
+//   } catch (err) {
+//     console.warn("Broadcast failed:", err);
+//   }
+// };
+
+export const broadcast = (event, data) => {
+  console.log("broadcast called", event, data);
+
   try {
-    getChannel().postMessage({
-      event,
-      data,
-      timestamp: Date.now(),
-    });
+    channel.postMessage({ event, data });
+    console.log("broadcast success");
   } catch (err) {
-    console.warn("Broadcast failed:", err);
+    console.error("broadcast error:", err);
   }
 };
 
