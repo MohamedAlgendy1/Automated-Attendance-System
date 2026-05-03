@@ -235,30 +235,33 @@ useEffect(() => {
     setFormLoading(true);
 
     try {
-      if (editingLecture) {
-        await editLecture(
-          editingLecture.id,
-          form.title,
-          form.startTime,
-          form.endTime,
-          parseInt(id),
-          parseInt(form.classRoomId)
-        );
-        showToast("Lecture updated ✅");
-      } else {
+     if (editingLecture) {
+  await editLecture(
+    editingLecture.id,
+    form.title,
+    form.startTime,
+    form.endTime,
+    parseInt(id),
+    parseInt(form.classRoomId)
+  );
 
-        const created = await createLecture(
-  form.title,
-  form.startTime,
-  form.endTime,
-  parseInt(id),
-  parseInt(form.classRoomId)
-);
+  showToast("Lecture updated ✅");
+} else {
+  const created = await createLecture(
+    form.title,
+    form.startTime,
+    form.endTime,
+    parseInt(id),
+    parseInt(form.classRoomId)
+  );
 
-broadcast(EVENTS.LECTURE_ADDED, {
-  courseCode: course?.code || course?.courseCode,
-  lecture: created,
-});
+  broadcast(EVENTS.LECTURE_ADDED, {
+    courseCode: courseCode,
+    lecture: created,
+  });
+
+  showToast("Lecture added 🎉");
+}
         // await createLecture(
         //   form.title,
         //   form.startTime,
@@ -283,8 +286,8 @@ broadcast(EVENTS.LECTURE_ADDED, {
  // console.error("Broadcast Error:", err);
 //}
 
-        showToast("Lecture added 🎉");
-      }
+      //  showToast("Lecture added 🎉");
+    //  }
       setShowModal(false);
       setEditingLecture(null);
       setForm({ title: "", classRoomId: "", startTime: "", endTime: "" });
