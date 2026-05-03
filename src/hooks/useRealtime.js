@@ -14,7 +14,7 @@ export const useRealtime = (onEvent) => {
 
   useEffect(() => {
     listen(handleEvent);
-    return () => stopListening();
+    return () => stopListening(handleEvent);
   }, [handleEvent]);
 };
 
