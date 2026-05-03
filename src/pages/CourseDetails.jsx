@@ -54,17 +54,12 @@ function CourseDetails() {
 
   // ✅ real-time notifications
 useRealtime((msg) => {
+  // عند إضافة محاضرة
   if (msg.event === EVENTS.LECTURE_ADDED) {
-    const lecture = msg.data?.lecture;
-    if (!lecture) return;
-
-    setLectures((prev) => {
-      const exists = prev.some(l => l.id === lecture.id);
-      if (exists) return prev;
-      return [...prev, lecture];
-    });
+    setRefresh((prev) => prev + 1);
   }
 
+  // عند تسجيل حضور طالب
   if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
     setNotifications((prev) => [
       {
@@ -77,37 +72,129 @@ useRealtime((msg) => {
   }
 });
 
+// useRealtime((msg) => {
+//   if (msg.event === EVENTS.LECTURE_ADDED) {
+//     setLectures((prev) => [...prev, msg.data.lecture]);
+//   }
+
+//   if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
+//     setNotifications((prev) => [
+//       {
+//         id: Date.now(),
+//         message: `✅ ${msg.data.studentName} recorded attendance`,
+//         time: msg.data.timestamp,
+//       },
+//       ...prev.slice(0, 4),
+//     ]);
+//   }
+// });
+
+useEffect(() => {
+  const load = async () => {
+    setLoading(true);
+
+    try {
+      const [courseRes, lecturesData, classroomsRes] = await Promise.all([
+        getCourseById(id),
+        getLecturesByCourse(id),
+        api.get("/classroom/AllClassRoom", {
+          params: {
+            pagenumber: 1,
+            pagesize: 100,
+          },
+        }),
+      ]);
+
+      // Course
+      setCourse(courseRes);
+
+      // Lectures
+      console.log("LECTURES RAW:", lecturesData);
+
+      setLectures(
+        Array.isArray(lecturesData?.data)
+          ? lecturesData.data
+          : []
+      );
+
+      // Classrooms
+      const classData = classroomsRes.data;
+
+      if (Array.isArray(classData?.data)) {
+        setClassrooms(classData.data);
+      } else if (Array.isArray(classData?.items)) {
+        setClassrooms(classData.items);
+      } else if (Array.isArray(classData)) {
+        setClassrooms(classData);
+      } else {
+        setClassrooms([]);
+      }
+
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, [id, refresh]);
+
+// useRealtime((msg) => {
+//   if (msg.event === EVENTS.LECTURE_ADDED) {
+//     const lecture = msg.data?.lecture;
+//     if (!lecture) return;
+
+//     setLectures((prev) => {
+//       const exists = prev.some(l => l.id === lecture.id);
+//       if (exists) return prev;
+//       return [...prev, lecture];
+//     });
+//   }
+
+//   if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
+//     setNotifications((prev) => [
+//       {
+//         id: Date.now(),
+//         message: `✅ ${msg.data.studentName} recorded attendance`,
+//         time: msg.data.timestamp,
+//       },
+//       ...prev.slice(0, 4),
+//     ]);
+//   }
+// });
+
   // ✅ جيب بيانات الكورس والمحاضرات والكلاسروم
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [courseRes, lecturesData, classroomsRes] = await Promise.all([
-          getCourseById(id),
-          getLecturesByCourse(id),
-          api.get("/classroom/AllClassRoom", {
-            params: { pagenumber: 1, pagesize: 100 },
-          }),
-        ]);
+//   useEffect(() => {
+//     const load = async () => {
+//       setLoading(true);
+//       try {
+//         const [courseRes, lecturesData, classroomsRes] = await Promise.all([
+//           getCourseById(id),
+//           getLecturesByCourse(id),
+//           api.get("/classroom/AllClassRoom", {
+//             params: { pagenumber: 1, pagesize: 100 },
+//           }),
+//         ]);
 
-        setCourse(courseRes);
-        setCourse(courseRes);
+//         setCourse(courseRes);
+//         setCourse(courseRes);
 
-// ✅ الحل الصح
-console.log("LECTURES RAW:", lecturesData);
+// // ✅ الحل الصح
+// console.log("LECTURES RAW:", lecturesData);
 
-if (Array.isArray(lecturesData?.data)) {
-  setLectures(lecturesData.data);
-} 
-else if (Array.isArray(lecturesData?.items)) {
-  setLectures(lecturesData.items);
-}
-else if (Array.isArray(lecturesData)) {
-  setLectures(lecturesData);
-}
-else {
-  setLectures([]);
-}
+// if (Array.isArray(lecturesData?.data)) {
+//   setLectures(lecturesData.data);
+// } 
+// else if (Array.isArray(lecturesData?.items)) {
+//   setLectures(lecturesData.items);
+// }
+// else if (Array.isArray(lecturesData)) {
+//   setLectures(lecturesData);
+// }
+// else {
+//   setLectures([]);
+// }
 
 // if (Array.isArray(lecturesData)) {
 //   console.log("LECTURES RAW:", lecturesData);
@@ -120,20 +207,20 @@ else {
 //   setLectures([]);
 // }
 
-        const classData = classroomsRes.data;
-        if (Array.isArray(classData?.data)) setClassrooms(classData.data);
-        else if (Array.isArray(classData?.items)) setClassrooms(classData.items);
-        else if (Array.isArray(classData)) setClassrooms(classData);
-        else setClassrooms([]);
+  //       const classData = classroomsRes.data;
+  //       if (Array.isArray(classData?.data)) setClassrooms(classData.data);
+  //       else if (Array.isArray(classData?.items)) setClassrooms(classData.items);
+  //       else if (Array.isArray(classData)) setClassrooms(classData);
+  //       else setClassrooms([]);
 
-      } catch (err) {
-        showToast(getErrorMessage(err), "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [id, refresh]);
+  //     } catch (err) {
+  //       showToast(getErrorMessage(err), "error");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   load();
+  // }, [id, refresh]);
 
   // ✅ إضافة / تعديل محاضرة
   const handleAddLecture = async (e) => {
