@@ -174,36 +174,53 @@ export const getLecturesByCourse = async (courseId) => {
   const res = await api.get("/courselecture/AllCourseLectures", {
     params: { pagenumber: 1, pagesize: 100 },
   });
+  const data = res.data;
+  const all = Array.isArray(data) ? data
+    : Array.isArray(data?.items) ? data.items
+    : Array.isArray(data?.data) ? data.data
+    : [];
 
-  let data = res.data;
+  console.log("ALL LECTURES:", all);           // 👈 ضيف
+  console.log("FIRST LECTURE:", all[0]);       // 👈 ضيف
+  console.log("FILTERING BY courseId:", courseId); // 👈 ضيف
 
-  // لو رجع string نحوله JSON
-  if (typeof data === "string") {
-    try {
-      data = JSON.parse(data);
-    } catch {
-      data = [];
-    }
-  }
-
-  const all =
-    Array.isArray(data) ? data :
-    Array.isArray(data?.items) ? data.items :
-    Array.isArray(data?.data) ? data.data :
-    [];
-
-  console.log("LECTURES:", all);
-
-  return all.filter((l) => {
-    const id =
-      l.courseId ||
-      l.CourseId ||
-      l.courseID ||
-      l.course?.id;
-
-    return Number(id) === Number(courseId);
-  });
+  return all.filter((l) => l.courseId === parseInt(courseId));
 };
+
+// export const getLecturesByCourse = async (courseId) => {
+//   const res = await api.get("/courselecture/AllCourseLectures", {
+//     params: { pagenumber: 1, pagesize: 100 },
+//   });
+
+//   let data = res.data;
+
+//   // لو رجع string نحوله JSON
+//   if (typeof data === "string") {
+//     try {
+//       data = JSON.parse(data);
+//     } catch {
+//       data = [];
+//     }
+//   }
+
+//   const all =
+//     Array.isArray(data) ? data :
+//     Array.isArray(data?.items) ? data.items :
+//     Array.isArray(data?.data) ? data.data :
+//     [];
+
+//   console.log("LECTURES:", all);
+
+//   return all.filter((l) => {
+//     const id =
+//       l.courseId ||
+//       l.CourseId ||
+//       l.courseID ||
+//       l.course?.id;
+
+//     return Number(id) === Number(courseId);
+//   });
+// };
 
 export const createLecture = async (
   title,
