@@ -83,7 +83,19 @@ function CourseDetails() {
         ]);
 
         setCourse(courseRes);
-        setLectures(lecturesData);
+        setCourse(courseRes);
+
+// ✅ الحل الصح
+if (Array.isArray(lecturesData)) {
+  console.log("LECTURES RAW:", lecturesData);
+  setLectures(lecturesData);
+} else if (Array.isArray(lecturesData?.data)) {
+  console.log("LECTURES RAW:", lecturesData);
+  setLectures(lecturesData.data);
+} else {
+  console.log("LECTURES RAW:", lecturesData);
+  setLectures([]);
+}
 
         const classData = classroomsRes.data;
         if (Array.isArray(classData?.data)) setClassrooms(classData.data);
