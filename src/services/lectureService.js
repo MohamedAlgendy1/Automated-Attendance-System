@@ -174,15 +174,19 @@ export const getLecturesByCourse = async (courseId) => {
   const res = await api.get("/courselecture/AllCourseLectures", {
     params: { pagenumber: 1, pagesize: 100 },
   });
+
+  // ✅ شوف الـ raw response كامل
+  console.log("RAW RESPONSE:", res.data);
+
   const data = res.data;
   const all = Array.isArray(data) ? data
     : Array.isArray(data?.items) ? data.items
     : Array.isArray(data?.data) ? data.data
     : [];
 
-  console.log("ALL LECTURES:", all);           // 👈 ضيف
-  console.log("FIRST LECTURE:", all[0]);       // 👈 ضيف
-  console.log("FILTERING BY courseId:", courseId); // 👈 ضيف
+  console.log("ALL LECTURES:", all);
+  console.log("FIRST LECTURE:", all[0]);
+  console.log("FILTERING BY courseId:", courseId);
 
   return all.filter((l) => l.courseId === parseInt(courseId));
 };
