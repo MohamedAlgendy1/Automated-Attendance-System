@@ -54,10 +54,10 @@ function CourseDetails() {
 
   // ✅ real-time notifications
   useRealtime((msg) => {
-    if (
-      msg.event === EVENTS.ATTENDANCE_RECORDED &&
-      msg.data.courseCode === (course?.code || course?.courseCode)
-    ) {
+  if (msg.event === EVENTS.LECTURE_ADDED) {
+    setLectures((prev) => [...prev, msg.data.lecture]);
+  }
+}); {
       setNotifications((prev) => [
         {
           id: Date.now(),

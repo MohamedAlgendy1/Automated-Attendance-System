@@ -3,18 +3,14 @@ import { listen, stopListening } from "../realtime";
 
 
 
-// ✅ Hook بيستمع للأحداث ويعمل callback
-export const useRealtime = (onEvent) => {
-  const handleEvent = useCallback(
-    (msg) => {
-      if (onEvent) onEvent(msg);
-    },
-    [onEvent]
-  );
+export const useRealtime = (eventName, onEvent) => {
+  const handleEvent = useCallback((data) => {
+    if (onEvent) onEvent(data);
+  }, [onEvent]);
 
   useEffect(() => {
-    listen(handleEvent);
-    return () => stopListening(handleEvent);
-  }, [handleEvent]);
-};
+    listen(eventName, handleEvent);
 
+    return () => stopListening(eventName, handleEvent);
+  }, [eventName, handleEvent]);
+};
