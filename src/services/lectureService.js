@@ -313,9 +313,10 @@ export const getLecturesByCourse = async (courseId) => {
     },
   });
 
+  console.log("API RESPONSE:", res.data);
+
   return res.data?.courseLectures?.data || [];
 };
-
   
 
   // رجع الأراي مباشرة
