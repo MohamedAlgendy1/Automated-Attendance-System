@@ -105,17 +105,16 @@ useEffect(() => {
       setCourse(courseRes);
 
       // Lectures
-      console.log("LECTURES RAW =", lecturesData);
+     // Lectures
+console.log("LECTURES RAW =", lecturesData);
 
-      if (Array.isArray(lecturesData)) {
-        setLectures([...lecturesData].sort((a, b) => b.id - a.id));
-      } else if (Array.isArray(lecturesData?.data)) {
-        setLectures([...lecturesData.data].sort((a, b) => b.id - a.id));
-      } else if (Array.isArray(lecturesData?.items)) {
-        setLectures([...lecturesData.items].sort((a, b) => b.id - a.id));
-      } else {
-        setLectures([]);
-      }
+const lecturesArray = lecturesData?.courseLectures?.data || [];
+
+setLectures(
+  Array.isArray(lecturesArray)
+    ? [...lecturesArray].sort((a, b) => b.id - a.id)
+    : []
+);
       // Classrooms
       const classData = classroomsRes.data;
 

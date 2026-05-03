@@ -313,15 +313,13 @@ export const getLecturesByCourse = async (courseId) => {
     },
   });
 
-  console.log("API RESPONSE =", res.data);
+  return res.data?.courseLectures?.data || [];
+};
+
+  
 
   // رجع الأراي مباشرة
-  if (Array.isArray(res.data?.data)) return res.data.data;
-  if (Array.isArray(res.data?.items)) return res.data.items;
-  if (Array.isArray(res.data)) return res.data;
 
-  return [];
-};
 
 export const createLecture = async (
   title,
