@@ -172,19 +172,33 @@ import api from "./api";
 
 export const getLecturesByCourse = async (courseId) => {
   const res = await api.get("/courselecture/AllCourseLectures", {
-    params: { pagenumber: 1, pagesize: 100 },
+    params: {
+      pagenumber: 1,
+      pagesize: 100,
+      CourseId: Number(courseId),
+    },
   });
 
-  // ✅ الـ lectures في courseLectures.data
-  const data = res.data;
-  const all = data?.courseLectures?.data
-    || data?.courseLectures?.items
-    || data?.data
-    || data?.items
-    || (Array.isArray(data) ? data : []);
+  console.log("API RESPONSE:", res.data);
 
-  return all.filter((l) => l.courseId === parseInt(courseId));
+  return res.data;
 };
+
+// export const getLecturesByCourse = async (courseId) => {
+//   const res = await api.get("/courselecture/AllCourseLectures", {
+//     params: { pagenumber: 1, pagesize: 100 },
+//   });
+
+//   // ✅ الـ lectures في courseLectures.data
+//   const data = res.data;
+//   const all = data?.courseLectures?.data
+//     || data?.courseLectures?.items
+//     || data?.data
+//     || data?.items
+//     || (Array.isArray(data) ? data : []);
+
+//   return all.filter((l) => l.courseId === parseInt(courseId));
+// };
 
 // export const getLecturesByCourse = async (courseId) => {
 //   const res = await api.get("/courselecture/AllCourseLectures", {

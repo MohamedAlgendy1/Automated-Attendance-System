@@ -94,16 +94,31 @@ useRealtime((msg) => {
         setCourse(courseRes);
 
 // ✅ الحل الصح
-if (Array.isArray(lecturesData)) {
-  console.log("LECTURES RAW:", lecturesData);
-  setLectures(lecturesData);
-} else if (Array.isArray(lecturesData?.data)) {
-  console.log("LECTURES RAW:", lecturesData);
+console.log("LECTURES RAW:", lecturesData);
+
+if (Array.isArray(lecturesData?.data)) {
   setLectures(lecturesData.data);
-} else {
-  console.log("LECTURES RAW:", lecturesData);
+} 
+else if (Array.isArray(lecturesData?.items)) {
+  setLectures(lecturesData.items);
+}
+else if (Array.isArray(lecturesData)) {
+  setLectures(lecturesData);
+}
+else {
   setLectures([]);
 }
+
+// if (Array.isArray(lecturesData)) {
+//   console.log("LECTURES RAW:", lecturesData);
+//   setLectures(lecturesData);
+// } else if (Array.isArray(lecturesData?.data)) {
+//   console.log("LECTURES RAW:", lecturesData);
+//   setLectures(lecturesData.data);
+// } else {
+//   console.log("LECTURES RAW:", lecturesData);
+//   setLectures([]);
+// }
 
         const classData = classroomsRes.data;
         if (Array.isArray(classData?.data)) setClassrooms(classData.data);
