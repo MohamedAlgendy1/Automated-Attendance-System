@@ -90,43 +90,27 @@ useEffect(() => {
     setLoading(true);
 
     try {
-      const [courseRes, lecturesData, classroomsRes] = await Promise.all([
+      const [courseRes, lecturesRes, classroomsRes] = await Promise.all([
         getCourseById(id),
         getLecturesByCourse(id),
         api.get("/classroom/AllClassRoom", {
-          params: {
-            pagenumber: 1,
-            pagesize: 100,
-          },
+          params: { pagenumber: 1, pagesize: 100 },
         }),
       ]);
 
-      // Course
       setCourse(courseRes);
 
-      // Lectures
-     // Lectures
-console.log("LECTURES RAW =", lecturesData);
+      const lecturesArray = lecturesRes?.courseLectures?.data || [];
 
-const lecturesArray = lecturesData?.courseLectures?.data || [];
+      setLectures(
+        lecturesArray.sort((a, b) => b.id - a.id)
+      );
 
-setLectures(
-  Array.isArray(lecturesArray)
-    ? [...lecturesArray].sort((a, b) => b.id - a.id)
-    : []
-);
-      // Classrooms
       const classData = classroomsRes.data;
 
-      if (Array.isArray(classData?.data)) {
-        setClassrooms(classData.data);
-      } else if (Array.isArray(classData?.items)) {
-        setClassrooms(classData.items);
-      } else if (Array.isArray(classData)) {
-        setClassrooms(classData);
-      } else {
-        setClassrooms([]);
-      }
+      setClassrooms(
+        classData?.data || classData?.items || classData || []
+      );
 
     } catch (err) {
       showToast(getErrorMessage(err), "error");
@@ -137,6 +121,60 @@ setLectures(
 
   load();
 }, [id, refresh]);
+
+
+// useEffect(() => {
+//   const load = async () => {
+//     setLoading(true);
+
+//     try {
+//       const [courseRes, lecturesData, classroomsRes] = await Promise.all([
+//         getCourseById(id),
+//         getLecturesByCourse(id),
+//         api.get("/classroom/AllClassRoom", {
+//           params: {
+//             pagenumber: 1,
+//             pagesize: 100,
+//           },
+//         }),
+//       ]);
+
+//       // Course
+//       setCourse(courseRes);
+
+//       // Lectures
+//      // Lectures
+// console.log("LECTURES RAW =", lecturesData);
+
+// const lecturesArray = lecturesData?.courseLectures?.data || [];
+
+// setLectures(
+//   Array.isArray(lecturesArray)
+//     ? [...lecturesArray].sort((a, b) => b.id - a.id)
+//     : []
+// );
+//       // Classrooms
+//       const classData = classroomsRes.data;
+
+//       if (Array.isArray(classData?.data)) {
+//         setClassrooms(classData.data);
+//       } else if (Array.isArray(classData?.items)) {
+//         setClassrooms(classData.items);
+//       } else if (Array.isArray(classData)) {
+//         setClassrooms(classData);
+//       } else {
+//         setClassrooms([]);
+//       }
+
+//     } catch (err) {
+//       showToast(getErrorMessage(err), "error");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   load();
+// }, [id, refresh]);
 
 // useRealtime((msg) => {
 //   if (msg.event === EVENTS.LECTURE_ADDED) {
