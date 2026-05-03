@@ -17,10 +17,13 @@ export const getMyCourses = async () => {
 // };
 
 export const enrollInCourse = async (courseCode) => {
+  console.log("API CALL START");
+
   const res = await api.post("/student/Enrollment", {
-    courseCode: courseCode?.trim()
+   courseCode: courseCode
   });
 
+  console.log("API RESPONSE", res.data);
   return res.data;
 };
 export const getMyAttendanceHistory = async () => {
