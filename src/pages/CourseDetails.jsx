@@ -443,7 +443,7 @@ useEffect(() => {
                   </td>
                 </tr>
               ) : (
-                lectures.map((l) => (
+                [...lectures].reverse().map((l) => (
                   <tr key={l.id}>
                     <td>{l.title}</td>
                     <td>{l.classRoomName || l.classroom || "-"}</td>
