@@ -410,10 +410,10 @@
 // export default CourseDetails;
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import "./../styles/courseDetails.css";
-import { getErrorMessage } from "../services/api";
+import { getErrorMessage, parseJwt } from "../services/api";
 import { getCourseById } from "../services/courseService";
 import {
   getLecturesByCourse,
@@ -426,6 +426,7 @@ import api from "../services/api";
 
 function CourseDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [course, setCourse] = useState(null);
   const [lectures, setLectures] = useState([]);
@@ -447,6 +448,13 @@ function CourseDetails() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  // ✅ اسم الدكتور
+  const token = localStorage.getItem("token");
+  const decoded = token ? parseJwt(token) : {};
+  const lecturerName =
+    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+    "Lecturer";
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -473,23 +481,21 @@ function CourseDetails() {
       else if (Array.isArray(classData?.items)) setClassrooms(classData.items);
       else if (Array.isArray(classData)) setClassrooms(classData);
       else setClassrooms([]);
-
     } catch (err) {
       showToast(getErrorMessage(err), "error");
     } finally {
       setLoading(false);
     }
   }, [id]);
-  
-useEffect(() => {
-  const fetchData = async () => {
-    await loadData();
-  };
 
-  fetchData();
-}, [loadData]);
+  useEffect(() => {
+    const fetchData = async () => {
+      await loadData();
+    };
+    fetchData();
+  }, [loadData]);
 
-  // ✅ إضافة / تعديل
+  // ✅ إضافة / تعديل محاضرة
   const handleAddLecture = async (e) => {
     e.preventDefault();
 
@@ -577,15 +583,59 @@ useEffect(() => {
   if (loading) return <p style={{ padding: 20 }}>Loading...</p>;
   if (!course) return <h2>Course not found</h2>;
 
+  const courseName = course.name || course.courseName || "";
+  const courseCode = course.code || course.courseCode || "";
+
   return (
     <div className="dashboard course-details-page">
+
+      {/* Sidebar */}
+      <div className="sidebar">
+        <div>
+          <h2 className="logo">QR Attend</h2>
+          <ul className="menu">
+            <li className="active">📘 My Courses</li>
+            <li onClick={() => navigate("/attendance")}>
+              📊 Attendance Overview
+            </li>
+          </ul>
+        </div>
+
+        <div className="user-box">
+          <div className="user-info">
+            <div className="avatar">
+              {lecturerName?.[0]?.toUpperCase() || "L"}
+            </div>
+            <div>
+              <p>{lecturerName}</p>
+              <span>Lecturer</span>
+            </div>
+          </div>
+
+          <button
+            className="logout-btn"
+            onClick={() => {
+              localStorage.clear();
+              navigate("/");
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Main */}
       <div className="main">
-        <h1>{course.name}</h1>
+        <h1>{courseName}</h1>
+
+        <p className="back" onClick={() => navigate("/lecturer")}>
+          ← Back to Courses
+        </p>
 
         <div className="cards">
           <div className="card">
             <p>Course Code</p>
-            <h2>{course.code}</h2>
+            <h2>{courseCode}</h2>
           </div>
           <div className="card">
             <p>Total Lectures</p>
@@ -632,7 +682,7 @@ useEffect(() => {
                     <td>{l.classRoomName || "-"}</td>
                     <td>{new Date(l.startTime).toLocaleString()}</td>
                     <td>{new Date(l.endTime).toLocaleString()}</td>
-                    <td>
+                    <td className="actions">
                       <span onClick={() => handleGenerateQR(l)}>📷</span>
                       <span onClick={() => handleEdit(l)}>✏️</span>
                       <span onClick={() => handleDelete(l.id)}>🗑️</span>
@@ -646,13 +696,14 @@ useEffect(() => {
 
         {selectedQR && qrToken && (
           <div className="qr-box">
-            <h2>Scan QR</h2>
+            <h2>Scan this QR Code</h2>
             <QRCodeCanvas value={qrToken} size={200} />
             <button onClick={() => setSelectedQR(null)}>Close</button>
           </div>
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
