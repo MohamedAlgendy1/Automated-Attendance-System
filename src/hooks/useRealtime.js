@@ -1,16 +1,12 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { listen, stopListening } from "../realtime";
 
-
-
-export const useRealtime = (eventName, onEvent) => {
-  const handleEvent = useCallback((data) => {
-    if (onEvent) onEvent(data);
-  }, [onEvent]);
-
+export const useRealtime = (eventName, callback) => {
   useEffect(() => {
-    listen(eventName, handleEvent);
+    if (!eventName || !callback) return;
 
-    return () => stopListening(eventName, handleEvent);
-  }, [eventName, handleEvent]);
+    listen(eventName, callback);
+
+    return () => stopListening(eventName, callback);
+  }, [eventName, callback]);
 };

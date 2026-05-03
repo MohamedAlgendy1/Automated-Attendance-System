@@ -53,23 +53,19 @@ function CourseDetails() {
   };
 
   // ✅ real-time notifications
-useRealtime((msg) => {
-  // عند إضافة محاضرة
-  if (msg.event === EVENTS.LECTURE_ADDED) {
-    setRefresh((prev) => prev + 1);
-  }
+useRealtime(EVENTS.LECTURE_ADDED, () => {
+  setRefresh((prev) => prev + 1);
+});
 
-  // عند تسجيل حضور طالب
-  if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
-    setNotifications((prev) => [
-      {
-        id: Date.now(),
-        message: `✅ ${msg.data.studentName} recorded attendance`,
-        time: msg.data.timestamp,
-      },
-      ...prev.slice(0, 4),
-    ]);
-  }
+useRealtime(EVENTS.ATTENDANCE_RECORDED, (msg) => {
+  setNotifications((prev) => [
+    {
+      id: Date.now(),
+      message: `✅ ${msg.studentName} recorded attendance`,
+      time: msg.timestamp,
+    },
+    ...prev.slice(0, 4),
+  ]);
 });
 
 // useRealtime((msg) => {
@@ -443,7 +439,7 @@ useEffect(() => {
                   </td>
                 </tr>
               ) : (
-                [...lectures].reverse().map((l) => (
+                lectures.map((l) => (
                   <tr key={l.id}>
                     <td>{l.title}</td>
                     <td>{l.classRoomName || l.classroom || "-"}</td>
