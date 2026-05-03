@@ -228,7 +228,7 @@ useEffect(() => {
 
     if (!form.title || !form.classRoomId || !form.startTime || !form.endTime) {
       setFormError("Please fill all fields");
-      return;
+      return console.log("lectures state =", lectures); 
     }
 
     setFormError("");
