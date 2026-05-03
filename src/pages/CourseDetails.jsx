@@ -133,10 +133,23 @@ function CourseDetails() {
           parseInt(id),
           parseInt(form.classRoomId)
         );
-        broadcast(EVENTS.LECTURE_ADDED, {
-          courseCode: course?.code || course?.courseCode,
-          lecture: form,
-        });
+        // broadcast(EVENTS.LECTURE_ADDED, {
+        //   courseCode: course?.code || course?.courseCode,
+        //   lecture: form,
+        // });
+try {
+  console.log("Before Broadcast");
+  
+  broadcast(EVENTS.LECTURE_ADDED, {
+    courseCode: course?.code || course?.courseCode,
+    lecture: form,
+  });
+
+  console.log("Broadcast Success");
+} catch (err) {
+  console.error("Broadcast Error:", err);
+}
+
         showToast("Lecture added 🎉");
       }
       setShowModal(false);
