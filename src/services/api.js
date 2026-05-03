@@ -171,7 +171,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL:"https://attendtrack.runasp.net/api",
+  baseURL:"https://attendtrack.runasp.net",
   headers: {
     "Content-Type": "application/json",
   },
