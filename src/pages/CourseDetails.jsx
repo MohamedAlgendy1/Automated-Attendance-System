@@ -124,7 +124,7 @@ useEffect(() => {
     } else {
       setClassrooms([]);
     }
-
+console.log(lecturesRes)
   } catch (err) {
     showToast(getErrorMessage(err), "error");
   } finally {
