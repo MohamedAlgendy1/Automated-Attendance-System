@@ -81,8 +81,9 @@ function LecturerDashboard() {
       setForm({ code: "", name: "" });
       setRefresh((r) => r + 1);
     } catch (err) {
-      setFormError(getErrorMessage(err));
-    } finally {
+ console.log(err);
+ setFormError(getErrorMessage(err));
+} finally {
       setFormLoading(false);
     }
   };
