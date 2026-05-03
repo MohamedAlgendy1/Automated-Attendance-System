@@ -52,6 +52,11 @@ function CourseDetails() {
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
+  useEffect(() => {
+    console.log("LECTURES UPDATED:", lectures);
+  }, [lectures]);
+
+
   // ✅ real-time notifications
 useRealtime(EVENTS.LECTURE_ADDED, () => {
   setRefresh((prev) => prev + 1);
