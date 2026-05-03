@@ -73,22 +73,7 @@ useRealtime(EVENTS.ATTENDANCE_RECORDED, (msg) => {
   ]);
 });
 
-// useRealtime((msg) => {
-//   if (msg.event === EVENTS.LECTURE_ADDED) {
-//     setLectures((prev) => [...prev, msg.data.lecture]);
-//   }
 
-//   if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
-//     setNotifications((prev) => [
-//       {
-//         id: Date.now(),
-//         message: `✅ ${msg.data.studentName} recorded attendance`,
-//         time: msg.data.timestamp,
-//       },
-//       ...prev.slice(0, 4),
-//     ]);
-//   }
-// });
 
 useEffect(() => {
   const load = async () => {
@@ -134,140 +119,7 @@ useEffect(() => {
 
   load();
 }, [id, refresh]);
-// useEffect(() => {
-//   const load = async () => {
-//     setLoading(true);
 
-//     try {
-//       const [courseRes, lecturesData, classroomsRes] = await Promise.all([
-//         getCourseById(id),
-//         getLecturesByCourse(id),
-//         api.get("/classroom/AllClassRoom", {
-//           params: {
-//             pagenumber: 1,
-//             pagesize: 100,
-//           },
-//         }),
-//       ]);
-
-//       // Course
-//       setCourse(courseRes);
-
-//       // Lectures
-//      // Lectures
-// console.log("LECTURES RAW =", lecturesData);
-
-// const lecturesArray = lecturesData?.courseLectures?.data || [];
-
-// setLectures(
-//   Array.isArray(lecturesArray)
-//     ? [...lecturesArray].sort((a, b) => b.id - a.id)
-//     : []
-// );
-//       // Classrooms
-//       const classData = classroomsRes.data;
-
-//       if (Array.isArray(classData?.data)) {
-//         setClassrooms(classData.data);
-//       } else if (Array.isArray(classData?.items)) {
-//         setClassrooms(classData.items);
-//       } else if (Array.isArray(classData)) {
-//         setClassrooms(classData);
-//       } else {
-//         setClassrooms([]);
-//       }
-
-//     } catch (err) {
-//       showToast(getErrorMessage(err), "error");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   load();
-// }, [id, refresh]);
-
-// useRealtime((msg) => {
-//   if (msg.event === EVENTS.LECTURE_ADDED) {
-//     const lecture = msg.data?.lecture;
-//     if (!lecture) return;
-
-//     setLectures((prev) => {
-//       const exists = prev.some(l => l.id === lecture.id);
-//       if (exists) return prev;
-//       return [...prev, lecture];
-//     });
-//   }
-
-//   if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
-//     setNotifications((prev) => [
-//       {
-//         id: Date.now(),
-//         message: `✅ ${msg.data.studentName} recorded attendance`,
-//         time: msg.data.timestamp,
-//       },
-//       ...prev.slice(0, 4),
-//     ]);
-//   }
-// });
-
-  // ✅ جيب بيانات الكورس والمحاضرات والكلاسروم
-//   useEffect(() => {
-//     const load = async () => {
-//       setLoading(true);
-//       try {
-//         const [courseRes, lecturesData, classroomsRes] = await Promise.all([
-//           getCourseById(id),
-//           getLecturesByCourse(id),
-//           api.get("/classroom/AllClassRoom", {
-//             params: { pagenumber: 1, pagesize: 100 },
-//           }),
-//         ]);
-
-//         setCourse(courseRes);
-//         setCourse(courseRes);
-
-// // ✅ الحل الصح
-// console.log("LECTURES RAW:", lecturesData);
-
-// if (Array.isArray(lecturesData?.data)) {
-//   setLectures(lecturesData.data);
-// } 
-// else if (Array.isArray(lecturesData?.items)) {
-//   setLectures(lecturesData.items);
-// }
-// else if (Array.isArray(lecturesData)) {
-//   setLectures(lecturesData);
-// }
-// else {
-//   setLectures([]);
-// }
-
-// if (Array.isArray(lecturesData)) {
-//   console.log("LECTURES RAW:", lecturesData);
-//   setLectures(lecturesData);
-// } else if (Array.isArray(lecturesData?.data)) {
-//   console.log("LECTURES RAW:", lecturesData);
-//   setLectures(lecturesData.data);
-// } else {
-//   console.log("LECTURES RAW:", lecturesData);
-//   setLectures([]);
-// }
-
-  //       const classData = classroomsRes.data;
-  //       if (Array.isArray(classData?.data)) setClassrooms(classData.data);
-  //       else if (Array.isArray(classData?.items)) setClassrooms(classData.items);
-  //       else if (Array.isArray(classData)) setClassrooms(classData);
-  //       else setClassrooms([]);
-
-  //     } catch (err) {
-  //       showToast(getErrorMessage(err), "error");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   load();
-  // }, [id, refresh]);
 
   // ✅ إضافة / تعديل محاضرة
   const handleAddLecture = async (e) => {
@@ -309,32 +161,7 @@ useEffect(() => {
 
   showToast("Lecture added 🎉");
 }
-        // await createLecture(
-        //   form.title,
-        //   form.startTime,
-        //   form.endTime,
-        //   parseInt(id),
-        //   parseInt(form.classRoomId)
-        // );
-        // broadcast(EVENTS.LECTURE_ADDED, {
-        //   courseCode: course?.code || course?.courseCode,
-        //   lecture: form,
-        // });
-// try {
-//   console.log("Before Broadcast");
-  
-//   broadcast(EVENTS.LECTURE_ADDED, {
-//     courseCode: course?.code || course?.courseCode,
-//     lecture: form,
-//   });
 
-//   console.log("Broadcast Success");
-// }catch (err) {
- // console.error("Broadcast Error:", err);
-//}
-
-      //  showToast("Lecture added 🎉");
-    //  }
       setShowModal(false);
       setEditingLecture(null);
       setForm({ title: "", classRoomId: "", startTime: "", endTime: "" });
@@ -508,30 +335,7 @@ useEffect(() => {
     </tr>
   )}
 </tbody>
-             {/* <tbody>
-              {lectures.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: "center", padding: 20 }}>
-                    No lectures yet
-                  </td>
-                </tr>
-              ) : (
-                lectures.map((l) => (
-                  <tr key={l.id}>
-                    <td>{l.title}</td>
-                    <td>{l.classRoomName || l.classroom || "-"}</td>
-                    <td>{l.startTime ? new Date(l.startTime).toLocaleString() : "-"}</td>
-                    <td>{l.endTime ? new Date(l.endTime).toLocaleString() : "-"}</td>
-                    <td className="actions">
-                      <span onClick={() => handleGenerateQR(l)}>📷</span>
-                      <span onClick={() => navigate(`/attendance-records/${id}/${l.id}`)}>📊</span>
-                      <span onClick={() => handleEdit(l)}>✏️</span>
-                      <span onClick={() => handleDelete(l.id)}>🗑️</span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>  */}
+           
           </table>
         </div>
 
