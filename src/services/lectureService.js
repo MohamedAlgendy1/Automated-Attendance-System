@@ -167,23 +167,23 @@
 //   const res = await api.get(`/lecturer/CourseOverview/${courseId}`);
 //   return res.data;
 // };
+//_________________________________________________________
+// import api from "./api";
 
-import api from "./api";
+// export const getLecturesByCourse = async (courseId) => {
+//   const res = await api.get("/courselecture/AllCourseLectures", {
+//     params: {
+//       pagenumber: 1,
+//       pagesize: 100,
+//       CourseId: Number(courseId),
+//     },
+//   });
 
-export const getLecturesByCourse = async (courseId) => {
-  const res = await api.get("/courselecture/AllCourseLectures", {
-    params: {
-      pagenumber: 1,
-      pagesize: 100,
-      CourseId: Number(courseId),
-    },
-  });
+//   console.log("API RESPONSE:", res.data);
 
-  console.log("API RESPONSE:", res.data);
-
-  return res.data;
-};
-
+//   return res.data;
+// };
+//___________________________________________________________
 // export const getLecturesByCourse = async (courseId) => {
 //   const res = await api.get("/courselecture/AllCourseLectures", {
 //     params: { pagenumber: 1, pagesize: 100 },
@@ -234,6 +234,94 @@ export const getLecturesByCourse = async (courseId) => {
 //     return Number(id) === Number(courseId);
 //   });
 // };
+//_______________________________________________________________________
+// export const createLecture = async (
+//   title,
+//   startTime,
+//   endTime,
+//   courseId,
+//   classRoomId
+// ) => {
+//   const res = await api.post("/courselecture/Create", {
+//     title,
+//     startTime,
+//     endTime,
+//     courseId: Number(courseId),
+//     classRoomId: Number(classRoomId),
+//   });
+
+//   return res.data;
+// };
+
+// export const editLecture = async (
+//   id,
+//   title,
+//   startTime,
+//   endTime,
+//   courseId,
+//   classRoomId
+// ) => {
+//   const res = await api.put(`/courselecture/Edit/${id}`, {
+//     title,
+//     startTime,
+//     endTime,
+//     courseId: Number(courseId),
+//     classRoomId: Number(classRoomId),
+//   });
+
+//   return res.data;
+// };
+
+
+
+// export const generateQR = async (courseLectureId) => {
+//   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+//   const res = await api.post("/lecturer/GenerateQR", {
+//     expiresAt,
+//     courseLectureId: Number(courseLectureId),
+//   });
+
+//   return res.data;
+// };
+
+// export const deleteLecture = async (id) => {
+//   const res = await api.delete(`/courselecture/Delete/${id}`);
+//   return res.data;
+// };
+
+
+
+// export const getAttendanceReport = async (courseId) => {
+//   const res = await api.get(`/lecturer/AttendanceReport/${courseId}`);
+//   return res.data;
+// };
+
+// export const getCourseOverview = async (courseId) => {
+//   const res = await api.get(`/lecturer/CourseOverview/${courseId}`);
+//   return res.data;
+// };
+
+import api from "./api";
+
+export const getLecturesByCourse = async (courseId) => {
+  const res = await api.get("/courselecture/AllCourseLectures", {
+    params: {
+      pagenumber: 1,
+      pagesize: 100,
+      CourseId: Number(courseId),
+    },
+  });
+
+  console.log("API RESPONSE =", res.data);
+
+  // رجع الأراي مباشرة
+  if (Array.isArray(res.data?.data)) return res.data.data;
+  if (Array.isArray(res.data?.items)) return res.data.items;
+  if (Array.isArray(res.data)) return res.data;
+
+  return [];
+};
 
 export const createLecture = async (
   title,
@@ -272,8 +360,6 @@ export const editLecture = async (
   return res.data;
 };
 
-
-
 export const generateQR = async (courseLectureId) => {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -289,8 +375,6 @@ export const deleteLecture = async (id) => {
   const res = await api.delete(`/courselecture/Delete/${id}`);
   return res.data;
 };
-
-
 
 export const getAttendanceReport = async (courseId) => {
   const res = await api.get(`/lecturer/AttendanceReport/${courseId}`);
