@@ -193,10 +193,10 @@ const overallPercent =
   {myCourses.map((course) => {
     const name = course.name || course.courseName || "";
     const code = course.code || course.courseCode || "";
-console.log("LECTURE:", lectures[0]);
+
     // ✅ هات المحاضرات الخاصة بالكورس
     const lectures = lecturesMap[course.courseId] || [];
-
+console.log("LECTURE:", lectures[0]);
     // ✅ احسب عدد المحاضرات اللي حضرتها
     const attended = lectures.filter((lec) =>
       attendance.some(
