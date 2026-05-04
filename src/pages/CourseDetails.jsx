@@ -53,7 +53,7 @@ function CourseDetails() {
   };
 
   useEffect(() => {
-    console.log("LECTURES UPDATED:", lectures);
+    
   }, [lectures]);
 
 
@@ -92,7 +92,7 @@ useEffect(() => {
 
       const lectures = lecturesRes || [];
 
-      console.log("FINAL LECTURES =", lectures);
+     
 
       setLectures(
         [...lectures].sort((a, b) => b.id - a.id)
@@ -127,7 +127,7 @@ useEffect(() => {
 
     if (!form.title || !form.classRoomId || !form.startTime || !form.endTime) {
       setFormError("Please fill all fields");
-      return console.log("lectures state =", lectures); 
+      return ; 
     }
 
     setFormError("");
@@ -310,7 +310,7 @@ useEffect(() => {
               </tr>
             </thead>
  <tbody>
-  {console.log("LECTURES STATE =", lectures)}
+
 
   {lectures && lectures.length > 0 ? (
     lectures.map((l) => (
