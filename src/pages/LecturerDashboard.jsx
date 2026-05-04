@@ -392,7 +392,7 @@ useEffect(() => {
         courses.map(async (c) => {
           try {
             const res = await getCourseOverview(c.courseId);
-
+            console.log("OVERVIEW:", res);
             result[c.courseId] =
               res?.totalEnrolled ??
               res?.totalStudents ??
