@@ -42,7 +42,14 @@ function StudentCourseDetails() {
     ) {
       setRefresh((r) => r + 1);
     }
+
+  if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
+    setRefresh((r) => r + 1);
+  }
+
   });
+
+
 
   // ✅ جيب بيانات الكورس والمحاضرات والحضور
   useEffect(() => {
@@ -76,13 +83,28 @@ function StudentCourseDetails() {
   }, [courseId, refresh]);
 
   const totalLectures = lectures.length;
+  // const attended = attendance.filter(
+  //   (a) => a.courseId === course?.id
+  // ).length;
+
   const attended = attendance.filter(
-    (a) => a.courseId === course?.id
-  ).length;
+  (a) => a.courseId === course?.courseId
+).length;
+
   const percent = totalLectures === 0 ? 0 : Math.round((attended / totalLectures) * 100);
 
-  const isLectureAttended = (lectureId) =>
-    attendance.some((a) => a.courseLectureId === lectureId || a.lectureId === lectureId);
+ // const isLectureAttended = (lectureId) =>
+  //  attendance.some((a) =>a.courseLectureId === lectureId || a.lectureId === lectureId);
+
+const isLectureAttended = (lectureId) =>
+  attendance.some((a) =>
+    a.lectureId === lectureId ||
+    a.courseLectureId === lectureId ||
+    a.id === lectureId
+  );
+      
+
+
 
   const showError = (msg) => {
     setScanResult("error");
@@ -102,6 +124,10 @@ function StudentCourseDetails() {
   const recordAttendance = async (qrToken, lat, lng) => {
     try {
       await scanQR(qrToken, lat || 0, lng || 0);
+
+      const updated = await getMyAttendanceHistory();
+      setAttendance(updated);
+
       setScanResult("success");
       setScanMessage("✅ Attendance recorded successfully!");
       setLocationStatus("idle");
@@ -160,6 +186,8 @@ function StudentCourseDetails() {
   if (!course) return <h2 style={{ padding: 20 }}>Course not found</h2>;
 
   const courseName = course.name || course.courseName || "";
+
+ 
 
   return (
     <div className="dashboard student-page">
