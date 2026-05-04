@@ -109,54 +109,7 @@ setTotalLectures(lecturesCount);
   load();
 }, [refresh]);
 
-  // useEffect(() => {
-  //   const load = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const data = await getMyCourses();
-    
-  //       setMyCourses(data);
-  //     } catch (err) {
-  //       console.error(getErrorMessage(err));
-  //       setMyCourses([]);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   load();
-  // }, [refresh]);
 
-  // const handleEnroll = async (e) => {
-  //   e.preventDefault();
-  //   setEnrollError("");
-
-  //   if (!enrollForm.courseCode) {
-  //     setEnrollError("Please enter course code");
-  //     return;
-  //   }
-
-  //   setEnrollLoading(true);
-  //   try {
-
-  //     await enrollInCourse(null, enrollForm.courseCode);
-//       await enrollInCourse(
-//   enrollForm.courseId || 0,
-//   enrollForm.courseCode
-// );
-//       await enrollInCourse(
-//         enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
-//         enrollForm.courseCode
-//       );
-  //     showToast("Enrolled successfully 🎉");
-  //     setShowModal(false);
-  //     setEnrollForm({ courseId: "", courseCode: "" });
-  //     setRefresh((r) => r + 1);
-  //   } catch (err) {
-  //     setEnrollError(getErrorMessage(err));
-  //   } finally {
-  //     setEnrollLoading(false);
-  //   }
-  // };
 
   const attendedLectures = attendance.filter(
   (a) => a.status === "Present"
@@ -240,7 +193,7 @@ const overallPercent =
   {myCourses.map((course) => {
     const name = course.name || course.courseName || "";
     const code = course.code || course.courseCode || "";
-
+console.log("LECTURE:", lectures[0]);
     // ✅ هات المحاضرات الخاصة بالكورس
     const lectures = lecturesMap[course.courseId] || [];
 
