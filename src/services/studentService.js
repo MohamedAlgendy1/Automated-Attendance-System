@@ -26,11 +26,30 @@ export const enrollInCourse = async (courseCode) => {
   return res.data;
 };
 
+// export const getMyAttendanceHistory = async () => {
+//   const res = await api.get("/student/MyAttendanceHistory");
+//   const data = res.data;
+//   if (Array.isArray(data)) return data;
+//   if (Array.isArray(data?.items)) return data.items;
+//   return [];
+// };
+
 export const getMyAttendanceHistory = async () => {
   const res = await api.get("/student/MyAttendanceHistory");
-  const data = res.data;
+  let data = res.data;
+
+  // 👇 الحل
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return [];
+    }
+  }
+
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
+
   return [];
 };
 

@@ -59,6 +59,12 @@ useEffect(() => {
   // ✅ جيب بيانات الكورس والمحاضرات والحضور
   useEffect(() => {
     const load = async () => {
+
+      const updated = await getMyAttendanceHistory();
+console.log("UPDATED attendance:", updated);
+setAttendance(updated);
+
+
       setLoading(true);
       try {
         const [coursesData, historyData] = await Promise.all([
@@ -107,8 +113,8 @@ const isLectureAttended = (lectureId) =>
     a.courseLectureId === lectureId ||
     a.id === lectureId
   );
-      
 
+  
 
 
   const showError = (msg) => {
@@ -130,9 +136,7 @@ const isLectureAttended = (lectureId) =>
     try {
       await scanQR(qrToken, lat || 0, lng || 0);
 
-     const updated = await getMyAttendanceHistory();
-console.log("UPDATED attendance:", updated);
-setAttendance(updated);
+
 
       setScanResult("success");
       setScanMessage("✅ Attendance recorded successfully!");
@@ -142,6 +146,7 @@ setAttendance(updated);
       showError(getErrorMessage(err));
     }
   };
+
 
   // ✅ معالجة نتيجة الـ QR
   const handleQRResult = (text) => {
