@@ -369,13 +369,12 @@ function LecturerDashboard() {
   const [formLoading, setFormLoading] = useState(false);
 
   const decoded = parseJwt(localStorage.getItem("token")) || {};
-const lecturerName =
-  decoded?.name ||
-  decoded?.unique_name ||
-  decoded?.email ||
+const lecturerName = 
   decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+  decoded?.["name"] ||
+  decoded?.["Name"] ||
+  decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"] ||
   "Lecturer";
-
   /* REALTIME */
   useRealtime((msg) => {
     if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
@@ -399,7 +398,7 @@ useEffect(() => {
               res?.totalStudents ??
               res?.enrolledStudents ??
               0;
-          } catch (err) {
+          } catch  {
             // مهم: نتخطى أي 403 بدون ما نكسر الصفحة
             result[c.courseId] = 0;
           }
@@ -599,7 +598,8 @@ useEffect(() => {
   </div>
 </div>
 
-                <h3>{c.courseName || c.name}</h3>
+                 <h3>{c.courseName || c.name}</h3> 
+               
                <p>
   {courseStudents?.[c.courseId] || 0} students enrolled
 </p>
