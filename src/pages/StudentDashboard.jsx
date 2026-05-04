@@ -2,7 +2,8 @@ import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { parseJwt, getErrorMessage } from "../services/api";
-import { enrollInCourse } from "../services/studentService";
+import { enrollInCourse, getMyCourses } from "../services/studentService";
+
 
 function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
