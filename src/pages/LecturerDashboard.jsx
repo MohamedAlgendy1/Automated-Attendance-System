@@ -369,6 +369,8 @@ function LecturerDashboard() {
   const [formLoading, setFormLoading] = useState(false);
 
   const decoded = parseJwt(localStorage.getItem("token")) || {};
+console.log(decoded);
+
 const lecturerName = 
   decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
   decoded?.["name"] ||
