@@ -17,7 +17,7 @@ const [refresh, setRefresh] = useState(0);
  // const [enrollForm, setEnrollForm] = useState({ courseId: "", courseCode: "" });
   const [enrollError, setEnrollError] = useState("");
   const [enrollLoading, setEnrollLoading] = useState(false);
-
+const [lecturesMap, setLecturesMap] = useState({});
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 const [attendance, setAttendance] = useState([]);
 const [totalLectures, setTotalLectures] = useState(0);
@@ -78,15 +78,25 @@ useEffect(() => {
       setAttendance(attendanceData);
 
       const lecturesArrays = await Promise.all(
-        courses.map((c) => getLecturesByCourse(c.courseId))
-      );
+  courses.map((c) => getLecturesByCourse(c.courseId))
+);
 
-      const lecturesCount = lecturesArrays.reduce(
-        (sum, arr) => sum + arr.length,
-        0
-      );
+// ✅ اعمل map تربط كل كورس بالمحاضرات بتاعته
+const map = {};
+courses.forEach((c, i) => {
+  map[c.courseId] = lecturesArrays[i];
+});
 
-      setTotalLectures(lecturesCount);
+setLecturesMap(map);
+
+// (اختياري لو لسه محتاج الإجمالي)
+const lecturesCount = lecturesArrays.reduce(
+  (sum, arr) => sum + arr.length,
+  0
+);
+
+setTotalLectures(lecturesCount);
+      
 
     } catch (err) {
       console.error(getErrorMessage(err));
@@ -226,51 +236,53 @@ const overallPercent =
                 <span>Use the "Enroll in Course" button to join a course.</span>
               </div>
             ) : (
-              <div className="courses-grid">
-                {myCourses.map((course) => {
-                  const name = course.name || course.courseName || "";
-                  const code = course.code || course.courseCode || "";
+             <div className="courses-grid">
+  {myCourses.map((course) => {
+    const name = course.name || course.courseName || "";
+    const code = course.code || course.courseCode || "";
 
-                  const courseLectures = attendance.filter(
-  (a) => a.courseId === course.courseId
-);
+    // ✅ هات المحاضرات الخاصة بالكورس
+    const lectures = lecturesMap[course.courseId] || [];
 
-const attended = courseLectures.filter(
-  (a) => a.status === "Present"
-).length;
+    // ✅ احسب عدد المحاضرات اللي حضرتها
+    const attended = lectures.filter((lec) =>
+      attendance.some(
+        (a) =>
+          a.courseLectureId === lec.courseLectureId &&
+          a.status === "Present"
+      )
+    ).length;
 
-const total = courseLectures.length;
+    const total = lectures.length;
 
-const percent = total === 0 ? 0 : Math.round((attended / total) * 100);
+    const percent =
+      total === 0 ? 0 : Math.round((attended / total) * 100);
 
-console.log("Course:", course.courseId);
-console.log("Attendance:", attendance);
+    return (
+      <div
+        key={course.courseId}
+        className="course-card"
+        onClick={() => navigate(`/student/course/${course.courseId}`)}
+        style={{ cursor: "pointer" }}
+      >
+        <h3>{name}</h3>
+        <span className="course-code">{code}</span>
 
-
-                  return (
-                    <div
-                      key={course.id}
-                      className="course-card"
-                      onClick={() => navigate(`/student/course/${course.courseId}`)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <h3>{name}</h3>
-                      <span className="course-code">{code}</span>
-                      <div className="attendance-box">
-                        <div
-                          className="progress-circle"
-                          style={{
-                            background: `conic-gradient(#22c55e ${percent}%, #e5e7eb ${percent}% 100%)`,
-                          }}
-                        >
-                          <span>{percent}%</span>
-                        </div>
-                        <p>My Attendance</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+        <div className="attendance-box">
+          <div
+            className="progress-circle"
+            style={{
+              background: `conic-gradient(#22c55e ${percent}%, #e5e7eb ${percent}% 100%)`,
+            }}
+          >
+            <span>{percent}%</span>
+          </div>
+          <p>My Attendance</p>
+        </div>
+      </div>
+    );
+  })}
+</div>
             )}
           </>
         )}
