@@ -301,7 +301,9 @@ function CourseBlock({ course }) {
               });
             }
 
-            map.get(s.studentId).attendedSet.add(lec.id);
+if (s.status?.toLowerCase() === "present") {
+  map.get(s.studentId).attendedSet.add(lec.id);
+}
           });
         }
 
