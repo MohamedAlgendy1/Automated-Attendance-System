@@ -50,10 +50,10 @@ function StudentCourseDetails() {
   });
 
 
-useEffect(() => {
-  console.log("lectures:", lectures);
-  console.log("attendance:", attendance);
-}, [lectures, attendance]);
+// useEffect(() => {
+//   console.log("lectures:", lectures);
+//   console.log("attendance:", attendance);
+// }, [lectures, attendance]);
 
 
   // ✅ جيب بيانات الكورس والمحاضرات والحضور
@@ -61,7 +61,7 @@ useEffect(() => {
     const load = async () => {
 
       const updated = await getMyAttendanceHistory();
-console.log("UPDATED attendance:", updated);
+
 setAttendance(updated);
 
 

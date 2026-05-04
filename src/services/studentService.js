@@ -5,7 +5,7 @@ export const getMyCourses = async () => {
   const res = await api.get("/student/MyCourses");
   const data = res.data;
 
-  console.log("RAW DATA:", data); // 👈 مهم للتأكد
+  //console.log("RAW DATA:", data); // 👈 مهم للتأكد
 
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.courses)) return data.courses; // ✅ الصح

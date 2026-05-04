@@ -196,7 +196,7 @@ const overallPercent =
 
     // ✅ هات المحاضرات الخاصة بالكورس
     const lectures = lecturesMap[course.courseId] || [];
-console.log("LECTURE:", lectures[0]);
+
     // ✅ احسب عدد المحاضرات اللي حضرتها
     const attended = lectures.filter((lec) =>
       attendance.some(
