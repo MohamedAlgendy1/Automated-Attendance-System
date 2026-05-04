@@ -1,5 +1,5 @@
 import "./../styles/dashboard.css";
-import { useState} from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { enrollInCourse } from "../services/studentService";
