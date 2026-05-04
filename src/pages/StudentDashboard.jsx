@@ -46,7 +46,6 @@ function StudentDashboard() {
     load();
   }, [refresh]);
 
-  // ✅ Enroll في كورس
   const handleEnroll = async (e) => {
     e.preventDefault();
     setEnrollError("");
@@ -62,10 +61,10 @@ function StudentDashboard() {
   enrollForm.courseId || 0,
   enrollForm.courseCode
 );
-      // await enrollInCourse(
-      //   enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
-      //   enrollForm.courseCode
-      // );
+      await enrollInCourse(
+        enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
+        enrollForm.courseCode
+      );
       showToast("Enrolled successfully 🎉");
       setShowModal(false);
       setEnrollForm({ courseId: "", courseCode: "" });
@@ -199,7 +198,7 @@ function StudentDashboard() {
       </div>
 
       {/* Enroll Modal */}
-      {showModal && (
+       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
@@ -229,7 +228,7 @@ function StudentDashboard() {
       )}
 
       {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
-    </div>
+    </div> 
   );
 }
 
