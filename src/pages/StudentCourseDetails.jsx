@@ -130,8 +130,9 @@ const isLectureAttended = (lectureId) =>
     try {
       await scanQR(qrToken, lat || 0, lng || 0);
 
-      const updated = await getMyAttendanceHistory();
-      setAttendance(updated);
+     const updated = await getMyAttendanceHistory();
+console.log("UPDATED attendance:", updated);
+setAttendance(updated);
 
       setScanResult("success");
       setScanMessage("✅ Attendance recorded successfully!");
