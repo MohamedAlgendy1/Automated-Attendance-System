@@ -7,9 +7,9 @@ import { enrollInCourse } from "../services/studentService";
 function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
   const [showModal, setShowModal] = useState(false);
-  const [myCourses] = useState([]);
-  const [loading] = useState(true);
-  const [setRefresh] = useState(0);
+const [myCourses, setMyCourses] = useState([]);
+const [loading, setLoading] = useState(true);
+const [refresh, setRefresh] = useState(0);
   const navigate = useNavigate();
   const [enrollForm, setEnrollForm] = useState({ courseCode: "" });
  // const [enrollForm, setEnrollForm] = useState({ courseId: "", courseCode: "" });
@@ -59,21 +59,21 @@ const handleEnroll = async (e) => {
   }
 };
 
-  // useEffect(() => {
-  //   const load = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const data = await getMyCourses();
-  //       setMyCourses(data);
-  //     } catch (err) {
-  //       console.error(getErrorMessage(err));
-  //       setMyCourses([]);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   load();
-  // }, [refresh]);
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await getMyCourses();
+        setMyCourses(data);
+      } catch (err) {
+        console.error(getErrorMessage(err));
+        setMyCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [refresh]);
 
   // const handleEnroll = async (e) => {
   //   e.preventDefault();
