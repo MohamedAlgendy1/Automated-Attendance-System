@@ -380,7 +380,6 @@ function LecturerDashboard() {
       setRealtimeCount((p) => p + 1);
     }
   });
-
 useEffect(() => {
   const loadStudents = async () => {
     if (!courses.length) return;
@@ -390,14 +389,18 @@ useEffect(() => {
 
       await Promise.all(
         courses.map(async (c) => {
-          const res = await getCourseOverview(c.courseId);
+          try {
+            const res = await getCourseOverview(c.courseId);
 
-          // ✅ من الـ API اللي انت بعتها
-          result[c.courseId] =
-            res?.totalEnrolled ??
-            res?.totalPresent ??   // fallback مهم
-            res?.report?.length ?? // fallback قوي جدًا
-            0;
+            result[c.courseId] =
+              res?.totalEnrolled ??
+              res?.totalStudents ??
+              res?.enrolledStudents ??
+              0;
+          } catch (err) {
+            // مهم: نتخطى أي 403 بدون ما نكسر الصفحة
+            result[c.courseId] = 0;
+          }
         })
       );
 

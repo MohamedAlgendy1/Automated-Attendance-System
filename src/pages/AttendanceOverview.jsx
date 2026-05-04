@@ -318,7 +318,7 @@ function CourseBlock({ course }) {
         });
 
         setStudents(result);
-      } catch (err) {
+      } catch  {
         setStudents([]);
       } finally {
         setLoading(false);

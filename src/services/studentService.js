@@ -1,12 +1,6 @@
 import api from "./api";
 
-// export const getMyCourses = async () => {
-//   const res = await api.get("/student/MyCourses");
-//   const data = res.data;
-//   if (Array.isArray(data)) return data;
-//   if (Array.isArray(data?.items)) return data.items;
-//   return [];
-// };
+
 export const getMyCourses = async () => {
   const res = await api.get("/student/MyCourses");
   const data = res.data;
@@ -17,22 +11,7 @@ export const getMyCourses = async () => {
   if (Array.isArray(data?.courses)) return data.courses; // ✅ الصح
   return [];
 };
-// export const enrollInCourse = async (courseId, courseCode) => {
-//   const res = await api.post("/student/Enrollment", {
-//     courseId: courseId ? parseInt(courseId) : undefined,
-//     courseCode,
-//   });
-//   return res.data;
-// };
 
-// export const enrollInCourse = async (courseId, courseCode) => {
-//   const res = await api.post("/student/Enrollment", {
-//     courseId,
-//     courseCode,
-//   });
-
-//   return res.data;
-// };
 
 export const enrollInCourse = async (courseCode) => {
   const res = await api.post(
