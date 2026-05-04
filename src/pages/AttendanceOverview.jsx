@@ -16,19 +16,31 @@ function AttendanceOverview() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     "Lecturer";
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await getAllCourses();
-        setCourses(data);
-      } catch (err) {
-        console.error(getErrorMessage(err));
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const load = async () => {
+    try {
+      const lectures = await getLecturesByCourse(courseId);
+
+      if (!lectures || lectures.length === 0) {
+        setReport([]);
+        return;
       }
-    };
-    load();
-  }, []);
+
+      const lectureId = lectures[0].id;
+
+      const res = await getAttendanceReport(lectureId);
+
+      setReport(res?.report || []);
+
+    } catch (err) {
+      setReport([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, [courseId]);
 
   return (
     <div className="dashboard attendance-page">
@@ -88,15 +100,13 @@ function CourseBlock({ course }) {
 
  useEffect(() => {
 
-    getAttendanceReport(courseId)
-      .then((res) => {
-        if (Array.isArray(res)) setReport(res);
-        else if (Array.isArray(res?.students)) setReport(res.students);
-        else setReport([]);
-      })
-      .catch(() => setReport([]))
-      .finally(() => setLoading(false));
-  }, [courseId]);
+getAttendanceReport(courseId)
+  .then((res) => {
+    setReport(res?.report || []);
+  })
+  .catch(() => setReport([]))
+  .finally(() => setLoading(false));
+
 
   return (
     <div className="table-box">
