@@ -334,7 +334,7 @@
 import "./../styles/dashboardLecturer.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { getCourseOverview } from "../services/lectureService";
 import { useRealtime } from "../hooks/useRealtime";
 import { EVENTS } from "../realtime";
 
@@ -348,8 +348,7 @@ import {
 } from "../services/courseService";
 
 import {
-  getLecturesByCourse,
-  getAttendanceReport,
+
 } from "../services/lectureService";
 
 function LecturerDashboard() {
@@ -360,7 +359,7 @@ function LecturerDashboard() {
   const [courseStudents, setCourseStudents] = useState({});
   const [refresh, setRefresh] = useState(0);
   const [realtimeCount, setRealtimeCount] = useState(0);
-  const [totalStudents, setTotalStudents] = useState(0);
+ 
 
   const [showModal, setShowModal] = useState(false);
   const [editCourseData, setEditCourseData] = useState(null);
@@ -382,6 +381,35 @@ function LecturerDashboard() {
     }
   });
 
+useEffect(() => {
+  const loadStudents = async () => {
+    try {
+      const result = {};
+
+      for (const c of courses || []) {
+        const res = await getCourseOverview(c.courseId);
+
+        // حسب الـ API response
+        result[c.courseId] =
+          res?.totalEnrolled ??
+          res?.enrolledStudents ??
+          res?.studentsCount ??
+          0;
+      }
+
+      setCourseStudents(result);
+    } catch (err) {
+      console.log(err);
+      setCourseStudents({});
+    }
+  };
+
+  if (courses.length > 0) {
+    loadStudents();
+  }
+}, [courses, refresh]);
+
+
   /* LOAD COURSES */
   useEffect(() => {
     const load = async () => {
@@ -399,35 +427,8 @@ function LecturerDashboard() {
     load();
   }, [refresh]);
 
-  /* STUDENTS COUNT */
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const coursesData = await getAllCourses();
 
-        const set = new Set();
 
-        for (const c of coursesData || []) {
-          const lectures = await getLecturesByCourse(c.courseId);
-
-          for (const lec of lectures || []) {
-            const res = await getAttendanceReport(lec.id);
-
-            (res?.report || []).forEach((s) => {
-              set.add(s.studentId);
-            });
-          }
-        }
-
-        setTotalStudents(set.size);
-      } catch (err) {
-        console.log(err);
-        setTotalStudents(0);
-      }
-    };
-
-    run();
-  }, [refresh]);
 
   /* FORM */
   const handleSubmit = async (e) => {
@@ -529,10 +530,11 @@ function LecturerDashboard() {
           </div>
 
           <div className="card">
-            <p>Students</p>
-            <h2>{totalStudents}</h2>
-          </div>
-
+  <p>Total Enrolled Students</p>
+  <h2>
+    {Object.values(courseStudents).reduce((a, b) => a + b, 0)}
+  </h2>
+</div>
           {realtimeCount > 0 && (
             <div className="card" style={{ borderLeft: "4px solid #22c55e" }}>
               <p>Live Attendance</p>
