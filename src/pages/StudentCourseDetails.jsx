@@ -55,8 +55,8 @@ function StudentCourseDetails() {
         ]);
 
         // دور على الكورس بالـ id أو الـ code
-       const found = coursesData.find(
-  (c) => c.courseId === parseInt(courseId)
+  const found = coursesData.find(
+  (c) => c.courseId === Number(courseId)
 );
 
         setCourse(found || null);
@@ -73,7 +73,7 @@ function StudentCourseDetails() {
       }
     };
     load();
-  }, [courseCode, refresh]);
+  }, [courseId, refresh]);
 
   const totalLectures = lectures.length;
   const attended = attendance.filter(
