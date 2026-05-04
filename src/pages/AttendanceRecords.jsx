@@ -242,13 +242,13 @@
 // }
 
 // export default AttendanceRecords;
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceRecords.css";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAttendanceReport } from "../services/lectureService";
 import { getCourseById } from "../services/courseService";
+import { getLecturesByCourse } from "../services/lectureService";
 
 function AttendanceRecords() {
   const { courseId } = useParams();
@@ -267,21 +267,30 @@ function AttendanceRecords() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [courseRes] = await Promise.all([
-          getCourseById(courseId),
-        ]);
+        setLoading(true);
 
+        // 1️⃣ جيب الكورس
+        const courseRes = await getCourseById(courseId);
         setCourse(courseRes);
 
-        // ⚠️ لازم lectureId (مفترض من backend أو أول lecture)
-        const lectureId = courseRes?.latestLectureId;
+        // 2️⃣ جيب المحاضرات
+        const lecturesRes = await getLecturesByCourse(courseId);
 
-        if (lectureId) {
-          const reportRes = await getAttendanceReport(lectureId);
-          setReport(reportRes.report || []);
-        } else {
+        const lectures =
+          lecturesRes?.courseLectures?.data || [];
+
+        // 3️⃣ خد أول lecture (أو آخر واحدة لو عايز)
+        const lectureId = lectures?.[0]?.id;
+
+        if (!lectureId) {
           setReport([]);
+          return;
         }
+
+        // 4️⃣ جيب الحضور
+        const reportRes = await getAttendanceReport(lectureId);
+
+        setReport(reportRes?.report || []);
 
       } catch (err) {
         console.error(getErrorMessage(err));
@@ -296,15 +305,14 @@ function AttendanceRecords() {
 
   return (
     <div className="dashboard records-page">
+
       {/* Sidebar */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
           <ul className="menu">
             <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
-            <li onClick={() => navigate("/attendance")}>
-              📊 Attendance Overview
-            </li>
+            <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>
           </ul>
         </div>
 
@@ -335,24 +343,20 @@ function AttendanceRecords() {
       <div className="main">
         <h1>Attendance Records</h1>
 
-        <p
-          onClick={() => navigate(-1)}
-          style={{ cursor: "pointer", color: "#2563eb", marginBottom: 20 }}
-        >
+        <p onClick={() => navigate(-1)} style={{ cursor: "pointer", color: "#2563eb" }}>
           ← Back
         </p>
 
         {/* Cards */}
-        <div className="cards" style={{ marginBottom: 20 }}>
+        <div className="cards">
           <div className="card">
             <p>Course</p>
-            <h2>{course?.code || course?.courseCode || "-"}</h2>
+            <h2>{course?.courseCode || course?.code || "-"}</h2>
           </div>
 
           <div className="card">
-            <p>Attended</p>
+            <p>Present</p>
             <h2 style={{ color: "#22c55e" }}>
-              {report.filter((s) => s.status === "Present").length} /{" "}
               {report.length}
             </h2>
           </div>
@@ -360,17 +364,15 @@ function AttendanceRecords() {
 
         {/* Table */}
         <div className="table-box">
-          <h2>{course?.name || course?.courseName || "Course"}</h2>
+          <h2>{course?.name || "Course"}</h2>
 
           {loading ? (
-            <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>
-              Loading...
-            </p>
+            <p>Loading...</p>
           ) : (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Student Name</th>
+                  <th>Student</th>
                   <th>Status</th>
                   <th>Scan Time</th>
                 </tr>
@@ -379,40 +381,34 @@ function AttendanceRecords() {
               <tbody>
                 {report.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: "center", padding: 20 }}>
-                      No attendance records yet
+                    <td colSpan="3" style={{ textAlign: "center" }}>
+                      No attendance yet
                     </td>
                   </tr>
                 ) : (
-                  report.map((s, i) => {
-                    const isPresent = s.status === "Present";
+                  report.map((s, i) => (
+                    <tr key={i}>
+                      <td>{s.studentName}</td>
 
-                    return (
-                      <tr key={i}>
-                        <td>{s.studentName}</td>
+                      <td>
+                        <span style={{
+                          padding: "5px 10px",
+                          borderRadius: 20,
+                          background: "#dcfce7",
+                          color: "#16a34a",
+                          fontWeight: 600
+                        }}>
+                          {s.status}
+                        </span>
+                      </td>
 
-                        <td>
-                          <span
-                            style={{
-                              padding: "5px 10px",
-                              borderRadius: 20,
-                              background: isPresent ? "#dcfce7" : "#fee2e2",
-                              color: isPresent ? "#16a34a" : "#dc2626",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {isPresent ? "✅ Present" : "❌ Absent"}
-                          </span>
-                        </td>
-
-                        <td>
-                          {s.scanTime
-                            ? new Date(s.scanTime).toLocaleString()
-                            : "-"}
-                        </td>
-                      </tr>
-                    );
-                  })
+                      <td>
+                        {s.scanTime
+                          ? new Date(s.scanTime).toLocaleString()
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
