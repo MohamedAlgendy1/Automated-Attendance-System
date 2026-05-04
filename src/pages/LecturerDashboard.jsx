@@ -357,7 +357,7 @@ function LecturerDashboard() {
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [courseStudents, setCourseStudents] = useState({});
   const [refresh, setRefresh] = useState(0);
   const [realtimeCount, setRealtimeCount] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
@@ -592,7 +592,9 @@ function LecturerDashboard() {
 </div>
 
                 <h3>{c.courseName || c.name}</h3>
-                <p>0 students enrolled</p>
+               <p>
+  {courseStudents[c.courseId] ?? 0} students enrolled
+</p>
               </div>
             ))}
 
