@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { enrollInCourse, getMyCourses } from "../services/studentService";
-
+import { getMyAttendanceHistory } from "../services/studentService";
+import { getLecturesByCourse } from "../services/lectureService";
 
 function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
@@ -18,7 +19,8 @@ const [refresh, setRefresh] = useState(0);
   const [enrollLoading, setEnrollLoading] = useState(false);
 
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
-
+const [attendance, setAttendance] = useState([]);
+const [totalLectures, setTotalLectures] = useState(0);
   // ✅ بيانات الطالب من الـ token
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
@@ -64,22 +66,55 @@ console.log("FULL ERROR:", err.response);
   }
 };
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const data = await getMyCourses();
+
+useEffect(() => {
+  const load = async () => {
+    setLoading(true);
+    try {
+      const courses = await getMyCourses();
+      setMyCourses(courses);
+
+      const attendanceData = await getMyAttendanceHistory();
+      setAttendance(attendanceData);
+
+      const lecturesArrays = await Promise.all(
+        courses.map((c) => getLecturesByCourse(c.courseId))
+      );
+
+      const lecturesCount = lecturesArrays.reduce(
+        (sum, arr) => sum + arr.length,
+        0
+      );
+
+      setTotalLectures(lecturesCount);
+
+    } catch (err) {
+      console.error(getErrorMessage(err));
+      setMyCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, [refresh]);
+
+  // useEffect(() => {
+  //   const load = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const data = await getMyCourses();
     
-        setMyCourses(data);
-      } catch (err) {
-        console.error(getErrorMessage(err));
-        setMyCourses([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [refresh]);
+  //       setMyCourses(data);
+  //     } catch (err) {
+  //       console.error(getErrorMessage(err));
+  //       setMyCourses([]);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   load();
+  // }, [refresh]);
 
   // const handleEnroll = async (e) => {
   //   e.preventDefault();
@@ -112,6 +147,15 @@ console.log("FULL ERROR:", err.response);
   //     setEnrollLoading(false);
   //   }
   // };
+
+  const attendedLectures = attendance.filter(
+  (a) => a.status === "Present"
+).length;
+
+const overallPercent =
+  totalLectures === 0
+    ? 0
+    : Math.round((attendedLectures / totalLectures) * 100);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -163,8 +207,8 @@ console.log("FULL ERROR:", err.response);
 
             <div className="cards">
               <div className="card"><p>My Courses</p><h2>{myCourses.length}</h2></div>
-              <div className="card"><p>Attended Lectures</p><h2>0</h2></div>
-              <div className="card"><p>Overall Attendance</p><h2>0%</h2></div>
+              <div className="card"><p>Attended Lectures</p><h2>{attendedLectures}</h2></div>
+              <div className="card"><p>Overall Attendance</p><h2>{overallPercent}%</h2></div>
             </div>
 
             <div className="top-bar">
