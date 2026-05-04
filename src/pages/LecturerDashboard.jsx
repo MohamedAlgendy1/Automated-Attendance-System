@@ -369,10 +369,12 @@ function LecturerDashboard() {
   const [formLoading, setFormLoading] = useState(false);
 
   const decoded = parseJwt(localStorage.getItem("token")) || {};
-  const lecturerName =
-    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
-    decoded?.name ||
-    "Lecturer";
+const lecturerName =
+  decoded?.name ||
+  decoded?.unique_name ||
+  decoded?.email ||
+  decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+  "Lecturer";
 
   /* REALTIME */
   useRealtime((msg) => {
