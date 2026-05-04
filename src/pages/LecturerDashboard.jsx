@@ -564,17 +564,32 @@ function LecturerDashboard() {
                 key={c.courseId}
                 className="course-card"
                 onClick={() => navigate(`/course/${c.courseId}`)}
-              >
-                <div className="course-header">
-                  <span className="course-code">
-                    {c.courseCode || c.code}
-                  </span>
+              ><div className="course-header">
+  <span className="course-code">
+    {c.courseCode || c.code}
+  </span>
 
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => handleEdit(c)}>✏️</button>
-                    <button onClick={() => handleDelete(c.courseId)}>🗑</button>
-                  </div>
-                </div>
+  <div
+    className="actions"
+    onClick={(e) => e.stopPropagation()}
+  >
+    <button
+      className="edit-btn"
+      onClick={() => handleEdit(c)}
+      title="Edit"
+    >
+      ✏️
+    </button>
+
+    <button
+      className="delete-btn"
+      onClick={() => handleDelete(c.courseId)}
+      title="Delete"
+    >
+      🗑
+    </button>
+  </div>
+</div>
 
                 <h3>{c.courseName || c.name}</h3>
                 <p>0 students enrolled</p>
