@@ -201,7 +201,7 @@ console.log("LECTURE:", lectures[0]);
     const attended = lectures.filter((lec) =>
       attendance.some(
         (a) =>
-          a.courseLectureId === lec.courseLectureId &&
+         a.courseLectureId === lec.id &&
           a.status === "Present"
       )
     ).length;
