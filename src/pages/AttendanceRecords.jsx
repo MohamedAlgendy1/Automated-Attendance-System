@@ -265,7 +265,7 @@ function AttendanceRecords() {
     "Lecturer";
 
 
-    
+
 useEffect(() => {
   const load = async () => {
     try {
@@ -278,7 +278,7 @@ useEffect(() => {
       // 2️⃣ المحاضرات
       const lecturesRes = await getLecturesByCourse(courseId);
 
-      const lectures = lecturesRes?.courseLectures?.data || [];
+      const lectures = lecturesRes || [];
 
       if (lectures.length === 0) {
         setReport([]);

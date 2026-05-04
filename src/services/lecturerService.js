@@ -1,20 +1,16 @@
-// import api from "./api";
+import api from "./api";
 
-// // ---------------- ATTENDANCE REPORT ----------------
-// export const getAttendanceReport = async (courseId) => {
-//   const res = await api.get(`/lecturer/AttendanceReport/${courseId}`);
-//   return res.data;
-// };
-// // ---------------- COURSE OVERVIEW ----------------
-// export const getCourseOverview = (courseId) =>
-//   api.get(`/lecturer/CourseOverview/${courseId}`);
 
-// // ---------------- GENERATE QR ----------------
-// export const generateQR = (data = {}) =>
-//   api.post("/lecturer/GenerateQR", {
-//     expiresAt: data.expiresAt,
-//     courseLectureId: data.courseLectureId,
-//   });
+// ---------------- COURSE OVERVIEW ----------------
+export const getCourseOverview = (courseId) =>
+  api.get(`/lecturer/CourseOverview/${courseId}`);
+
+// ---------------- GENERATE QR ----------------
+export const generateQR = (data = {}) =>
+  api.post("/lecturer/GenerateQR", {
+    expiresAt: data.expiresAt,
+    courseLectureId: data.courseLectureId,
+  });
 
 //________________________________________________
 // import api from "./api";
