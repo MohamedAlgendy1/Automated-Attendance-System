@@ -24,7 +24,6 @@ const [totalLectures, setTotalLectures] = useState(0);
   // ✅ بيانات الطالب من الـ token
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
-  console.log(decoded);
   const studentName = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Student";
   const studentEmail = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || "";
 
@@ -243,6 +242,11 @@ const attended = courseLectures.filter(
 const total = courseLectures.length;
 
 const percent = total === 0 ? 0 : Math.round((attended / total) * 100);
+
+console.log("Course:", course.courseId);
+console.log("Attendance:", attendance);
+
+
                   return (
                     <div
                       key={course.id}
