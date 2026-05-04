@@ -54,6 +54,9 @@ const handleEnroll = async (e) => {
     setEnrollForm({ courseCode: "" });
     setRefresh((r) => r + 1);
   } catch (err) {
+console.log("FULL ERROR:", err.response);
+  console.log("DATA:", err.response?.data);
+
     setEnrollError(getErrorMessage(err));
   } finally {
     setEnrollLoading(false);
