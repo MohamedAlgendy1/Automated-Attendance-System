@@ -347,9 +347,9 @@ import {
   deleteCourse,
 } from "../services/courseService";
 
-import {
+// import {
 
-} from "../services/lectureService";
+// } from "../services/lectureService";
 
 function LecturerDashboard() {
   const navigate = useNavigate();
@@ -383,19 +383,23 @@ function LecturerDashboard() {
 
 useEffect(() => {
   const loadStudents = async () => {
+    if (!courses.length) return;
+
     try {
       const result = {};
 
-      for (const c of courses || []) {
-        const res = await getCourseOverview(c.courseId);
+      await Promise.all(
+        courses.map(async (c) => {
+          const res = await getCourseOverview(c.courseId);
 
-        // حسب الـ API response
-        result[c.courseId] =
-          res?.totalEnrolled ??
-          res?.enrolledStudents ??
-          res?.studentsCount ??
-          0;
-      }
+          result[c.courseId] =
+            res?.totalEnrolled ??
+            res?.totalStudents ??
+            res?.enrolledStudents ??
+            res?.studentsCount ??
+            0;
+        })
+      );
 
       setCourseStudents(result);
     } catch (err) {
@@ -404,10 +408,8 @@ useEffect(() => {
     }
   };
 
-  if (courses.length > 0) {
-    loadStudents();
-  }
-}, [courses, refresh]);
+  loadStudents();
+}, [courses]);
 
 
   /* LOAD COURSES */
