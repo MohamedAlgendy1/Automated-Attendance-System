@@ -360,7 +360,6 @@ function LecturerDashboard() {
 
   const [refresh, setRefresh] = useState(0);
   const [realtimeCount, setRealtimeCount] = useState(0);
-
   const [totalStudents, setTotalStudents] = useState(0);
 
   const [showModal, setShowModal] = useState(false);
@@ -376,14 +375,14 @@ function LecturerDashboard() {
     decoded?.name ||
     "Lecturer";
 
-  /* ================= REALTIME ================= */
+  /* REALTIME */
   useRealtime((msg) => {
     if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
-      setRealtimeCount((prev) => prev + 1);
+      setRealtimeCount((p) => p + 1);
     }
   });
 
-  /* ================= LOAD COURSES ================= */
+  /* LOAD COURSES */
   useEffect(() => {
     const load = async () => {
       try {
@@ -400,41 +399,37 @@ function LecturerDashboard() {
     load();
   }, [refresh]);
 
-  /* ================= TOTAL STUDENTS ================= */
+  /* STUDENTS COUNT */
   useEffect(() => {
-    const calculateStudents = async () => {
+    const run = async () => {
       try {
         const coursesData = await getAllCourses();
 
-        let studentSet = new Set();
+        const set = new Set();
 
-        for (const course of coursesData || []) {
-          const lectures = await getLecturesByCourse(course.courseId);
+        for (const c of coursesData || []) {
+          const lectures = await getLecturesByCourse(c.courseId);
 
           for (const lec of lectures || []) {
             const res = await getAttendanceReport(lec.id);
 
-            const report = res?.report || [];
-
-            report.forEach((s) => {
-              if (s?.studentId) {
-                studentSet.add(s.studentId);
-              }
+            (res?.report || []).forEach((s) => {
+              set.add(s.studentId);
             });
           }
         }
 
-        setTotalStudents(studentSet.size);
+        setTotalStudents(set.size);
       } catch (err) {
         console.log(err);
         setTotalStudents(0);
       }
     };
 
-    calculateStudents();
+    run();
   }, [refresh]);
 
-  /* ================= COURSE ACTIONS ================= */
+  /* FORM */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
@@ -458,7 +453,6 @@ function LecturerDashboard() {
       setForm({ name: "", code: "" });
       setRefresh((r) => r + 1);
     } catch (err) {
-      console.log(err);
       setFormError(getErrorMessage(err));
     } finally {
       setFormLoading(false);
@@ -490,19 +484,19 @@ function LecturerDashboard() {
     navigate("/");
   };
 
-  const totalLectures = () => 0; // placeholder (زي ما هو عندك)
-
   return (
     <div className="dashboard lecturer-page">
 
-      {/* SIDEBAR (UNCHANGED → CSS SAFE) */}
+      {/* SIDEBAR (UNCHANGED) */}
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
 
           <ul className="menu">
             <li className="active">📘 My Courses</li>
-            <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>
+            <li onClick={() => navigate("/attendance")}>
+              📊 Attendance Overview
+            </li>
           </ul>
         </div>
 
@@ -523,21 +517,15 @@ function LecturerDashboard() {
         </div>
       </div>
 
-      {/* MAIN */}
+      {/* MAIN (UNCHANGED STRUCTURE) */}
       <div className="main">
 
         <h1>Lecturer Dashboard</h1>
 
-        {/* CARDS */}
         <div className="cards">
           <div className="card">
             <p>Courses</p>
             <h2>{courses.length}</h2>
-          </div>
-
-          <div className="card">
-            <p>Lectures</p>
-            <h2>{totalLectures()}</h2>
           </div>
 
           <div className="card">
@@ -553,7 +541,6 @@ function LecturerDashboard() {
           )}
         </div>
 
-        {/* ADD COURSE */}
         <div className="top-bar">
           <button
             className="enroll-btn"
@@ -567,11 +554,11 @@ function LecturerDashboard() {
           </button>
         </div>
 
-        {/* COURSES */}
         {loading ? (
           <p>Loading...</p>
         ) : (
           <div className="courses-grid">
+
             {courses.map((c) => (
               <div
                 key={c.courseId}
@@ -579,7 +566,9 @@ function LecturerDashboard() {
                 onClick={() => navigate(`/course/${c.courseId}`)}
               >
                 <div className="course-header">
-                  <span>{c.courseCode || c.code}</span>
+                  <span className="course-code">
+                    {c.courseCode || c.code}
+                  </span>
 
                   <div onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => handleEdit(c)}>✏️</button>
@@ -588,18 +577,20 @@ function LecturerDashboard() {
                 </div>
 
                 <h3>{c.courseName || c.name}</h3>
-                <p>Course Card</p>
+                <p>0 students enrolled</p>
               </div>
             ))}
+
           </div>
         )}
 
       </div>
 
-      {/* MODAL */}
+      {/* MODAL (UNCHANGED STYLE STRUCTURE) */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
+
             <h3>{editCourseData ? "Edit Course" : "Add Course"}</h3>
 
             <form onSubmit={handleSubmit}>
@@ -621,6 +612,7 @@ function LecturerDashboard() {
                 {formLoading ? "Saving..." : "Save"}
               </button>
             </form>
+
           </div>
         </div>
       )}
