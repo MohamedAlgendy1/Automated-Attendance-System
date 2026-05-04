@@ -19,28 +19,32 @@ function AttendanceRecords() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     "Lecturer";
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [courseRes, reportRes] = await Promise.all([
-          getCourseById(courseId),
-          getAttendanceReport(courseId),
-        ]);
+ useEffect(() => {
+  const load = async () => {
+    try {
+      const [courseRes] = await Promise.all([
+        getCourseById(courseId),
+      ]);
 
-        setCourse(courseRes);
+      setCourse(courseRes);
 
-        if (Array.isArray(reportRes)) setReport(reportRes);
-        else if (Array.isArray(reportRes?.students)) setReport(reportRes.students);
-        else setReport([]);
-      } catch (err) {
-        console.error(getErrorMessage(err));
-      } finally {
-        setLoading(false);
+      // ⚠️ هنا لازم lectureId (مش courseId)
+      const lectureId = courseRes.latestLectureId; // مثال
+
+      if (lectureId) {
+        const reportRes = await getAttendanceReport(lectureId);
+        setReport(reportRes.report || []);
       }
-    };
 
-    load();
-  }, [courseId]);
+    } catch (err) {
+      console.error(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, [courseId]);
 
   return (
     <div className="dashboard records-page">
