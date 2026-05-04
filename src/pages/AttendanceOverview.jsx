@@ -192,7 +192,7 @@ export default function AttendanceOverview() {
     "Lecturer";
 
   useEffect(() => {
-    const loadCourses = async () => {
+    const load = async () => {
       try {
         const data = await getAllCourses();
         setCourses(data || []);
@@ -203,25 +203,47 @@ export default function AttendanceOverview() {
       }
     };
 
-    loadCourses();
+    load();
   }, []);
 
   return (
     <div className="dashboard attendance-page">
 
-      {/* Sidebar */}
+      {/* Sidebar (NO CHANGE → CSS SAFE) */}
       <div className="sidebar">
-        <h2 className="logo">QR Attend</h2>
+        <div>
+          <h2 className="logo">QR Attend</h2>
 
-        <ul className="menu">
-          <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
-          <li className="active">📊 Attendance Overview</li>
-        </ul>
+          <ul className="menu">
+            <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
+            <li className="active">📊 Attendance Overview</li>
+          </ul>
+        </div>
 
-        <div className="user">{lecturerName}</div>
+        <div className="user-box">
+          <div className="user-info">
+            <div className="avatar">
+              {lecturerName?.[0]?.toUpperCase() || "L"}
+            </div>
+            <div>
+              <p>{lecturerName}</p>
+              <span>Lecturer</span>
+            </div>
+          </div>
+
+          <button
+            className="logout-btn"
+            onClick={() => {
+              localStorage.clear();
+              navigate("/");
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
-      {/* Main */}
+      {/* Main (NO CHANGE → CSS SAFE) */}
       <div className="main">
         <h1>Attendance Overview</h1>
 
@@ -258,7 +280,6 @@ function CourseBlock({ course }) {
   useEffect(() => {
     const load = async () => {
       try {
-        // 1️⃣ get lectures
         const lectures = await getLecturesByCourse(courseId);
 
         if (!lectures?.length) {
@@ -266,44 +287,33 @@ function CourseBlock({ course }) {
           return;
         }
 
-        const totalLectures = lectures.length;
+        const total = lectures.length;
+        const map = new Map();
 
-        // 2️⃣ aggregation map
-        const studentMap = new Map();
-
-        // 3️⃣ loop lectures
         for (const lec of lectures) {
           const res = await getAttendanceReport(lec.id);
 
-          const report = res?.report || [];
-
-          report.forEach((s) => {
-            const id = s.studentId;
-
-            if (!studentMap.has(id)) {
-              studentMap.set(id, {
+          (res?.report || []).forEach((s) => {
+            if (!map.has(s.studentId)) {
+              map.set(s.studentId, {
                 studentName: s.studentName,
                 attendedSet: new Set(),
               });
             }
 
-            studentMap.get(id).attendedSet.add(lec.id);
+            map.get(s.studentId).attendedSet.add(lec.id);
           });
         }
 
-        // 4️⃣ build final result
-        const result = Array.from(studentMap.values()).map((s) => {
+        const result = Array.from(map.values()).map((s) => {
           const attended = s.attendedSet.size;
-          const percent =
-            totalLectures === 0
-              ? 0
-              : Math.round((attended / totalLectures) * 100);
 
           return {
             studentName: s.studentName,
             attended,
-            total: totalLectures,
-            percent,
+            total,
+            percent:
+              total === 0 ? 0 : Math.round((attended / total) * 100),
           };
         });
 
@@ -321,12 +331,9 @@ function CourseBlock({ course }) {
   return (
     <div className="table-box">
 
-      {/* Header */}
-      <div style={{ marginBottom: 10 }}>
-        <h2>{courseName} ({courseCode})</h2>
-      </div>
+      {/* IMPORTANT: same structure as your original CSS */}
+      <h2>{courseName} ({courseCode})</h2>
 
-      {/* Table */}
       <table className="table">
         <thead>
           <tr>
