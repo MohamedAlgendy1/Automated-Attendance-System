@@ -50,6 +50,11 @@ function StudentCourseDetails() {
   });
 
 
+useEffect(() => {
+  console.log("lectures:", lectures);
+  console.log("attendance:", attendance);
+}, [lectures, attendance]);
+
 
   // ✅ جيب بيانات الكورس والمحاضرات والحضور
   useEffect(() => {
