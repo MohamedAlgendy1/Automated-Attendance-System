@@ -69,6 +69,7 @@ console.log("FULL ERROR:", err.response);
       setLoading(true);
       try {
         const data = await getMyCourses();
+        console.log("API RESPONSE:", data);
         setMyCourses(data);
       } catch (err) {
         console.error(getErrorMessage(err));
