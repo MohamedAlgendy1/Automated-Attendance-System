@@ -2,8 +2,10 @@ import api from "./api";
 
 
 // ---------------- COURSE OVERVIEW ----------------
-export const getCourseOverview = (courseId) =>
-  api.get(`/lecturer/CourseOverview/${courseId}`);
+export const getCourseOverview = async (courseId) => {
+  const res = await api.get(`/lecturer/CourseOverview/${courseId}`);
+  return res.data;
+};
 
 // ---------------- GENERATE QR ----------------
 export const generateQR = (data = {}) =>
