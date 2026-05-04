@@ -169,13 +169,15 @@
 // }
 
 // export default AttendanceOverview;
-
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceOverview.css";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAllCourses } from "../services/courseService";
-import { getLecturesByCourse, getAttendanceReport } from "../services/lectureService";
+import {
+  getLecturesByCourse,
+  getAttendanceReport,
+} from "../services/lectureService";
 
 function AttendanceOverview() {
   const navigate = useNavigate();
@@ -188,18 +190,19 @@ function AttendanceOverview() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     "Lecturer";
 
-  // ✅ تحميل الكورسات
   useEffect(() => {
     const load = async () => {
       try {
         const data = await getAllCourses();
-        setCourses(data);
+        setCourses(data || []);
       } catch (err) {
         console.error(getErrorMessage(err));
+        setCourses([]);
       } finally {
         setLoading(false);
       }
     };
+
     load();
   }, []);
 
@@ -265,11 +268,10 @@ function AttendanceOverview() {
   );
 }
 
-// ================= Course Block =================
+/* ================= COURSE BLOCK ================= */
 
 function CourseBlock({ course }) {
-  const [report, setReport] = useState([]);
-  const [lectureTitle, setLectureTitle] = useState("");
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const courseId = course.courseId;
@@ -279,25 +281,50 @@ function CourseBlock({ course }) {
   useEffect(() => {
     const load = async () => {
       try {
-        // 1️⃣ هات المحاضرات
+        // 1️⃣ كل المحاضرات
         const lectures = await getLecturesByCourse(courseId);
 
         if (!lectures || lectures.length === 0) {
-          setReport([]);
+          setStudents([]);
           return;
         }
 
-        // 2️⃣ أول محاضرة
-        const lectureId = lectures[0].id;
+        const totalLectures = lectures.length;
 
-        // 3️⃣ هات الحضور
-        const res = await getAttendanceReport(lectureId);
+        // 2️⃣ تجميع الطلاب
+        const map = new Map();
 
-        setLectureTitle(res?.lectureTitle || "");
-        setReport(res?.report || []);
+        // 3️⃣ loop على كل lecture
+        for (const lec of lectures) {
+          const res = await getAttendanceReport(lec.id);
 
+          const report = res?.report || [];
+
+          report.forEach((s) => {
+            const id = s.studentId;
+
+            if (!map.has(id)) {
+              map.set(id, {
+                studentName: s.studentName,
+                attended: 0,
+                total: totalLectures,
+              });
+            }
+
+            map.get(id).attended += 1;
+          });
+        }
+
+        // 4️⃣ حساب النسبة
+        const finalData = Array.from(map.values()).map((s) => ({
+          ...s,
+          percent:
+            s.total === 0 ? 0 : Math.round((s.attended / s.total) * 100),
+        }));
+
+        setStudents(finalData);
       } catch (err) {
-        setReport([]);
+        setStudents([]);
       } finally {
         setLoading(false);
       }
@@ -308,57 +335,53 @@ function CourseBlock({ course }) {
 
   return (
     <div className="table-box">
-      <h2>{courseName} ({courseCode})</h2>
+      <h2>
+        {courseName} ({courseCode})
+      </h2>
 
-      <p style={{ marginBottom: 10 }}>
-        Lecture: {lectureTitle || "-"}
-      </p>
-
-      <p style={{ marginBottom: 15 }}>
-        {report.length} students attended
+      <p style={{ marginBottom: 15, color: "#64748b" }}>
+        Total Students: {students.length}
       </p>
 
       <table className="table">
         <thead>
           <tr>
             <th>Student</th>
-            <th>Status</th>
-            <th>Scan Time</th>
+            <th>Attended</th>
+            <th>Total</th>
+            <th>Percentage</th>
           </tr>
         </thead>
 
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="3">Loading...</td>
+              <td colSpan="4">Loading...</td>
             </tr>
-          ) : report.length === 0 ? (
+          ) : students.length === 0 ? (
             <tr>
-              <td colSpan="3">No attendance yet</td>
+              <td colSpan="4">No attendance data</td>
             </tr>
           ) : (
-            report.map((s, i) => (
+            students.map((s, i) => (
               <tr key={i}>
                 <td>{s.studentName}</td>
-
+                <td>{s.attended}</td>
+                <td>{s.total}</td>
                 <td>
                   <span
                     style={{
-                      background: "#dcfce7",
-                      color: "#16a34a",
-                      padding: "5px 10px",
-                      borderRadius: 20,
-                      fontWeight: 600,
+                      fontWeight: "bold",
+                      color:
+                        s.percent >= 75
+                          ? "#16a34a"
+                          : s.percent >= 50
+                          ? "#d97706"
+                          : "#dc2626",
                     }}
                   >
-                    {s.status}
+                    {s.percent}%
                   </span>
-                </td>
-
-                <td>
-                  {s.scanTime
-                    ? new Date(s.scanTime).toLocaleString()
-                    : "-"}
                 </td>
               </tr>
             ))
