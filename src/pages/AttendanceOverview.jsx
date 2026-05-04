@@ -3,44 +3,43 @@ import { useState, useEffect } from "react";
 import "./../styles/attendanceOverview.css";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAllCourses } from "../services/courseService";
-import { getAttendanceReport } from "../services/lectureService";
+import { getLecturesByCourse, getAttendanceReport } from "../services/lectureService";
 
-function AttendanceOverview() {
-  const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
+
+
+function CourseBlock({ course }) {
+  const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-  const decoded = token ? parseJwt(token) : {};
-  const lecturerName =
-    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
-    "Lecturer";
+  const courseId = course.courseId;
+  const courseName = course.courseName || course.name || "";
+  const courseCode = course.courseCode || course.code || "";
 
-useEffect(() => {
-  const load = async () => {
-    try {
-      const lectures = await getLecturesByCourse(courseId);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const lectures = await getLecturesByCourse(courseId);
 
-      if (!lectures || lectures.length === 0) {
+        if (!lectures || lectures.length === 0) {
+          setReport([]);
+          return;
+        }
+
+        const lectureId = lectures[0].id;
+
+        const res = await getAttendanceReport(lectureId);
+
+        setReport(res?.report || []);
+
+      } catch (err) {
         setReport([]);
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const lectureId = lectures[0].id;
-
-      const res = await getAttendanceReport(lectureId);
-
-      setReport(res?.report || []);
-
-    } catch (err) {
-      setReport([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  load();
-}, [courseId]);
+    load();
+  }, [courseId]);
 
   return (
     <div className="dashboard attendance-page">
