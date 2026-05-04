@@ -16,12 +16,20 @@ export const getMyCourses = async () => {
 //   return res.data;
 // };
 
+// export const enrollInCourse = async (courseId, courseCode) => {
+//   const res = await api.post("/student/Enrollment", {
+//     courseId,
+//     courseCode,
+//   });
+
+//   return res.data;
+// };
+
 export const enrollInCourse = async (courseId, courseCode) => {
   const res = await api.post("/student/Enrollment", {
-    courseId,
+    courseId: courseId || 0,
     courseCode,
   });
-
   return res.data;
 };
 

@@ -1,18 +1,18 @@
 import "./../styles/dashboard.css";
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { parseJwt, getErrorMessage } from "../services/api";
-import { getMyCourses, enrollInCourse } from "../services/studentService";
+import { enrollInCourse } from "../services/studentService";
 
 function StudentDashboard() {
   const [activePage, setActivePage] = useState("courses");
   const [showModal, setShowModal] = useState(false);
-  const [myCourses, setMyCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refresh, setRefresh] = useState(0);
+  const [myCourses] = useState([]);
+  const [loading] = useState(true);
+  const [setRefresh] = useState(0);
   const navigate = useNavigate();
-
-  const [enrollForm, setEnrollForm] = useState({ courseId: "", courseCode: "" });
+  const [enrollForm, setEnrollForm] = useState({ courseCode: "" });
+ // const [enrollForm, setEnrollForm] = useState({ courseId: "", courseCode: "" });
   const [enrollError, setEnrollError] = useState("");
   const [enrollLoading, setEnrollLoading] = useState(false);
 
@@ -30,51 +30,82 @@ function StudentDashboard() {
   };
 
   // ✅ جيب كورسات الطالب من الـ Backend
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const data = await getMyCourses();
-        setMyCourses(data);
-      } catch (err) {
-        console.error(getErrorMessage(err));
-        setMyCourses([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [refresh]);
+const handleEnroll = async (e) => {
+  e.preventDefault();
+  setEnrollError("");
 
-  const handleEnroll = async (e) => {
-    e.preventDefault();
-    setEnrollError("");
+  if (!enrollForm.courseCode) {
+    setEnrollError("Please enter course code");
+    return;
+  }
 
-    if (!enrollForm.courseCode) {
-      setEnrollError("Please enter course code");
-      return;
-    }
+  console.log("ENROLL PAYLOAD:", {
+    courseCode: enrollForm.courseCode,
+  });
 
-    setEnrollLoading(true);
-    try {
-      await enrollInCourse(
-  enrollForm.courseId || 0,
-  enrollForm.courseCode
-);
-      await enrollInCourse(
-        enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
-        enrollForm.courseCode
-      );
-      showToast("Enrolled successfully 🎉");
-      setShowModal(false);
-      setEnrollForm({ courseId: "", courseCode: "" });
-      setRefresh((r) => r + 1);
-    } catch (err) {
-      setEnrollError(getErrorMessage(err));
-    } finally {
-      setEnrollLoading(false);
-    }
-  };
+  setEnrollLoading(true);
+
+  try {
+    await enrollInCourse(null, enrollForm.courseCode);
+
+    showToast("Enrolled successfully 🎉");
+    setShowModal(false);
+    setEnrollForm({ courseCode: "" });
+    setRefresh((r) => r + 1);
+  } catch (err) {
+    setEnrollError(getErrorMessage(err));
+  } finally {
+    setEnrollLoading(false);
+  }
+};
+
+  // useEffect(() => {
+  //   const load = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const data = await getMyCourses();
+  //       setMyCourses(data);
+  //     } catch (err) {
+  //       console.error(getErrorMessage(err));
+  //       setMyCourses([]);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   load();
+  // }, [refresh]);
+
+  // const handleEnroll = async (e) => {
+  //   e.preventDefault();
+  //   setEnrollError("");
+
+  //   if (!enrollForm.courseCode) {
+  //     setEnrollError("Please enter course code");
+  //     return;
+  //   }
+
+  //   setEnrollLoading(true);
+  //   try {
+
+  //     await enrollInCourse(null, enrollForm.courseCode);
+//       await enrollInCourse(
+//   enrollForm.courseId || 0,
+//   enrollForm.courseCode
+// );
+//       await enrollInCourse(
+//         enrollForm.courseId ? parseInt(enrollForm.courseId) : undefined,
+//         enrollForm.courseCode
+//       );
+  //     showToast("Enrolled successfully 🎉");
+  //     setShowModal(false);
+  //     setEnrollForm({ courseId: "", courseCode: "" });
+  //     setRefresh((r) => r + 1);
+  //   } catch (err) {
+  //     setEnrollError(getErrorMessage(err));
+  //   } finally {
+  //     setEnrollLoading(false);
+  //   }
+  // };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -212,12 +243,12 @@ function StudentDashboard() {
                 onChange={(e) => setEnrollForm({ ...enrollForm, courseCode: e.target.value })}
                 required
               />
-              <input
+              {/* <input
                 placeholder="Course ID (optional)"
                 type="number"
                 value={enrollForm.courseId}
                 onChange={(e) => setEnrollForm({ ...enrollForm, courseId: e.target.value })}
-              />
+              /> */}
               {enrollError && <p style={{ color: "red" }}>{enrollError}</p>}
               <button type="submit" disabled={enrollLoading}>
                 {enrollLoading ? "Enrolling..." : "Enroll"}
