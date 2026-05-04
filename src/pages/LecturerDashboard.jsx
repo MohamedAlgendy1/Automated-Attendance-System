@@ -347,9 +347,7 @@ import {
   deleteCourse,
 } from "../services/courseService";
 
-// import {
 
-// } from "../services/lectureService";
 
 function LecturerDashboard() {
   const navigate = useNavigate();
@@ -369,7 +367,7 @@ function LecturerDashboard() {
   const [formLoading, setFormLoading] = useState(false);
 
   const decoded = parseJwt(localStorage.getItem("token")) || {};
-console.log(decoded);
+
 
 const lecturerName = 
   decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
@@ -377,6 +375,8 @@ const lecturerName =
   decoded?.["Name"] ||
   decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"] ||
   "Lecturer";
+
+
   /* REALTIME */
   useRealtime((msg) => {
     if (msg.event === EVENTS.ATTENDANCE_RECORDED) {
