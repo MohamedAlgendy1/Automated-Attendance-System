@@ -10,7 +10,7 @@ import { getMyCourses, getMyAttendanceHistory, scanQR } from "../services/studen
 import { getLecturesByCourse } from "../services/lectureService";
 
 function StudentCourseDetails() {
-  const { courseCode } = useParams();
+  const { courseId } = useParams();
   const navigate = useNavigate();
 
   const [course, setCourse] = useState(null);
@@ -55,18 +55,15 @@ function StudentCourseDetails() {
         ]);
 
         // دور على الكورس بالـ id أو الـ code
-        const found = coursesData.find(
-          (c) =>
-            c.id === parseInt(courseCode) ||
-            c.code === courseCode ||
-            c.courseCode === courseCode
-        );
+       const found = coursesData.find(
+  (c) => c.courseId === parseInt(courseId)
+);
 
         setCourse(found || null);
         setAttendance(historyData);
 
         if (found) {
-          const lecturesData = await getLecturesByCourse(found.id);
+          const lecturesData = await getLecturesByCourse(found.courseId);
           setLectures(lecturesData);
         }
       } catch (err) {

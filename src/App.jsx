@@ -69,7 +69,7 @@ function App() {
         />
 
         <Route
-          path="/student/course/:courseCode"
+          path="/student/course/:courseId"
           element={
             <ProtectedRoute role="student">
               <StudentCourseDetails />

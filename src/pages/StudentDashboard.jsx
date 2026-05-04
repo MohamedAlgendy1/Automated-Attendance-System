@@ -190,7 +190,7 @@ console.log("FULL ERROR:", err.response);
                     <div
                       key={course.id}
                       className="course-card"
-                      onClick={() => navigate(`/student/course/${course.id}`)}
+                      onClick={() => navigate(`/student/course/${course.courseId}`)}
                       style={{ cursor: "pointer" }}
                     >
                       <h3>{name}</h3>
