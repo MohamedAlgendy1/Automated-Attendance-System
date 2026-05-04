@@ -392,25 +392,24 @@ useEffect(() => {
         courses.map(async (c) => {
           const res = await getCourseOverview(c.courseId);
 
+          // ✅ من الـ API اللي انت بعتها
           result[c.courseId] =
             res?.totalEnrolled ??
-            res?.totalStudents ??
-            res?.enrolledStudents ??
-            res?.studentsCount ??
+            res?.totalPresent ??   // fallback مهم
+            res?.report?.length ?? // fallback قوي جدًا
             0;
         })
       );
 
       setCourseStudents(result);
     } catch (err) {
-      console.log(err);
+      console.log("Course overview error:", err);
       setCourseStudents({});
     }
   };
 
   loadStudents();
 }, [courses]);
-
 
   /* LOAD COURSES */
   useEffect(() => {
@@ -597,7 +596,7 @@ useEffect(() => {
 
                 <h3>{c.courseName || c.name}</h3>
                <p>
-  {courseStudents[c.courseId] ?? 0} students enrolled
+  {courseStudents?.[c.courseId] || 0} students enrolled
 </p>
               </div>
             ))}
