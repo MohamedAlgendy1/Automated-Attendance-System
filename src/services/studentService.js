@@ -26,9 +26,15 @@ export const getMyCourses = async () => {
 // };
 
 export const enrollInCourse = async (courseCode) => {
-  const res = await api.post("/student/Enrollment", {
-    courseCode: courseCode,
-  });
+  const res = await api.post(
+    "/student/Enrollment",
+    { courseCode },
+    {
+      headers: {
+        Accept: "application/octet-stream", // 👈 مهم جدًا
+      },
+    }
+  );
   return res.data;
 };
 
