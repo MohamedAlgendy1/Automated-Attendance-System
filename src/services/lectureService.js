@@ -376,8 +376,8 @@ export const deleteLecture = async (id) => {
   return res.data;
 };
 
-export const getAttendanceReport = async (courseId) => {
-  const res = await api.get(`/lecturer/AttendanceReport/${courseId}`);
+export const getAttendanceReport = async (lectureId) => {
+  const res = await api.get(`/lecturer/AttendanceReport/${lectureId}`);
   return res.data;
 };
 

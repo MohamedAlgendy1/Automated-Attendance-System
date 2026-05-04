@@ -264,44 +264,46 @@ function AttendanceRecords() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     "Lecturer";
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
 
-        // 1️⃣ جيب الكورس
-        const courseRes = await getCourseById(courseId);
-        setCourse(courseRes);
+    
+useEffect(() => {
+  const load = async () => {
+    try {
+      setLoading(true);
 
-        // 2️⃣ جيب المحاضرات
-        const lecturesRes = await getLecturesByCourse(courseId);
+      // 1️⃣ الكورس
+      const courseRes = await getCourseById(courseId);
+      setCourse(courseRes);
 
-        const lectures =
-          lecturesRes?.courseLectures?.data || [];
+      // 2️⃣ المحاضرات
+      const lecturesRes = await getLecturesByCourse(courseId);
 
-        // 3️⃣ خد أول lecture (أو آخر واحدة لو عايز)
-        const lectureId = lectures?.[0]?.id;
+      const lectures = lecturesRes?.courseLectures?.data || [];
 
-        if (!lectureId) {
-          setReport([]);
-          return;
-        }
-
-        // 4️⃣ جيب الحضور
-        const reportRes = await getAttendanceReport(lectureId);
-
-        setReport(reportRes?.report || []);
-
-      } catch (err) {
-        console.error(getErrorMessage(err));
+      if (lectures.length === 0) {
         setReport([]);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    load();
-  }, [courseId]);
+      // 3️⃣ أهم تعديل هنا 👇
+      const lectureId = lectures[0].id; // أول lecture
+
+      // 4️⃣ الحضور
+      const reportRes = await getAttendanceReport(lectureId);
+
+      setReport(reportRes?.report || []);
+
+    } catch (err) {
+      console.log(getErrorMessage(err));
+      setReport([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, [courseId]);
+
 
   return (
     <div className="dashboard records-page">
