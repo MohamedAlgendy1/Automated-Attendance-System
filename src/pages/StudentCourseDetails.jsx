@@ -98,9 +98,10 @@ setAttendance(updated);
   //   (a) => a.courseId === course?.id
   // ).length;
 
-  const attended = attendance.filter(
-  (a) => a.courseId === course?.courseId
+const attended = lectures.filter((lec) =>
+  attendance.some((a) => a.courseLectureId === lec.id)
 ).length;
+
 
   const percent = totalLectures === 0 ? 0 : Math.round((attended / totalLectures) * 100);
 
