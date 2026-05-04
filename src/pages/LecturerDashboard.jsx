@@ -394,10 +394,11 @@ useEffect(() => {
             const res = await getCourseOverview(c.courseId);
             console.log("OVERVIEW:", res);
             result[c.courseId] =
-              res?.totalEnrolled ??
-              res?.totalStudents ??
-              res?.enrolledStudents ??
-              0;
+  res?.totalEnrolledStudents ??
+  res?.totalEnrolled ??
+  res?.totalStudents ??
+  res?.enrolledStudents ??
+  0;
           } catch  {
             // مهم: نتخطى أي 403 بدون ما نكسر الصفحة
             result[c.courseId] = 0;
