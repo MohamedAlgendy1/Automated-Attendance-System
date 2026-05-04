@@ -172,6 +172,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceOverview.css";
+
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAllCourses } from "../services/courseService";
 import {
@@ -179,7 +180,7 @@ import {
   getAttendanceReport,
 } from "../services/lectureService";
 
-function AttendanceOverview() {
+export default function AttendanceOverview() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -191,54 +192,33 @@ function AttendanceOverview() {
     "Lecturer";
 
   useEffect(() => {
-    const load = async () => {
+    const loadCourses = async () => {
       try {
         const data = await getAllCourses();
         setCourses(data || []);
       } catch (err) {
-        console.error(getErrorMessage(err));
-        setCourses([]);
+        console.log(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
     };
 
-    load();
+    loadCourses();
   }, []);
 
   return (
     <div className="dashboard attendance-page">
+
       {/* Sidebar */}
       <div className="sidebar">
-        <div>
-          <h2 className="logo">QR Attend</h2>
-          <ul className="menu">
-            <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
-            <li className="active">📊 Attendance Overview</li>
-          </ul>
-        </div>
+        <h2 className="logo">QR Attend</h2>
 
-        <div className="user-box">
-          <div className="user-info">
-            <div className="avatar">
-              {lecturerName?.[0]?.toUpperCase() || "L"}
-            </div>
-            <div>
-              <p>{lecturerName}</p>
-              <span>Lecturer</span>
-            </div>
-          </div>
+        <ul className="menu">
+          <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
+          <li className="active">📊 Attendance Overview</li>
+        </ul>
 
-          <button
-            className="logout-btn"
-            onClick={() => {
-              localStorage.clear();
-              navigate("/");
-            }}
-          >
-            Sign Out
-          </button>
-        </div>
+        <div className="user">{lecturerName}</div>
       </div>
 
       {/* Main */}
@@ -247,23 +227,20 @@ function AttendanceOverview() {
 
         <div className="cards">
           <div className="card">
-            <p>Courses</p>
+            <p>Total Courses</p>
             <h2>{courses.length}</h2>
           </div>
         </div>
 
         {loading ? (
-          <p style={{ marginTop: 20 }}>Loading...</p>
-        ) : courses.length === 0 ? (
-          <div className="table-box">
-            <p style={{ textAlign: "center" }}>No courses yet</p>
-          </div>
+          <p>Loading...</p>
         ) : (
           courses.map((course) => (
             <CourseBlock key={course.courseId} course={course} />
           ))
         )}
       </div>
+
     </div>
   );
 }
@@ -281,20 +258,20 @@ function CourseBlock({ course }) {
   useEffect(() => {
     const load = async () => {
       try {
-        // 1️⃣ كل المحاضرات
+        // 1️⃣ get lectures
         const lectures = await getLecturesByCourse(courseId);
 
-        if (!lectures || lectures.length === 0) {
+        if (!lectures?.length) {
           setStudents([]);
           return;
         }
 
         const totalLectures = lectures.length;
 
-        // 2️⃣ تجميع الطلاب
-        const map = new Map();
+        // 2️⃣ aggregation map
+        const studentMap = new Map();
 
-        // 3️⃣ loop على كل lecture
+        // 3️⃣ loop lectures
         for (const lec of lectures) {
           const res = await getAttendanceReport(lec.id);
 
@@ -303,26 +280,34 @@ function CourseBlock({ course }) {
           report.forEach((s) => {
             const id = s.studentId;
 
-            if (!map.has(id)) {
-              map.set(id, {
+            if (!studentMap.has(id)) {
+              studentMap.set(id, {
                 studentName: s.studentName,
-                attended: 0,
-                total: totalLectures,
+                attendedSet: new Set(),
               });
             }
 
-            map.get(id).attended += 1;
+            studentMap.get(id).attendedSet.add(lec.id);
           });
         }
 
-        // 4️⃣ حساب النسبة
-        const finalData = Array.from(map.values()).map((s) => ({
-          ...s,
-          percent:
-            s.total === 0 ? 0 : Math.round((s.attended / s.total) * 100),
-        }));
+        // 4️⃣ build final result
+        const result = Array.from(studentMap.values()).map((s) => {
+          const attended = s.attendedSet.size;
+          const percent =
+            totalLectures === 0
+              ? 0
+              : Math.round((attended / totalLectures) * 100);
 
-        setStudents(finalData);
+          return {
+            studentName: s.studentName,
+            attended,
+            total: totalLectures,
+            percent,
+          };
+        });
+
+        setStudents(result);
       } catch (err) {
         setStudents([]);
       } finally {
@@ -335,14 +320,13 @@ function CourseBlock({ course }) {
 
   return (
     <div className="table-box">
-      <h2>
-        {courseName} ({courseCode})
-      </h2>
 
-      <p style={{ marginBottom: 15, color: "#64748b" }}>
-        Total Students: {students.length}
-      </p>
+      {/* Header */}
+      <div style={{ marginBottom: 10 }}>
+        <h2>{courseName} ({courseCode})</h2>
+      </div>
 
+      {/* Table */}
       <table className="table">
         <thead>
           <tr>
@@ -388,8 +372,7 @@ function CourseBlock({ course }) {
           )}
         </tbody>
       </table>
+
     </div>
   );
 }
-
-export default AttendanceOverview;
