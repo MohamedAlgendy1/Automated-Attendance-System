@@ -46,7 +46,8 @@ const handleEnroll = async (e) => {
   setEnrollLoading(true);
 
   try {
-    await enrollInCourse(null, enrollForm.courseCode);
+    //await enrollInCourse(null, enrollForm.courseCode);
+    await enrollInCourse(enrollForm.courseCode);
 
     showToast("Enrolled successfully 🎉");
     setShowModal(false);
