@@ -108,11 +108,7 @@ setAttendance(updated);
   //  attendance.some((a) =>a.courseLectureId === lectureId || a.lectureId === lectureId);
 
 const isLectureAttended = (lectureId) =>
-  attendance.some((a) =>
-    a.lectureId === lectureId ||
-    a.courseLectureId === lectureId ||
-    a.id === lectureId
-  );
+  attendance.some((a) => a.courseLectureId === lectureId);
 
   
 

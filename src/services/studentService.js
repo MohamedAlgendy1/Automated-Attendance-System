@@ -36,22 +36,18 @@ export const enrollInCourse = async (courseCode) => {
 
 export const getMyAttendanceHistory = async () => {
   const res = await api.get("/student/MyAttendanceHistory");
-  let data = res.data;
+  const data = res.data;
 
-  // 👇 الحل
-  if (typeof data === "string") {
-    try {
-      data = JSON.parse(data);
-    } catch {
-      return [];
-    }
-  }
-
+  // 👇 الحل هنا
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.history)) return data.history;
 
   return [];
 };
+
+
+
 
 export const scanQR = async (token, lat, lng) => {
   const res = await api.post("/student/ScanQr", {
