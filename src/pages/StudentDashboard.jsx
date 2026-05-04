@@ -230,6 +230,18 @@ const overallPercent =
                 {myCourses.map((course) => {
                   const name = course.name || course.courseName || "";
                   const code = course.code || course.courseCode || "";
+
+                  const courseLectures = attendance.filter(
+  (a) => a.courseId === course.courseId
+);
+
+const attended = courseLectures.filter(
+  (a) => a.status === "Present"
+).length;
+
+const total = courseLectures.length;
+
+const percent = total === 0 ? 0 : Math.round((attended / total) * 100);
                   return (
                     <div
                       key={course.id}
@@ -243,10 +255,10 @@ const overallPercent =
                         <div
                           className="progress-circle"
                           style={{
-                            background: `conic-gradient(#22c55e 0% 0%, #e5e7eb 0% 100%)`,
+                            background: `conic-gradient(#22c55e ${percent}%, #e5e7eb ${percent}% 100%)`,
                           }}
                         >
-                          <span>0%</span>
+                          <span>{percent}%</span>
                         </div>
                         <p>My Attendance</p>
                       </div>
