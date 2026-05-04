@@ -86,12 +86,7 @@ function CourseBlock({ course }) {
   const courseName = course.courseName || course.name || "";
   const courseCode = course.courseCode || course.code || "";
 
-  useEffect(() => {
-    // ✅ تحقق إن courseId موجود قبل الـ API call
-    if (!courseId) {
-      setLoading(false);
-      return;
-    }
+ useEffect(() => {
 
     getAttendanceReport(courseId)
       .then((res) => {
