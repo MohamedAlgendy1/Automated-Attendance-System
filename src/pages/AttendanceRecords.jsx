@@ -55,7 +55,17 @@ function AttendanceRecords() {
       setLoading(true);
       try {
         const res = await getAttendanceReport(selectedLectureId);
-        setReport(res?.report || []);
+        console.log("🔍 attendance response:", res); // مؤقت عشان نشوف الشكل
+
+        // ✅ بيتعامل مع أي شكل يرجعه الـ API
+        const reportData =
+          Array.isArray(res)           ? res        :
+          Array.isArray(res?.report)   ? res.report :
+          Array.isArray(res?.students) ? res.students :
+          Array.isArray(res?.data)     ? res.data   :
+          [];
+
+        setReport(reportData);
       } catch (err) {
         console.log(getErrorMessage(err));
         setReport([]);
