@@ -380,6 +380,7 @@ function AdminDashboard() {
               <table>
                 <thead>
                   <tr>
+                    <th>Name</th>
                     <th>Email</th>
                     <th>SSIN</th>
                     <th>Actions</th>
@@ -388,13 +389,14 @@ function AdminDashboard() {
                 <tbody>
                   {filteredLecturers.length === 0 ? (
                     <tr>
-                      <td colSpan="3" style={{ textAlign: "center", padding: 20, color: "#888" }}>
+                      <td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>
                         No lecturers found
                       </td>
                     </tr>
                   ) : (
                     filteredLecturers.map((l) => (
                       <tr key={l.userId}>
+                        <td>{`${l.firstName || ""} ${l.lastName || ""}`.trim() || "-"}</td>
                         <td>{l.email}</td>
                         <td>{l.ssin || "-"}</td>
                         <td>
