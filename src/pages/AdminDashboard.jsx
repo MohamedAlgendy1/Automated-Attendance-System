@@ -847,7 +847,18 @@ function AdminDashboard() {
         const res = await api.get("/admin/GetLecturers", {
           params: { Name: search },
         });
-        setLecturers(res.data || []);
+       const data = res.data;
+
+if (Array.isArray(data)) {
+  setLecturers(data);
+} else if (Array.isArray(data?.items)) {
+  setLecturers(data.items);
+} else if (Array.isArray(data?.data)) {
+  setLecturers(data.data);
+} else {
+  console.log("INVALID LECTURERS RESPONSE:", data);
+  setLecturers([]);
+}
       } catch {
         setLecturers([]);
       } finally {
@@ -862,7 +873,18 @@ function AdminDashboard() {
       setClassroomsLoading(true);
       try {
         const res = await api.get("/classroom/AllClassRoom");
-        setClassrooms(res.data || []);
+       const data = res.data;
+
+if (Array.isArray(data)) {
+  setClassrooms(data);
+} else if (Array.isArray(data?.items)) {
+  setClassrooms(data.items);
+} else if (Array.isArray(data?.data)) {
+  setClassrooms(data.data);
+} else {
+  console.log("INVALID CLASSROOMS RESPONSE:", data);
+  setClassrooms([]);
+}
       } catch {
         setClassrooms([]);
       } finally {
@@ -989,7 +1011,7 @@ function AdminDashboard() {
 
             <table>
               <tbody>
-                {lecturers.map((l) => (
+                {(Array.isArray(lecturers) ? lecturers : []).map((l) => (
                   <tr key={l.userId}>
                     <td>{l.name}</td>
                     <td>{l.email}</td>
