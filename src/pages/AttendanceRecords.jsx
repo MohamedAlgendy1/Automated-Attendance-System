@@ -13,6 +13,8 @@ function AttendanceRecords() {
   const [lectures, setLectures]           = useState([]);
   const [selectedLectureId, setSelectedLectureId] = useState(null);
   const [report, setReport]               = useState([]);
+  const [totalPresent, setTotalPresent]   = useState(0);
+  const [totalEnrolled, setTotalEnrolled] = useState(0);
   const [loading, setLoading]             = useState(true);
 
   const token = localStorage.getItem("token");
@@ -58,14 +60,10 @@ function AttendanceRecords() {
         console.log("🔍 attendance response:", res); // مؤقت عشان نشوف الشكل
 
         // ✅ بيتعامل مع أي شكل يرجعه الـ API
-        const reportData =
-          Array.isArray(res)           ? res        :
-          Array.isArray(res?.report)   ? res.report :
-          Array.isArray(res?.students) ? res.students :
-          Array.isArray(res?.data)     ? res.data   :
-          [];
-
+        const reportData = Array.isArray(res?.report) ? res.report : [];
         setReport(reportData);
+        setTotalPresent(res?.totalPresent ?? reportData.length);
+        setTotalEnrolled(res?.totalEnrolled ?? 0);
       } catch (err) {
         console.log(getErrorMessage(err));
         setReport([]);
@@ -77,7 +75,8 @@ function AttendanceRecords() {
     loadReport();
   }, [selectedLectureId]);
 
-  const presentCount = report.length;
+  // ✅ من الـ API مباشرة
+  const presentCount = totalPresent;
 
   return (
     <div className="dashboard records-page">
@@ -129,6 +128,10 @@ function AttendanceRecords() {
           <div className="card">
             <p>Present</p>
             <h2 style={{ color: "#22c55e" }}>{presentCount}</h2>
+          </div>
+          <div className="card">
+            <p>Enrolled</p>
+            <h2>{totalEnrolled}</h2>
           </div>
         </div>
 
