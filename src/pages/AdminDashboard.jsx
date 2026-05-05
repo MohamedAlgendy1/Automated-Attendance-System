@@ -30,7 +30,12 @@ function AdminDashboard() {
   const [classrooms, setClassrooms] = useState([]);
   const [classroomsLoading, setClassroomsLoading] = useState(false);
   const [classroomsRefresh, setClassroomsRefresh] = useState(0);
+const [students, setStudents] = useState([]);
+useEffect(() => {
+  console.log("STUDENTS:", students); // 👈 هنا
+}, [students]);
 
+const [studentsLoading, setStudentsLoading] = useState(false);
   // ✅ Stats
   const [stats, setStats] = useState(null);
 
@@ -142,6 +147,36 @@ function AdminDashboard() {
     if (activePage === "classrooms") fetchClassrooms();
   }, [activePage, searchClass, classroomsRefresh]);
 
+
+useEffect(() => {
+  const fetchStudents = async () => {
+    setStudentsLoading(true);
+    try {
+      const res = await api.get("/admin/GetStudents", {
+        params: {
+          pagenumber: 1,
+          pagesize: 100,
+          name: search,
+        },
+      });
+
+      const data = res.data;
+
+      if (Array.isArray(data)) setStudents(data);
+      else if (Array.isArray(data?.items)) setStudents(data.items);
+      else if (Array.isArray(data?.data)) setStudents(data.data);
+      else setStudents([]);
+    } catch (err) {
+      console.log("Students error:", getErrorMessage(err));
+      setStudents([]);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  if (activePage === "students") fetchStudents();
+}, [activePage, search]);
+
   // ✅ إضافة Lecturer
   const handleAddLecturer = async (e) => {
     e.preventDefault();
@@ -166,17 +201,7 @@ function AdminDashboard() {
     }
   };
 
-  // ✅ حذف حساب
-  // const handleCloseAccount = async (userid) => {
-  //   if (!window.confirm("Are you sure you want to close this account?")) return;
-  //   try {
-  //     await api.put(`/admin/CloseAccount/${userid}`);
-  //     showToast("Account closed successfully");
-  //     setLecturersRefresh((r) => r + 1);
-  //   } catch (err) {
-  //     showToast(getErrorMessage(err), "error");
-  //   }
-  // };
+
 
 const handleCloseAccount = async (userid) => {
   if (!userid) {
@@ -270,9 +295,11 @@ const handleCloseAccount = async (userid) => {
   const deleteStudent = (id) =>
     setStudents(students.filter((s) => s.id !== id));
 
-  const filteredStudents = students.filter((s) =>
-    s.name?.toLowerCase().includes(search.toLowerCase())
-  );
+ const filteredStudents = students.filter((s) =>
+  `${s.firstName || ""} ${s.lastName || ""}`
+    .toLowerCase()
+    .includes(search.toLowerCase())
+);
 
 
 const filteredLecturers = lecturers.filter((l) =>
@@ -495,7 +522,7 @@ console.log("Lecturers Data => ", filteredLecturers);
                 ) : (
                   filteredStudents.map((s) => (
                     <tr key={s.id}>
-                      <td>{s.name}</td>
+                      <td>{s.firstName} {s.lastName}</td>
                       <td>{s.email}</td>
                       <td>{s.ssin || "-"}</td>
                       <td>{s.section || "-"}</td>
