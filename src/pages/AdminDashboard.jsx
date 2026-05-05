@@ -782,7 +782,6 @@
 
 // export default AdminDashboard;
 
-
 import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -790,8 +789,8 @@ import {
   FaChalkboardTeacher,
   FaMapMarkerAlt,
   FaBook,
-  FaTrash,
   FaEdit,
+  FaTrash,
 } from "react-icons/fa";
 import api, { getErrorMessage } from "../services/api";
 
@@ -799,13 +798,25 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("lecturers");
 
-  // ================= STATE =================
   const [lecturers, setLecturers] = useState([]);
+  const [lecturersLoading, setLecturersLoading] = useState(false);
+  const [lecturersRefresh, setLecturersRefresh] = useState(0);
+
   const [classrooms, setClassrooms] = useState([]);
+  const [classroomsLoading, setClassroomsLoading] = useState(false);
+  const [classroomsRefresh, setClassroomsRefresh] = useState(0);
+
   const [stats, setStats] = useState(null);
 
+  const [search, setSearch] = useState("");
+  const [searchClass, setSearchClass] = useState("");
+
+  // مودال
   const [showLecturerModal, setShowLecturerModal] = useState(false);
-  const [editLecturer, setEditLecturer] = useState(null);
+  const [showClassroomModal, setShowClassroomModal] = useState(false);
+
+  const [editClassroom, setEditClassroom] = useState(null);
+
   const [lecturerForm, setLecturerForm] = useState({
     firstName: "",
     lastName: "",
@@ -814,8 +825,6 @@ function AdminDashboard() {
     ssin: "",
   });
 
-  const [showClassroomModal, setShowClassroomModal] = useState(false);
-  const [editClassroom, setEditClassroom] = useState(null);
   const [classroomForm, setClassroomForm] = useState({
     name: "",
     buildingName: "",
@@ -824,87 +833,120 @@ function AdminDashboard() {
     radiusOfAcceptanceMeter: "",
   });
 
-  // ================= FETCH =================
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const showToast = (msg, type = "success") => {
+    setToast({ show: true, message: msg, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+  };
+
+  const parseResponse = (res) => {
+    try {
+      if (typeof res.data === "string") return JSON.parse(res.data);
+      return res.data;
+    } catch {
+      return res.data;
+    }
+  };
+
+  // Stats
   useEffect(() => {
-    api.get("/admin/SystemDashboard").then((res) => setStats(res.data));
+    const fetch = async () => {
+      const res = await api.get("/admin/SystemDashboard");
+      const data = parseResponse(res);
+      setStats(data?.data || data);
+    };
+    fetch();
   }, []);
 
+  // Lecturers
   useEffect(() => {
-    if (activePage === "lecturers") {
-      api.get("/admin/GetLecturers").then((res) => {
-        const data = res.data;
-        if (Array.isArray(data)) setLecturers(data);
-        else if (Array.isArray(data?.data)) setLecturers(data.data);
-        else setLecturers([]);
-      });
-    }
-  }, [activePage]);
+    if (activePage !== "lecturers") return;
 
+    const fetch = async () => {
+      setLecturersLoading(true);
+      try {
+        const res = await api.get("/admin/GetLecturers", {
+          params: {
+            pagenumber: 1,
+            pagesize: 100,
+            Name: search,
+            SortBy: "id",
+            IsDescindeng: false,
+          },
+        });
+
+        const data = parseResponse(res);
+        setLecturers(data?.data || data || []);
+      } finally {
+        setLecturersLoading(false);
+      }
+    };
+
+    fetch();
+  }, [activePage, search, lecturersRefresh]);
+
+  // Classrooms
   useEffect(() => {
-    if (activePage === "classrooms") {
-      api.get("/classroom/AllClassRoom").then((res) => {
-        const data = res.data;
-        if (Array.isArray(data)) setClassrooms(data);
-        else if (Array.isArray(data?.data)) setClassrooms(data.data);
-        else setClassrooms([]);
-      });
-    }
-  }, [activePage]);
+    if (activePage !== "classrooms") return;
 
-  // ================= LOCATION =================
-  const handleGetLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setClassroomForm((prev) => ({
-          ...prev,
-          latitude: pos.coords.latitude.toFixed(6),
-          longitude: pos.coords.longitude.toFixed(6),
-        }));
-      },
-      () => alert("Allow location access")
-    );
-  };
+    const fetch = async () => {
+      setClassroomsLoading(true);
+      try {
+        const res = await api.get("/classroom/AllClassRoom");
+        const data = parseResponse(res);
+        setClassrooms(data?.data || data || []);
+      } finally {
+        setClassroomsLoading(false);
+      }
+    };
 
-  // ================= ADD / EDIT =================
+    fetch();
+  }, [activePage, classroomsRefresh]);
+
+  // Add Lecturer
   const handleAddLecturer = async (e) => {
     e.preventDefault();
-    try {
-      if (editLecturer) {
-        await api.put(`/admin/EditLecturer/${editLecturer.userId}`, lecturerForm);
-      } else {
-        await api.post("/admin/AddLecturer", lecturerForm);
-      }
-      setShowLecturerModal(false);
-      setEditLecturer(null);
-    } catch (err) {
-      alert(getErrorMessage(err));
-    }
+    await api.post("/admin/AddLecturer", lecturerForm);
+    showToast("Added ✅");
+    setShowLecturerModal(false);
+    setLecturersRefresh((r) => r + 1);
   };
 
-  const handleAddClassroom = async (e) => {
-    e.preventDefault();
-    try {
-      if (editClassroom) {
-        await api.put(`/classroom/Edit/${editClassroom.id}`, classroomForm);
-      } else {
-        await api.post("/classroom/CreateClassRoom", classroomForm);
-      }
-      setShowClassroomModal(false);
-      setEditClassroom(null);
-    } catch (err) {
-      alert(getErrorMessage(err));
-    }
-  };
-
-  // ================= DELETE =================
-  const handleDeleteLecturer = async (id) => {
+  // Close Account
+  const handleCloseAccount = async (id) => {
+    if (!window.confirm("Close account?")) return;
     await api.put(`/admin/CloseAccount/${id}`);
-    setLecturers((prev) => prev.filter((l) => l.userId !== id));
+    showToast("Closed ✅");
+    setLecturersRefresh((r) => r + 1);
+  };
+
+  // Save Classroom
+  const handleSaveClassroom = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      ...classroomForm,
+      latitude: parseFloat(classroomForm.latitude) || 0,
+      longitude: parseFloat(classroomForm.longitude) || 0,
+      radiusOfAcceptanceMeter:
+        parseInt(classroomForm.radiusOfAcceptanceMeter) || 0,
+    };
+
+    if (editClassroom) {
+      await api.put(`/classroom/Edit/${editClassroom.id}`, payload);
+    } else {
+      await api.post("/classroom/CreateClassRoom", payload);
+    }
+
+    showToast("Saved ✅");
+    setShowClassroomModal(false);
+    setClassroomsRefresh((r) => r + 1);
   };
 
   const handleDeleteClassroom = async (id) => {
     await api.delete(`/classroom/Delete/${id}`);
-    setClassrooms((prev) => prev.filter((c) => c.id !== id));
+    setClassroomsRefresh((r) => r + 1);
   };
 
   const handleLogout = () => {
@@ -914,284 +956,138 @@ function AdminDashboard() {
 
   return (
     <div className="dashboard">
-      {/* ================= SIDEBAR ================= */}
+      {/* Sidebar */}
       <div className="sidebar">
         <h2 className="logo">QR Attend</h2>
-
         <ul className="menu">
-          <li
-            className={activePage === "lecturers" ? "active" : ""}
-            onClick={() => setActivePage("lecturers")}
-          >
+          <li onClick={() => setActivePage("lecturers")}>
             <FaChalkboardTeacher /> Lecturers
           </li>
-
-          <li
-            className={activePage === "classrooms" ? "active" : ""}
-            onClick={() => setActivePage("classrooms")}
-          >
+          <li onClick={() => setActivePage("classrooms")}>
             <FaMapMarkerAlt /> Classrooms
           </li>
         </ul>
 
         <button className="logout-btn" onClick={handleLogout}>
-          Logout
+          Sign Out
         </button>
       </div>
 
-      {/* ================= MAIN ================= */}
+      {/* Main */}
       <div className="main">
         <h1>Admin Dashboard</h1>
 
-        {/* CARDS */}
+        {/* Cards */}
         <div className="cards">
           <div className="card">
             <FaChalkboardTeacher />
-            <h2>{stats?.totalLecturers || 0}</h2>
+            <h2>{stats?.totalLecturers ?? lecturers.length}</h2>
             <p>Lecturers</p>
           </div>
-
           <div className="card">
             <FaBook />
-            <h2>{stats?.totalCourses || 0}</h2>
+            <h2>{stats?.totalCourses ?? 0}</h2>
             <p>Courses</p>
           </div>
-
           <div className="card">
             <FaMapMarkerAlt />
-            <h2>{stats?.totalClassrooms || 0}</h2>
+            <h2>{stats?.totalClassrooms ?? classrooms.length}</h2>
             <p>Classrooms</p>
           </div>
         </div>
 
-        {/* ================= LECTURERS ================= */}
+        {/* Lecturers */}
         {activePage === "lecturers" && (
           <div className="table-box">
-            <div className="table-header">
-              <h2>Lecturers</h2>
-              <button
-                className="enroll-btn"
-                onClick={() => setShowLecturerModal(true)}
-              >
-                + Add Lecturer
-              </button>
-            </div>
+            <button onClick={() => setShowLecturerModal(true)}>
+              + Add Lecturer
+            </button>
 
-            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} />
+
+            {lecturersLoading ? (
+              <p>Loading...</p>
+            ) : (
               <table>
                 <tbody>
-                  {(lecturers || []).slice(0, 100).map((l) => (
+                  {lecturers.map((l) => (
                     <tr key={l.userId}>
-                      <td>{l.name}</td>
+                      <td>{l.firstName} {l.lastName}</td>
                       <td>{l.email}</td>
-
-                      <td className="actions">
-                        <FaEdit
-                          onClick={() => {
-                            setEditLecturer(l);
-                            setShowLecturerModal(true);
-                          }}
-                        />
-
-                        <FaTrash
-                          onClick={() => handleDeleteLecturer(l.userId)}
-                        />
+                      <td>
+                        <FaTrash onClick={() => handleCloseAccount(l.userId)} />
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            )}
           </div>
         )}
 
-        {/* ================= CLASSROOMS ================= */}
+        {/* Classrooms */}
         {activePage === "classrooms" && (
           <div className="table-box">
-            <div className="table-header">
-              <h2>Classrooms</h2>
-              <button
-                className="enroll-btn"
-                onClick={() => setShowClassroomModal(true)}
-              >
-                + Add Classroom
-              </button>
-            </div>
+            <button onClick={() => setShowClassroomModal(true)}>
+              + Add Classroom
+            </button>
 
-            <table>
-              <tbody>
-                {(classrooms || []).map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.name}</td>
-                    <td>{c.buildingName}</td>
-
-                    <td className="actions">
-                      <FaEdit
-                        onClick={() => {
+            {classroomsLoading ? (
+              <p>Loading...</p>
+            ) : (
+              <table>
+                <tbody>
+                  {classrooms.map((c) => (
+                    <tr key={c.id}>
+                      <td>{c.name}</td>
+                      <td>{c.buildingName}</td>
+                      <td>
+                        <FaEdit onClick={() => {
                           setEditClassroom(c);
                           setShowClassroomModal(true);
-                        }}
-                      />
-
-                      <FaTrash
-                        onClick={() => handleDeleteClassroom(c.id)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        }} />
+                        <FaTrash onClick={() => handleDeleteClassroom(c.id)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
       </div>
 
-      {/* ================= LECTURER MODAL ================= */}
+      {/* Modal Lecturer */}
       {showLecturerModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{editLecturer ? "Edit Lecturer" : "Add Lecturer"}</h3>
-              <span
-                className="close-btn"
-                onClick={() => setShowLecturerModal(false)}
-              >
-                ✖
-              </span>
-            </div>
-
-            <form onSubmit={handleAddLecturer}>
-              <div className="form-row">
-                <input
-                  placeholder="First Name"
-                  onChange={(e) =>
-                    setLecturerForm({
-                      ...lecturerForm,
-                      firstName: e.target.value,
-                    })
-                  }
-                />
-                <input
-                  placeholder="Last Name"
-                  onChange={(e) =>
-                    setLecturerForm({
-                      ...lecturerForm,
-                      lastName: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <input
-                placeholder="Email"
-                onChange={(e) =>
-                  setLecturerForm({
-                    ...lecturerForm,
-                    email: e.target.value,
-                  })
-                }
-              />
-
-              <input
-                placeholder="SSIN"
-                onChange={(e) =>
-                  setLecturerForm({
-                    ...lecturerForm,
-                    ssin: e.target.value,
-                  })
-                }
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                onChange={(e) =>
-                  setLecturerForm({
-                    ...lecturerForm,
-                    password: e.target.value,
-                  })
-                }
-              />
-
-              <button type="submit" className="save-btn">
-                {editLecturer ? "Update" : "Add"}
-              </button>
-            </form>
-          </div>
+        <div className="modal">
+          <form onSubmit={handleAddLecturer}>
+            <input placeholder="First Name"
+              onChange={(e)=>setLecturerForm({...lecturerForm,firstName:e.target.value})}/>
+            <input placeholder="Last Name"
+              onChange={(e)=>setLecturerForm({...lecturerForm,lastName:e.target.value})}/>
+            <input placeholder="Email"
+              onChange={(e)=>setLecturerForm({...lecturerForm,email:e.target.value})}/>
+            <input placeholder="Password"
+              onChange={(e)=>setLecturerForm({...lecturerForm,password:e.target.value})}/>
+            <button>Add</button>
+          </form>
         </div>
       )}
 
-      {/* ================= CLASSROOM MODAL ================= */}
+      {/* Modal Classroom */}
       {showClassroomModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{editClassroom ? "Edit Classroom" : "Add Classroom"}</h3>
-              <span
-                className="close-btn"
-                onClick={() => setShowClassroomModal(false)}
-              >
-                ✖
-              </span>
-            </div>
-
-            <form onSubmit={handleAddClassroom}>
-              <input
-                placeholder="Name"
-                onChange={(e) =>
-                  setClassroomForm({
-                    ...classroomForm,
-                    name: e.target.value,
-                  })
-                }
-              />
-
-              <input
-                placeholder="Building"
-                onChange={(e) =>
-                  setClassroomForm({
-                    ...classroomForm,
-                    buildingName: e.target.value,
-                  })
-                }
-              />
-
-              <button
-                type="button"
-                className="location-btn"
-                onClick={handleGetLocation}
-              >
-                📍 Get Location
-              </button>
-
-              <input
-                placeholder="Latitude"
-                value={classroomForm.latitude}
-                readOnly
-              />
-
-              <input
-                placeholder="Longitude"
-                value={classroomForm.longitude}
-                readOnly
-              />
-
-              <input
-                placeholder="Radius"
-                onChange={(e) =>
-                  setClassroomForm({
-                    ...classroomForm,
-                    radiusOfAcceptanceMeter: e.target.value,
-                  })
-                }
-              />
-
-              <button type="submit" className="save-btn">
-                {editClassroom ? "Update" : "Add"}
-              </button>
-            </form>
-          </div>
+        <div className="modal">
+          <form onSubmit={handleSaveClassroom}>
+            <input placeholder="Name"
+              onChange={(e)=>setClassroomForm({...classroomForm,name:e.target.value})}/>
+            <input placeholder="Building"
+              onChange={(e)=>setClassroomForm({...classroomForm,buildingName:e.target.value})}/>
+            <button>Save</button>
+          </form>
         </div>
       )}
+
+      {toast.show && <div className="toast">{toast.message}</div>}
     </div>
   );
 }
