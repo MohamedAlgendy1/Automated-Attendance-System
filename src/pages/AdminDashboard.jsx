@@ -274,12 +274,13 @@ const handleCloseAccount = async (userid) => {
     s.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // const filteredLecturers = lecturers.filter((l) =>
-  //   `${l.firstName} ${l.lastName}`.toLowerCase().includes(search.toLowerCase())
-  // );console.log(filteredLecturers);
+
 const filteredLecturers = lecturers.filter((l) =>
-  (l.name || "").toLowerCase().includes(search.toLowerCase())
+  `${l.firstName || ""} ${l.lastName || ""}`
+    .toLowerCase()
+    .includes(search.toLowerCase())
 );
+
 console.log("Lecturers Data => ", filteredLecturers);
 
   const filteredClassrooms = classrooms.filter((c) =>
@@ -362,72 +363,7 @@ console.log("Lecturers Data => ", filteredLecturers);
           </div>
         </div>
 
-        {/* ================= LECTURERS ================= */}
-        {/* {activePage === "lecturers" && (
-          <div className="table-box">
-            <div className="table-header">
-              <h2>Manage Lecturers</h2>
-              <button
-                className="enroll-btn"
-                onClick={() => {
-                  setShowLecturerModal(true);
-                  setLecturerFormError("");
-                  setLecturerForm({ firstName: "", lastName: "", email: "", password: "", ssin: "" });
-                }}
-              >
-                + Add Lecturer
-              </button>
-            </div>
-
-            <input
-              className="search"
-              placeholder="Filter lecturers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-
-            {lecturersLoading ? (
-              <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>Loading...</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>SSIN</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLecturers.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>
-                        No lecturers found
-                      </td>
-                    </tr>
-                  ) : (
-                   filteredLecturers.map((l) => (
-  <tr key={l.id}>
-    <td>{l.firstName} {l.lastName}</td>
-    <td>{l.email}</td>
-    <td>{l.ssin || "-"}</td>
-    <td>
-      <FaTrash
-        style={{ color: "#ef4444", cursor: "pointer" }}
-        onClick={() => handleCloseAccount(l.userid)}
-      />
-    </td>
-  </tr>
-))
-                  )}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )} */}
-
-
-        {/* ================= LECTURERS ================= */}
+        
 
   {/* ================= LECTURERS ================= */}
 {activePage === "lecturers" && (
@@ -499,33 +435,14 @@ console.log("Lecturers Data => ", filteredLecturers);
           ) : (
             filteredLecturers.map((l) => (
               <tr key={l.userId}>
-                <td>{l.name}</td>
+                <td>{l.firstName} {l.lastName}</td>
                 <td>{l.email}</td>
                 <td>{l.ssin || "-"}</td>
-                <td>{l.courses}</td>
+                <td>
+  {l.coursesCount ??
+   (Array.isArray(l.courses) ? l.courses.length : 0)}
+</td>
 
-                {/* <td>
-                  {l.userid ? (
-                    <FaTrash
-                      style={{
-                        color: "#ef4444",
-                        cursor: "pointer",
-                      }}
-                      onClick={() =>
-                        handleCloseAccount(l.userid)
-                      }
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        color: "#94a3b8",
-                        fontSize: "13px",
-                      }}
-                    >
-                      No ID
-                    </span>
-                  )}
-                </td> */}
 <td>
   <FaTrash
     style={{
