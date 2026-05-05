@@ -29,6 +29,10 @@ function AdminDashboard() {
   const [classroomsLoading, setClassroomsLoading] = useState(false);
   const [classroomsRefresh, setClassroomsRefresh] = useState(0);
 
+  // ✅ Courses من الـ Backend
+  const [courses, setCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+
 
   // ✅ Stats
   const [stats, setStats] = useState(null);
@@ -140,6 +144,32 @@ function AdminDashboard() {
     };
     if (activePage === "classrooms") fetchClassrooms();
   }, [activePage, searchClass, classroomsRefresh]);
+
+  // ✅ جيب الـ Courses من الـ Backend
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setCoursesLoading(true);
+      try {
+        const res = await api.get("/course/AllCourses", {
+          params: {
+            pagenumber: 1,
+            pagesize: 100,
+          },
+        });
+        const data = res.data;
+        if (Array.isArray(data)) setCourses(data);
+        else if (Array.isArray(data?.items)) setCourses(data.items);
+        else if (Array.isArray(data?.data)) setCourses(data.data);
+        else setCourses([]);
+      } catch (err) {
+        console.error("Courses error:", getErrorMessage(err));
+        setCourses([]);
+      } finally {
+        setCoursesLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
 
   // ✅ إضافة Lecturer
@@ -318,7 +348,7 @@ const handleCloseAccount = async (userid) => {
           </div>
           <div className="card">
             <FaBook />
-            <h2>{stats?.coursesCount ?? 0}</h2>
+            <h2>{stats?.coursesCount ?? courses.length}</h2>
             <p>Courses</p>
           </div>
           <div className="card">
