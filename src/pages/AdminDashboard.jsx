@@ -780,15 +780,17 @@
 
 // export default AdminDashboard;
 
+
+
 import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaChalkboardTeacher,
-
+  FaUserGraduate,
   FaMapMarkerAlt,
   FaBook,
-
+  FaEdit,
   FaTrash,
   FaChartBar,
 } from "react-icons/fa";
@@ -796,31 +798,27 @@ import api, { getErrorMessage } from "../services/api";
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState("lecturers");
+  const [activePage, setActivePage] = useState("students");
 
-  // ================= LECTURERS =================
   const [lecturers, setLecturers] = useState([]);
   const [lecturersLoading, setLecturersLoading] = useState(false);
   const [lecturersRefresh, setLecturersRefresh] = useState(0);
-  const [search, setSearch] = useState("");
 
-  // ================= CLASSROOMS =================
+  const [students, setStudents] = useState([]);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentsLoading, setStudentsLoading] = useState(false);
+
   const [classrooms, setClassrooms] = useState([]);
   const [classroomsLoading, setClassroomsLoading] = useState(false);
   const [classroomsRefresh, setClassroomsRefresh] = useState(0);
+
+  const [stats, setStats] = useState(null);
+  const [search, setSearch] = useState("");
   const [searchClass, setSearchClass] = useState("");
 
-  // ================= STATS =================
-  const [stats, setStats] = useState(null);
-
-  // ================= MODALS =================
   const [showLecturerModal, setShowLecturerModal] = useState(false);
   const [lecturerForm, setLecturerForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    ssin: "",
+    firstName: "", lastName: "", email: "", password: "", ssin: "",
   });
   const [lecturerFormError, setLecturerFormError] = useState("");
   const [lecturerFormLoading, setLecturerFormLoading] = useState(false);
@@ -828,14 +826,12 @@ function AdminDashboard() {
   const [showClassroomModal, setShowClassroomModal] = useState(false);
   const [editClassroom, setEditClassroom] = useState(null);
   const [classroomForm, setClassroomForm] = useState({
-    name: "",
-    buildingName: "",
-    latitude: "",
-    longitude: "",
-    radiusOfAcceptanceMeter: "",
+    name: "", buildingName: "", latitude: "", longitude: "", radiusOfAcceptanceMeter: "",
   });
   const [classroomFormError, setClassroomFormError] = useState("");
   const [classroomFormLoading, setClassroomFormLoading] = useState(false);
+  const [locLoading, setLocLoading] = useState(false);
+  const [locError, setLocError] = useState("");
 
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
@@ -844,18 +840,22 @@ function AdminDashboard() {
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // ================= STATS =================
+  // ✅ Stats
   useEffect(() => {
-    api.get("/admin/SystemDashboard")
-      .then(res => setStats(res.data))
-      .catch(err => console.log(getErrorMessage(err)));
+    const fetchStats = async () => {
+      try {
+        const res = await api.get("/admin/SystemDashboard");
+        setStats(res.data);
+      } catch (err) {
+        console.error("Stats error:", getErrorMessage(err));
+      }
+    };
+    fetchStats();
   }, []);
 
-  // ================= GET LECTURERS =================
+  // ✅ Lecturers
   useEffect(() => {
-    if (activePage !== "lecturers") return;
-
-    const fetch = async () => {
+    const fetchLecturers = async () => {
       setLecturersLoading(true);
       try {
         const res = await api.get("/admin/GetLecturers", {
@@ -863,30 +863,30 @@ function AdminDashboard() {
             pagenumber: 1,
             pagesize: 100,
             Name: search,
-            SortBy: "id",
+            SortBy: "",
             IsDescindeng: false,
           },
         });
-
         const data = res.data;
-        setLecturers(Array.isArray(data) ? data : data?.items || data?.data || []);
-
+        // ✅ الـ response بيرجع string/octet-stream — محتاج نشوف الـ shape
+        if (Array.isArray(data)) setLecturers(data);
+        else if (Array.isArray(data?.items)) setLecturers(data.items);
+        else if (Array.isArray(data?.data)) setLecturers(data.data);
+        else if (Array.isArray(data?.lecturers)) setLecturers(data.lecturers);
+        else setLecturers([]);
       } catch (err) {
-        console.log(getErrorMessage(err));
+        console.error("Lecturers error:", getErrorMessage(err));
         setLecturers([]);
       } finally {
         setLecturersLoading(false);
       }
     };
-
-    fetch();
+    if (activePage === "lecturers") fetchLecturers();
   }, [activePage, search, lecturersRefresh]);
 
-  // ================= GET CLASSROOMS =================
+  // ✅ Classrooms
   useEffect(() => {
-    if (activePage !== "classrooms") return;
-
-    const fetch = async () => {
+    const fetchClassrooms = async () => {
       setClassroomsLoading(true);
       try {
         const res = await api.get("/classroom/AllClassRoom", {
@@ -898,33 +898,47 @@ function AdminDashboard() {
             IsDescindeng: false,
           },
         });
-
         const data = res.data;
-        setClassrooms(Array.isArray(data) ? data : data?.items || data?.data || []);
-
+        if (Array.isArray(data)) setClassrooms(data);
+        else if (Array.isArray(data?.items)) setClassrooms(data.items);
+        else if (Array.isArray(data?.data)) setClassrooms(data.data);
+        else setClassrooms([]);
       } catch (err) {
-        console.log(getErrorMessage(err));
+        console.error("Classrooms error:", getErrorMessage(err));
         setClassrooms([]);
       } finally {
         setClassroomsLoading(false);
       }
     };
-
-    fetch();
+    if (activePage === "classrooms") fetchClassrooms();
   }, [activePage, searchClass, classroomsRefresh]);
 
-  // ================= ADD LECTURER =================
+  // ✅ Students — مفيش endpoint في الـ Swagger، هنشيل الـ API call
+  useEffect(() => {
+    if (activePage === "students") {
+      // ✅ Students مش موجود في الـ Backend endpoints — بنعرضهم من localStorage
+      const stored = JSON.parse(localStorage.getItem("students")) || [];
+      setStudents(stored);
+    }
+  }, [activePage]);
+
+  // ✅ Add Lecturer
   const handleAddLecturer = async (e) => {
     e.preventDefault();
-    setLecturerFormLoading(true);
     setLecturerFormError("");
-
+    setLecturerFormLoading(true);
     try {
-      await api.post("/admin/AddLecturer", lecturerForm);
-      showToast("Lecturer added ✅");
+      await api.post("/admin/AddLecturer", {
+        firstName: lecturerForm.firstName,
+        lastName: lecturerForm.lastName,
+        email: lecturerForm.email,
+        password: lecturerForm.password,
+        ssin: lecturerForm.ssin,
+      });
+      showToast("Lecturer added successfully ✅");
       setShowLecturerModal(false);
       setLecturerForm({ firstName: "", lastName: "", email: "", password: "", ssin: "" });
-      setLecturersRefresh(r => r + 1);
+      setLecturersRefresh((r) => r + 1);
     } catch (err) {
       setLecturerFormError(getErrorMessage(err));
     } finally {
@@ -932,45 +946,46 @@ function AdminDashboard() {
     }
   };
 
-  // ================= CLOSE ACCOUNT =================
-  const handleCloseAccount = async (id) => {
-    if (!window.confirm("Close this account?")) return;
-
+  // ✅ Close Account — userid في الـ path
+  const handleCloseAccount = async (userid) => {
+    if (!userid) {
+      showToast("User ID not found", "error");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to close this account?")) return;
     try {
-      await api.put(`/admin/CloseAccount/${id}`);
-      showToast("Account closed ✅");
-      setLecturersRefresh(r => r + 1);
+      await api.put(`/admin/CloseAccount/${userid}`);
+      showToast("Account closed successfully ✅");
+      setLecturersRefresh((r) => r + 1);
     } catch (err) {
       showToast(getErrorMessage(err), "error");
     }
   };
 
-  // ================= SAVE CLASSROOM =================
+  // ✅ Save Classroom
   const handleSaveClassroom = async (e) => {
     e.preventDefault();
-    setClassroomFormLoading(true);
     setClassroomFormError("");
-
-    const payload = {
-      ...classroomForm,
-      latitude: +classroomForm.latitude,
-      longitude: +classroomForm.longitude,
-      radiusOfAcceptanceMeter: +classroomForm.radiusOfAcceptanceMeter,
-    };
-
+    setClassroomFormLoading(true);
     try {
+      const payload = {
+        name: classroomForm.name,
+        buildingName: classroomForm.buildingName,
+        latitude: parseFloat(classroomForm.latitude) || 0,
+        longitude: parseFloat(classroomForm.longitude) || 0,
+        radiusOfAcceptanceMeter: parseInt(classroomForm.radiusOfAcceptanceMeter) || 0,
+      };
       if (editClassroom) {
         await api.put(`/classroom/Edit/${editClassroom.id}`, payload);
+        showToast("Classroom updated ✅");
       } else {
         await api.post("/classroom/CreateClassRoom", payload);
+        showToast("Classroom added ✅");
       }
-
-      showToast("Saved ✅");
       setShowClassroomModal(false);
       setEditClassroom(null);
       setClassroomForm({ name: "", buildingName: "", latitude: "", longitude: "", radiusOfAcceptanceMeter: "" });
-      setClassroomsRefresh(r => r + 1);
-
+      setClassroomsRefresh((r) => r + 1);
     } catch (err) {
       setClassroomFormError(getErrorMessage(err));
     } finally {
@@ -978,44 +993,79 @@ function AdminDashboard() {
     }
   };
 
+  // ✅ Delete Classroom
   const handleDeleteClassroom = async (id) => {
-    if (!window.confirm("Delete classroom?")) return;
-
+    if (!window.confirm("Delete this classroom?")) return;
     try {
       await api.delete(`/classroom/Delete/${id}`);
-      showToast("Deleted ✅");
-      setClassroomsRefresh(r => r + 1);
+      showToast("Classroom deleted");
+      setClassroomsRefresh((r) => r + 1);
     } catch (err) {
       showToast(getErrorMessage(err), "error");
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
+  // ✅ Get Location
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) { setLocError("Geolocation not supported"); return; }
+    setLocLoading(true);
+    setLocError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setClassroomForm((prev) => ({
+          ...prev,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6),
+        }));
+        setLocLoading(false);
+      },
+      () => { setLocError("Failed to get location."); setLocLoading(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
-  const filteredLecturers = lecturers.filter(l =>
-    `${l.firstName} ${l.lastName}`.toLowerCase().includes(search.toLowerCase())
+  const filteredStudents = students.filter((s) =>
+    `${s.firstName || s.name || ""} ${s.lastName || ""}`
+      .toLowerCase().includes(studentSearch.toLowerCase())
   );
 
-  const filteredClassrooms = classrooms.filter(c =>
+  const filteredLecturers = lecturers.filter((l) =>
+    `${l.firstName || ""} ${l.lastName || ""}`
+      .toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredClassrooms = classrooms.filter((c) =>
     c.name?.toLowerCase().includes(searchClass.toLowerCase())
   );
+
+  const handleLogout = () => { localStorage.clear(); navigate("/"); };
 
   return (
     <div className="dashboard">
       {/* Sidebar */}
       <div className="sidebar">
         <h2 className="logo">QR Attend</h2>
-
         <ul className="menu">
-          <li className={activePage==="lecturers"?"active":""} onClick={()=>setActivePage("lecturers")}><FaChalkboardTeacher/> Lecturers</li>
-          <li className={activePage==="classrooms"?"active":""} onClick={()=>setActivePage("classrooms")}><FaMapMarkerAlt/> Classrooms</li>
-          <li className={activePage==="reports"?"active":""} onClick={()=>setActivePage("reports")}><FaChartBar/> Reports</li>
+          <li className={activePage === "lecturers" ? "active" : ""} onClick={() => setActivePage("lecturers")}>
+            <FaChalkboardTeacher /> Lecturers
+          </li>
+          <li className={activePage === "students" ? "active" : ""} onClick={() => setActivePage("students")}>
+            <FaUserGraduate /> Students
+          </li>
+          <li className={activePage === "classrooms" ? "active" : ""} onClick={() => setActivePage("classrooms")}>
+            <FaMapMarkerAlt /> Classrooms
+          </li>
+          <li className={activePage === "reports" ? "active" : ""} onClick={() => setActivePage("reports")}>
+            <FaChartBar /> Reports
+          </li>
         </ul>
-
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div className="user-box">
+          <div className="user-info">
+            <div className="avatar">A</div>
+            <div><p>System Administrator</p><span>Admin</span></div>
+          </div>
+          <button className="logout-btn" onClick={handleLogout}>Sign Out</button>
+        </div>
       </div>
 
       {/* Main */}
@@ -1024,105 +1074,290 @@ function AdminDashboard() {
 
         {/* Cards */}
         <div className="cards">
-          <div className="card"><FaChalkboardTeacher/><h2>{stats?.lecturersCount ?? 0}</h2><p>Lecturers</p></div>
-          <div className="card"><FaBook/><h2>{stats?.coursesCount ?? 0}</h2><p>Courses</p></div>
-          <div className="card"><FaMapMarkerAlt/><h2>{stats?.classroomsCount ?? 0}</h2><p>Classrooms</p></div>
+          <div className="card">
+            <FaChalkboardTeacher />
+            <h2>{stats?.lecturersCount ?? lecturers.length}</h2>
+            <p>Lecturers</p>
+          </div>
+          <div className="card">
+            <FaUserGraduate />
+            <h2>{stats?.studentsCount ?? students.length}</h2>
+            <p>Students</p>
+          </div>
+          <div className="card">
+            <FaBook />
+            <h2>{stats?.coursesCount ?? 0}</h2>
+            <p>Courses</p>
+          </div>
+          <div className="card">
+            <FaMapMarkerAlt />
+            <h2>{stats?.classroomsCount ?? classrooms.length}</h2>
+            <p>Classrooms</p>
+          </div>
         </div>
 
-        {/* Lecturers Table */}
-        {activePage==="lecturers" && (
+        {/* ===== LECTURERS ===== */}
+        {activePage === "lecturers" && (
           <div className="table-box">
             <div className="table-header">
               <h2>Manage Lecturers</h2>
-              <button className="enroll-btn" onClick={()=>setShowLecturerModal(true)}>+ Add Lecturer</button>
+              <button className="enroll-btn" onClick={() => {
+                setShowLecturerModal(true);
+                setLecturerFormError("");
+                setLecturerForm({ firstName: "", lastName: "", email: "", password: "", ssin: "" });
+              }}>
+                + Add Lecturer
+              </button>
             </div>
-
-            <input className="search" placeholder="Search..." value={search} onChange={(e)=>setSearch(e.target.value)}/>
-
-            {lecturersLoading ? <p>Loading...</p> : (
+            <input
+              className="search"
+              placeholder="Filter lecturers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {lecturersLoading ? (
+              <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>Loading...</p>
+            ) : (
               <table>
                 <thead>
-                  <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>SSIN</th>
+                    <th>Actions</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {filteredLecturers.map(l=>(
-                    <tr key={l.userId}>
-                      <td>{l.firstName} {l.lastName}</td>
-                      <td>{l.email}</td>
-                      <td>
-                        <FaTrash style={{cursor:"pointer",color:"red"}} onClick={()=>handleCloseAccount(l.userId)}/>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredLecturers.length === 0 ? (
+                    <tr><td colSpan="4" style={{ textAlign: "center", padding: 20, color: "#888" }}>No lecturers found</td></tr>
+                  ) : (
+                    filteredLecturers.map((l) => (
+                      // ✅ استخدم userId أو id حسب الـ response
+                      <tr key={l.userId || l.id}>
+                        <td>{l.firstName} {l.lastName}</td>
+                        <td>{l.email}</td>
+                        <td>{l.ssin || "-"}</td>
+                        <td>
+                          <FaTrash
+                            style={{ color: "#ef4444", cursor: "pointer" }}
+                            // ✅ بعت userId لأنه الـ path param
+                            onClick={() => handleCloseAccount(l.userId || l.id)}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             )}
           </div>
         )}
 
-        {/* Classrooms Table */}
-        {activePage==="classrooms" && (
+        {/* ===== STUDENTS ===== */}
+        {activePage === "students" && (
           <div className="table-box">
-            <div className="table-header">
-              <h2>Manage Classrooms</h2>
-              <button className="enroll-btn" onClick={()=>setShowClassroomModal(true)}>+ Add Classroom</button>
-            </div>
-
-            <input className="search" placeholder="Search..." value={searchClass} onChange={(e)=>setSearchClass(e.target.value)}/>
-
-            {classroomsLoading ? <p>Loading...</p> : (
+            <div className="table-header"><h2>Manage Students</h2></div>
+            <input
+              className="search"
+              placeholder="Filter students by name, email..."
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+            />
+            {studentsLoading ? (
+              <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>Loading...</p>
+            ) : (
               <table>
                 <thead>
-                  <tr><th>Name</th><th>Building</th><th>Actions</th></tr>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>SSIN</th>
+                    <th>Level</th>
+                    <th>Department</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {filteredClassrooms.map(c=>(
-                    <tr key={c.id}>
-                      <td>{c.name}</td>
-                      <td>{c.buildingName}</td>
-                      <td>
-                        <FaTrash style={{cursor:"pointer",color:"red"}} onClick={()=>handleDeleteClassroom(c.id)}/>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredStudents.length === 0 ? (
+                    <tr><td colSpan="5" style={{ textAlign: "center", padding: 20, color: "#888" }}>No students found</td></tr>
+                  ) : (
+                    filteredStudents.map((s, i) => (
+                      <tr key={s.id || s.userId || i}>
+                        <td>{s.firstName || s.name} {s.lastName || ""}</td>
+                        <td>{s.email}</td>
+                        <td>{s.ssin || "-"}</td>
+                        <td>{s.level || "-"}</td>
+                        <td>{s.department || "-"}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             )}
+          </div>
+        )}
+
+        {/* ===== CLASSROOMS ===== */}
+        {activePage === "classrooms" && (
+          <div className="table-box">
+            <div className="table-header">
+              <h2>Manage Classrooms</h2>
+              <button className="enroll-btn" onClick={() => {
+                setShowClassroomModal(true);
+                setEditClassroom(null);
+                setClassroomFormError("");
+                setLocError("");
+                setClassroomForm({ name: "", buildingName: "", latitude: "", longitude: "", radiusOfAcceptanceMeter: "" });
+              }}>
+                + Add Classroom
+              </button>
+            </div>
+            <input
+              className="search"
+              placeholder="Filter classrooms..."
+              value={searchClass}
+              onChange={(e) => setSearchClass(e.target.value)}
+            />
+            {classroomsLoading ? (
+              <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>Loading...</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Building</th>
+                    <th>Coordinates</th>
+                    <th>Radius</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClassrooms.length === 0 ? (
+                    <tr><td colSpan="5" style={{ textAlign: "center", padding: 20, color: "#888" }}>No classrooms found</td></tr>
+                  ) : (
+                    filteredClassrooms.map((c) => (
+                      <tr key={c.id}>
+                        <td>{c.name}</td>
+                        <td>{c.buildingName || "-"}</td>
+                        <td>{c.latitude}, {c.longitude}</td>
+                        <td>{c.radiusOfAcceptanceMeter}m</td>
+                        <td>
+                          <FaEdit
+                            style={{ cursor: "pointer", marginRight: 8 }}
+                            onClick={() => {
+                              setEditClassroom(c);
+                              setClassroomForm({
+                                name: c.name || "",
+                                buildingName: c.buildingName || "",
+                                latitude: c.latitude?.toString() || "",
+                                longitude: c.longitude?.toString() || "",
+                                radiusOfAcceptanceMeter: c.radiusOfAcceptanceMeter?.toString() || "",
+                              });
+                              setClassroomFormError("");
+                              setLocError("");
+                              setShowClassroomModal(true);
+                            }}
+                          />
+                          <FaTrash
+                            style={{ color: "#ef4444", cursor: "pointer" }}
+                            onClick={() => handleDeleteClassroom(c.id)}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* ===== REPORTS ===== */}
+        {activePage === "reports" && (
+          <div className="table-box">
+            <h2>📊 System Reports</h2>
+            <p style={{ color: "#64748b", marginTop: 10 }}>
+              Total Lecturers: {stats?.lecturersCount ?? 0} |
+              Total Students: {stats?.studentsCount ?? 0} |
+              Total Courses: {stats?.coursesCount ?? 0} |
+              Total Classrooms: {stats?.classroomsCount ?? 0}
+            </p>
           </div>
         )}
       </div>
 
-      {/* Modals */}
+      {/* ===== ADD LECTURER MODAL ===== */}
       {showLecturerModal && (
         <div className="modal-overlay">
           <div className="modal">
+            <div className="modal-header">
+              <h3>Add Lecturer</h3>
+              <span onClick={() => setShowLecturerModal(false)} style={{ cursor: "pointer" }}>✖</span>
+            </div>
             <form onSubmit={handleAddLecturer}>
-              <input placeholder="First Name" value={lecturerForm.firstName} onChange={e=>setLecturerForm({...lecturerForm,firstName:e.target.value})}/>
-              <input placeholder="Last Name" value={lecturerForm.lastName} onChange={e=>setLecturerForm({...lecturerForm,lastName:e.target.value})}/>
-              <input placeholder="Email" value={lecturerForm.email} onChange={e=>setLecturerForm({...lecturerForm,email:e.target.value})}/>
-              <input placeholder="Password" value={lecturerForm.password} onChange={e=>setLecturerForm({...lecturerForm,password:e.target.value})}/>
-              <button type="submit">{lecturerFormLoading?"Adding...":"Add"}</button>
-              {lecturerFormError && <p>{lecturerFormError}</p>}
+              <div className="form-row">
+                <input placeholder="First Name" value={lecturerForm.firstName}
+                  onChange={(e) => setLecturerForm({ ...lecturerForm, firstName: e.target.value })} required />
+                <input placeholder="Last Name" value={lecturerForm.lastName}
+                  onChange={(e) => setLecturerForm({ ...lecturerForm, lastName: e.target.value })} required />
+              </div>
+              <input type="email" placeholder="Email" value={lecturerForm.email}
+                onChange={(e) => setLecturerForm({ ...lecturerForm, email: e.target.value })} required />
+              <input placeholder="SSIN" value={lecturerForm.ssin}
+                onChange={(e) => setLecturerForm({ ...lecturerForm, ssin: e.target.value })} />
+              <input type="password" placeholder="Password" value={lecturerForm.password}
+                onChange={(e) => setLecturerForm({ ...lecturerForm, password: e.target.value })} required />
+              {lecturerFormError && <p style={{ color: "red", marginBottom: 8 }}>{lecturerFormError}</p>}
+              <button className="save-btn" type="submit" disabled={lecturerFormLoading}>
+                {lecturerFormLoading ? "Adding..." : "Add Lecturer"}
+              </button>
             </form>
           </div>
         </div>
       )}
 
+      {/* ===== CLASSROOM MODAL ===== */}
       {showClassroomModal && (
         <div className="modal-overlay">
           <div className="modal">
+            <div className="modal-header">
+              <h3>{editClassroom ? "Edit Classroom" : "Add Classroom"}</h3>
+              <span onClick={() => setShowClassroomModal(false)} style={{ cursor: "pointer" }}>✖</span>
+            </div>
             <form onSubmit={handleSaveClassroom}>
-              <input placeholder="Name" value={classroomForm.name} onChange={e=>setClassroomForm({...classroomForm,name:e.target.value})}/>
-              <input placeholder="Building" value={classroomForm.buildingName} onChange={e=>setClassroomForm({...classroomForm,buildingName:e.target.value})}/>
-              <input placeholder="Radius" value={classroomForm.radiusOfAcceptanceMeter} onChange={e=>setClassroomForm({...classroomForm,radiusOfAcceptanceMeter:e.target.value})}/>
-              <button type="submit">{classroomFormLoading?"Saving...":"Save"}</button>
-              {classroomFormError && <p>{classroomFormError}</p>}
+              <input placeholder="Classroom Name" value={classroomForm.name}
+                onChange={(e) => setClassroomForm({ ...classroomForm, name: e.target.value })} required />
+              <input placeholder="Building Name" value={classroomForm.buildingName}
+                onChange={(e) => setClassroomForm({ ...classroomForm, buildingName: e.target.value })} />
+              <button type="button" onClick={handleGetLocation} disabled={locLoading}
+                style={{
+                  width: "100%", padding: "10px", marginBottom: "10px",
+                  background: locLoading ? "#94a3b8" : "#2563eb",
+                  color: "white", border: "none", borderRadius: "8px",
+                  cursor: locLoading ? "not-allowed" : "pointer",
+                  fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                }}>
+                {locLoading ? "🌀 Getting location..." : "📍 Get Current Location"}
+              </button>
+              {locError && <p style={{ color: "red", fontSize: 13, marginBottom: 8 }}>{locError}</p>}
+              <input placeholder="Latitude" value={classroomForm.latitude}
+                onChange={(e) => setClassroomForm({ ...classroomForm, latitude: e.target.value })}
+                style={{ background: classroomForm.latitude ? "#f0fdf4" : "" }} />
+              <input placeholder="Longitude" value={classroomForm.longitude}
+                onChange={(e) => setClassroomForm({ ...classroomForm, longitude: e.target.value })}
+                style={{ background: classroomForm.longitude ? "#f0fdf4" : "" }} />
+              <input placeholder="Radius (meters)" value={classroomForm.radiusOfAcceptanceMeter}
+                onChange={(e) => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })} required />
+              {classroomFormError && <p style={{ color: "red", marginBottom: 8 }}>{classroomFormError}</p>}
+              <button className="save-btn" type="submit" disabled={classroomFormLoading}>
+                {classroomFormLoading ? "Saving..." : editClassroom ? "Update" : "Add Classroom"}
+              </button>
             </form>
           </div>
         </div>
       )}
 
-      {toast.show && <div className="toast">{toast.message}</div>}
+      {/* Toast */}
+      {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
     </div>
   );
 }
