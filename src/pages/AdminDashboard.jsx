@@ -3,18 +3,16 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaChalkboardTeacher,
-  FaUserGraduate,
   FaMapMarkerAlt,
   FaBook,
   FaEdit,
   FaTrash,
-  FaChartBar,
 } from "react-icons/fa";
 import api, { getErrorMessage } from "../services/api";
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState("students");
+  const [activePage, setActivePage] = useState("lecturers");
 
   // ✅ Lecturers من الـ Backend
   const [lecturers, setLecturers] = useState([]);
@@ -25,19 +23,13 @@ function AdminDashboard() {
   const [students, setStudents] = useState(
     JSON.parse(localStorage.getItem("students")) || []
   );
-;
-const [studentSearch, setStudentSearch] = useState("");
+
   // ✅ Classrooms من الـ Backend
   const [classrooms, setClassrooms] = useState([]);
   const [classroomsLoading, setClassroomsLoading] = useState(false);
   const [classroomsRefresh, setClassroomsRefresh] = useState(0);
 
-  useEffect(() => {
-  console.log("STUDENTS:", students); // 👈 هنا
-}, [students])
 
-
-const [studentsLoading, setStudentsLoading] = useState(false);
   // ✅ Stats
   const [stats, setStats] = useState(null);
 
@@ -149,35 +141,6 @@ const [studentsLoading, setStudentsLoading] = useState(false);
     if (activePage === "classrooms") fetchClassrooms();
   }, [activePage, searchClass, classroomsRefresh]);
 
-
-useEffect(() => {
-  const fetchStudents = async () => {
-    setStudentsLoading(true);
-    try {
-      const res = await api.get("/admin/GetStudents", {
-        params: {
-          pagenumber: 1,
-          pagesize: 100,
-          name: search,
-        },
-      });
-
-      const data = res.data;
-
-      if (Array.isArray(data)) setStudents(data);
-      else if (Array.isArray(data?.items)) setStudents(data.items);
-      else if (Array.isArray(data?.data)) setStudents(data.data);
-      else setStudents([]);
-    } catch (err) {
-      console.log("Students error:", getErrorMessage(err));
-      setStudents([]);
-    } finally {
-      setStudentsLoading(false);
-    }
-  };
-
-  if (activePage === "students") fetchStudents();
-}, [activePage, search]);
 
   // ✅ إضافة Lecturer
   const handleAddLecturer = async (e) => {
@@ -294,19 +257,10 @@ const handleCloseAccount = async (userid) => {
     );
   };
 
-  const deleteStudent = (id) =>
-    setStudents(students.filter((s) => s.id !== id));
-const filteredStudents = students.filter((s) =>
-  `${s.firstName || ""} ${s.lastName || ""}`
-    .toLowerCase()
-    .includes(studentSearch.toLowerCase())
-);
-
-
-const filteredLecturers = lecturers.filter((l) =>
+  const filteredLecturers = lecturers.filter((l) =>
   `${l.firstName || ""} ${l.lastName || ""}`
     .toLowerCase()
-    .includes(studentSearch.toLowerCase())
+    .includes(search.toLowerCase())
 );
 
 //console.log("Lecturers Data => ", filteredLecturers);
@@ -333,22 +287,10 @@ const filteredLecturers = lecturers.filter((l) =>
             <FaChalkboardTeacher /> Lecturers
           </li>
           <li
-            className={activePage === "students" ? "active" : ""}
-            onClick={() => setActivePage("students")}
-          >
-            <FaUserGraduate /> Students
-          </li>
-          <li
             className={activePage === "classrooms" ? "active" : ""}
             onClick={() => setActivePage("classrooms")}
           >
             <FaMapMarkerAlt /> Classrooms
-          </li>
-          <li
-            className={activePage === "reports" ? "active" : ""}
-            onClick={() => setActivePage("reports")}
-          >
-            <FaChartBar /> Reports
           </li>
         </ul>
         <div className="user-box">
@@ -489,66 +431,6 @@ const filteredLecturers = lecturers.filter((l) =>
     )}
   </div>
 )}
-        {/* ================= STUDENTS ================= */}
-        {activePage === "students" && (
-          <div className="table-box">
-            <div className="table-header">
-              <h2>Manage Students</h2>
-            </div>
-            <input
-              className="search"
-              placeholder="Filter students by name, email..."
-              value={studentSearch}
-              onChange={(e) => setStudentSearch(e.target.value)}
-            />
-            {studentsLoading ? (
-  <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>
-    Loading...
-  </p>
-) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>SSIN</th>
-                  <th>Section</th>
-                  <th>Level</th>
-                  <th>Department</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: "center", padding: 20, color: "#888" }}>
-                      No students found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredStudents.map((s) => (
-                    <tr key={s.id}>
-                      <td>{s.firstName} {s.lastName}</td>
-                      <td>{s.email}</td>
-                      <td>{s.ssin || "-"}</td>
-                      <td>{s.section || "-"}</td>
-                      <td>{s.level || "-"}</td>
-                      <td>{s.department || "-"}</td>
-                      <td>
-                        <FaEdit />
-                        <FaTrash
-                          style={{ color: "#ef4444", cursor: "pointer", marginLeft: 8 }}
-                          onClick={() => deleteStudent(s.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>)}
-          </div>
-        )}
-
         {/* ================= CLASSROOMS ================= */}
         {activePage === "classrooms" && (
           <div className="table-box">
@@ -631,18 +513,6 @@ const filteredLecturers = lecturers.filter((l) =>
           </div>
         )}
 
-        {/* ================= REPORTS ================= */}
-        {activePage === "reports" && (
-          <div className="table-box">
-            <h2>📊 System Reports</h2>
-            <p style={{ color: "#64748b", marginTop: 10 }}>
-              Total Lecturers: {stats?.lecturersCount ?? 0} |
-              Total Students: {stats?.studentsCount ?? 0} |
-              Total Courses: {stats?.coursesCount ?? 0} |
-              Total Classrooms: {stats?.classroomsCount ?? 0}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* ================= ADD LECTURER MODAL ================= */}
@@ -778,4 +648,4 @@ const filteredLecturers = lecturers.filter((l) =>
   );
 }
 
-export default AdminDashboard;;
+export default AdminDashboard;
