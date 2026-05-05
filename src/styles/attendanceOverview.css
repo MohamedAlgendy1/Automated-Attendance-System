@@ -1,10 +1,8 @@
 /* ============================================================
-   attendanceOverview.css — Professional & Mobile-First
+   attendanceOverview.css — Same System as Records Page
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-/* ── Variables ── */
+/* ========= VARIABLES (نفس النظام) ========= */
 :root {
   --bg:           #0f1117;
   --surface:      #1a1d27;
@@ -14,8 +12,6 @@
   --accent-glow:  rgba(99,102,241,0.25);
   --green:        #22c55e;
   --green-bg:     rgba(34,197,94,0.12);
-  --amber:        #f59e0b;
-  --amber-bg:     rgba(245,158,11,0.12);
   --red:          #ef4444;
   --red-bg:       rgba(239,68,68,0.12);
   --text:         #f1f5f9;
@@ -27,186 +23,48 @@
   --shadow:       0 4px 24px rgba(0,0,0,0.4);
 }
 
-/* ── Reset ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Sora', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
+/* ========= FORCE OVERRIDE ========= */
+.attendance-page,
+.attendance-page .main {
+  background: var(--bg) !important;
+  color: var(--text) !important;
 }
 
-/* ============================================================
-   LAYOUT
-   ============================================================ */
-.dashboard.attendance-page {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg);
+.attendance-page .sidebar {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border) !important;
 }
 
-/* ============================================================
-   SIDEBAR
-   ============================================================ */
-.sidebar {
-  width: var(--sidebar-w);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 28px 16px 24px;
-  position: fixed;
-  top: 0; left: 0;
-  height: 100vh;
-  z-index: 100;
-  transition: transform 0.3s ease;
+.attendance-page .menu li {
+  color: var(--text-soft) !important;
 }
 
-.logo {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.5px;
-  padding: 0 8px;
-  margin-bottom: 32px;
+.attendance-page .menu li.active {
+  background: var(--accent-glow) !important;
+  color: var(--accent) !important;
 }
 
-.menu {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.menu li {
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-soft);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.menu li:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-.menu li.active {
-  background: var(--accent-glow);
-  color: var(--accent);
-}
-
-/* User box */
-.user-box {
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.user-info p {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 140px;
-}
-
-.user-info span {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 9px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-soft);
-  font-size: 13px;
-  font-family: 'Sora', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  background: var(--red-bg);
-  border-color: var(--red);
-  color: var(--red);
-}
-
-/* ============================================================
-   MAIN CONTENT
-   ============================================================ */
-.main {
+/* ========= MAIN ========= */
+.attendance-page .main {
   margin-left: var(--sidebar-w);
-  flex: 1;
-  padding: 36px 32px 48px;
-  min-height: 100vh;
+  padding: 36px 32px;
+  max-width: 1000px;
 }
 
-.main h1 {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.5px;
-  margin-bottom: 24px;
-}
-
-/* Loading text */
-.main > p {
-  color: var(--text-muted);
-  font-size: 14px;
-  padding: 40px 0;
-  text-align: center;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* ============================================================
-   STAT CARDS (top)
-   ============================================================ */
+/* ========= CARDS ========= */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 32px;
+  margin: 20px 0 30px;
 }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px 22px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 20px;
+  transition: all 0.2s;
 }
 
 .card:hover {
@@ -215,234 +73,131 @@ body {
 }
 
 .card p {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .card h2 {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 26px;
   color: var(--text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -1px;
 }
 
-/* ============================================================
-   COURSE TABLE BLOCK
-   ============================================================ */
+/* ========= TABLE BOX ========= */
 .table-box {
+  margin-top: 24px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  margin-bottom: 20px;
-  transition: box-shadow 0.2s;
 }
 
-.table-box:hover {
-  box-shadow: 0 0 0 1px rgba(99,102,241,0.2), var(--shadow);
-}
-
-.table-box > h2 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  padding: 18px 24px 14px;
+.table-box h2 {
+  padding: 18px 20px;
   border-bottom: 1px solid var(--border);
-  letter-spacing: -0.3px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-size: 16px;
+  color: var(--text);
 }
 
-.table-box > h2::before {
-  content: '';
-  display: inline-block;
-  width: 3px;
-  height: 16px;
-  background: var(--accent);
-  border-radius: 2px;
-}
-
-/* ============================================================
-   TABLE
-   ============================================================ */
+/* ========= TABLE ========= */
 .table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.table thead tr {
-  background: rgba(255,255,255,0.025);
-}
-
 .table th {
-  padding: 11px 24px;
-  text-align: left;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border);
-}
-
-.table tbody tr {
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
-}
-
-.table tbody tr:last-child { border-bottom: none; }
-
-.table tbody tr:hover {
-  background: rgba(255,255,255,0.03);
 }
 
 .table td {
-  padding: 13px 24px;
-  font-size: 14px;
+  padding: 14px 20px;
   color: var(--text-soft);
-  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
 }
 
-/* Student name — bold */
 .table td:first-child {
   color: var(--text);
   font-weight: 500;
 }
 
-/* Attended / Total — mono */
-.table td:nth-child(2),
-.table td:nth-child(3) {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--text-muted);
+.table tr:hover {
+  background: rgba(255,255,255,0.03);
 }
 
-/* Percentage badge */
-.table td:last-child span {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 700 !important;
-  padding: 3px 10px;
-  border-radius: 20px;
+/* ========= PERCENT COLORS (بدل inline style) ========= */
+.table td span {
+  font-weight: 600;
 }
 
-/* color classes for percent */
-.table td:last-child span[style*="#16a34a"] {
-  background: var(--green-bg) !important;
+.table td span {
+  color: var(--green);
+}
+
+.table td span:has(:not(.dummy)) {} /* placeholder */
+
+/* fallback حسب القيمة */
+.table td span {
+  color: var(--green);
+}
+
+/* للأسف JS بيحدد اللون inline، فهنا بنغلبه */
+.table td span[style*="#16a34a"] {
   color: var(--green) !important;
 }
 
-.table td:last-child span[style*="#d97706"] {
-  background: var(--amber-bg) !important;
-  color: var(--amber) !important;
+.table td span[style*="#d97706"] {
+  color: #f59e0b !important;
 }
 
-.table td:last-child span[style*="#dc2626"] {
-  background: var(--red-bg) !important;
+.table td span[style*="#dc2626"] {
   color: var(--red) !important;
 }
 
-/* Empty / Loading rows */
+/* ========= EMPTY / LOADING ========= */
 .table td[colspan] {
-  text-align: center !important;
-  color: var(--text-muted) !important;
-  font-size: 13px !important;
-  padding: 32px !important;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
 }
 
-/* ============================================================
-   ANIMATIONS
-   ============================================================ */
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 1;   }
+.attendance-page p {
+  color: var(--text-muted);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0);   }
-}
-
-.table-box {
-  animation: fadeIn 0.3s ease both;
-}
-
-.table-box:nth-child(2) { animation-delay: 0.05s; }
-.table-box:nth-child(3) { animation-delay: 0.10s; }
-.table-box:nth-child(4) { animation-delay: 0.15s; }
-.table-box:nth-child(5) { animation-delay: 0.20s; }
-
-/* ============================================================
-   MOBILE
-   ============================================================ */
+/* ========= RESPONSIVE ========= */
 @media (max-width: 768px) {
 
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .main {
+  .attendance-page .main {
     margin-left: 0;
-    padding: 20px 16px 80px;
-  }
-
-  .main h1 {
-    font-size: 20px;
-    margin-bottom: 16px;
+    padding: 20px 16px 90px;
   }
 
   .cards {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .card { padding: 14px 16px; }
-  .card h2 { font-size: 22px; }
+  .cards .card:first-child {
+    grid-column: 1 / -1;
+  }
 
-  /* Table box */
   .table-box {
-    border-radius: var(--radius-sm);
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table-box > h2 {
-    font-size: 13px;
-    padding: 14px 16px 12px;
   }
 
   .table th,
   .table td {
-    padding: 11px 14px;
     white-space: nowrap;
   }
-
-  .table th  { font-size: 10px; }
-  .table td  { font-size: 13px; }
 }
 
-/* ============================================================
-   SMALL PHONES
-   ============================================================ */
+/* ========= SMALL PHONES ========= */
 @media (max-width: 380px) {
-  .main { padding: 14px 10px 80px; }
-  .table th, .table td { padding: 10px 12px; }
+  .cards {
+    grid-template-columns: 1fr;
+  }
 }
-
-/* ============================================================
-   SCROLLBAR
-   ============================================================ */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
