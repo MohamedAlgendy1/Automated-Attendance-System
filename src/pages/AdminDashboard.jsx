@@ -317,11 +317,6 @@ const handleCloseAccount = async (userid) => {
             <p>Lecturers</p>
           </div>
           <div className="card">
-            <FaUserGraduate />
-            <h2>{stats?.studentsCount ?? students.length}</h2>
-            <p>Students</p>
-          </div>
-          <div className="card">
             <FaBook />
             <h2>{stats?.coursesCount ?? 0}</h2>
             <p>Courses</p>
