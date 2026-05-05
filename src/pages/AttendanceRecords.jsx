@@ -303,55 +303,80 @@ function AttendanceRecords() {
     const loadReport = async () => {
       setLoading(true);
       try {
-        // 1️⃣ جيب الـ report (اللي حضروا)
+        // 1️⃣ جيب اللي حضروا من الـ report
         const reportRes = await getAttendanceReport(selectedLectureId);
         const presentStudents = reportRes?.report || [];
 
-        // 2️⃣ جيب overview الكورس
-        let overview = null;
+        // 2️⃣ جيب قائمة كل الطلاب المسجلين في الكورس
+        let enrolledList = [];
         try {
-          overview = await getCourseOverview(courseId);
+          const overview = await getCourseOverview(courseId);
+          enrolledList =
+            overview?.students ||
+            overview?.enrolledStudents ||
+            overview?.studentList ||
+            [];
         } catch {
-          overview = null;
+          enrolledList = [];
         }
 
-        // 3️⃣ حاول تجيب قائمة الطلاب من الـ overview
-        const enrolledList =
-          overview?.students ||
-          overview?.enrolledStudents ||
-          overview?.studentList ||
-          [];
-
-        // 4️⃣ Merge
         if (enrolledList.length > 0) {
-          // عندنا كل الطلاب — نعمل merge ونحدد حاضر أو غايب
+          // ✅ عندنا كل الطلاب — نعمل merge صح
+          // نعمل Map من الـ present students عشان البحث يبقى سريع
+          const presentMap = new Map();
+          presentStudents.forEach((p) => {
+            const key =
+              p.studentId?.toString() ||
+              p.userId?.toString() ||
+              p.studentName;
+            if (key) presentMap.set(key, p);
+          });
+
           const merged = enrolledList.map((student) => {
             const studentKey =
-              student.studentId || student.userId || student.id || student.studentName || student.name;
+              student.studentId?.toString() ||
+              student.userId?.toString() ||
+              student.id?.toString() ||
+              student.studentName ||
+              student.name;
 
-            const presentRecord = presentStudents.find(
-              (p) =>
-                (p.studentId && p.studentId === student.studentId) ||
-                (p.userId && p.userId === student.userId) ||
-                (p.studentName && p.studentName === (student.studentName || student.name))
-            );
+            // ✅ نبحث في الـ presentMap بأكتر من طريقة
+            const presentRecord =
+              presentMap.get(student.studentId?.toString()) ||
+              presentMap.get(student.userId?.toString()) ||
+              presentMap.get(student.id?.toString()) ||
+              presentMap.get(student.studentName) ||
+              presentMap.get(student.name) ||
+              // fallback: ابحث بالاسم لو الـ id مش موجود
+              presentStudents.find(
+                (p) =>
+                  p.studentName &&
+                  (student.studentName || student.name) &&
+                  p.studentName === (student.studentName || student.name)
+              );
 
             return {
-              studentName: student.studentName || student.name || student.fullName || "Unknown",
+              studentName:
+                student.studentName ||
+                student.name ||
+                student.fullName ||
+                "Unknown",
               studentId: studentKey,
+              // ✅ حاضر بس لو موجود في الـ report فعلاً
               status: presentRecord ? "Present" : "Absent",
-              scanTime: presentRecord?.scanTime || null,
+              // ✅ وقت الحضور من الـ record
+              scanTime: presentRecord?.scanTime || presentRecord?.attendedAt || null,
             };
           });
 
           setMergedData(merged);
         } else {
-          // مفيش قائمة طلاب — نعرض اللي حضروا بس كـ Present
+          // مفيش قائمة طلاب — نعرض اللي حضروا بس
           const merged = presentStudents.map((s) => ({
             studentName: s.studentName || "Unknown",
-            studentId: s.studentId || s.userId || s.id,
+            studentId: s.studentId?.toString() || s.userId?.toString() || s.id?.toString(),
             status: "Present",
-            scanTime: s.scanTime || null,
+            scanTime: s.scanTime || s.attendedAt || null,
           }));
           setMergedData(merged);
         }
