@@ -242,21 +242,30 @@
 // }
 
 // export default AttendanceRecords;
+
+
+
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceRecords.css";
 import { parseJwt, getErrorMessage } from "../services/api";
-import { getAttendanceReport } from "../services/lectureService";
+import { getAttendanceReport, getLecturesByCourse, getCourseOverview } from "../services/lectureService";
 import { getCourseById } from "../services/courseService";
-import { getLecturesByCourse } from "../services/lectureService";
 
 function AttendanceRecords() {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
   const [course, setCourse] = useState(null);
-  const [report, setReport] = useState([]);
+  const [lectures, setLectures] = useState([]);
+  const [selectedLectureId, setSelectedLectureId] = useState(null);
+  const [report, setReport] = useState([]);       // اللي حضروا فعلاً
+  const [allStudents, setAllStudents] = useState([]); // كل الطلاب المسجلين
+  const [mergedData, setMergedData] = useState([]); // النتيجة النهائية
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
@@ -264,46 +273,134 @@ function AttendanceRecords() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     "Lecturer";
 
+  // ✅ Load course + lectures
+  useEffect(() => {
+    const loadInitial = async () => {
+      try {
+        const [courseRes, lecturesRes] = await Promise.all([
+          getCourseById(courseId),
+          getLecturesByCourse(courseId),
+        ]);
+        setCourse(courseRes);
 
+        const lects = lecturesRes || [];
+        setLectures(lects);
 
-useEffect(() => {
-  const load = async () => {
-    try {
-      setLoading(true);
-
-      // 1️⃣ الكورس
-      const courseRes = await getCourseById(courseId);
-      setCourse(courseRes);
-
-      // 2️⃣ المحاضرات
-      const lecturesRes = await getLecturesByCourse(courseId);
-
-      const lectures = lecturesRes || [];
-
-      if (lectures.length === 0) {
-        setReport([]);
-        return;
+        if (lects.length > 0) {
+          setSelectedLectureId(lects[0].id);
+        }
+      } catch (err) {
+        console.log(getErrorMessage(err));
       }
+    };
+    loadInitial();
+  }, [courseId]);
 
-      // 3️⃣ أهم تعديل هنا 👇
-      const lectureId = lectures[0].id; // أول lecture
-
-      // 4️⃣ الحضور
-      const reportRes = await getAttendanceReport(lectureId);
-
-      setReport(reportRes?.report || []);
-
-    } catch (err) {
-      console.log(getErrorMessage(err));
-      setReport([]);
-    } finally {
+  // ✅ Load attendance report whenever lecture changes
+  useEffect(() => {
+    if (!selectedLectureId) {
       setLoading(false);
+      return;
     }
+
+    const loadReport = async () => {
+      setLoading(true);
+      try {
+        // 1️⃣ جيب الـ report (اللي حضروا)
+        const reportRes = await getAttendanceReport(selectedLectureId);
+        const presentStudents = reportRes?.report || [];
+        setReport(presentStudents);
+
+        // 2️⃣ جيب overview الكورس (فيه عدد الطلاب وبياناتهم لو موجودة)
+        let overview = null;
+        try {
+          overview = await getCourseOverview(courseId);
+        } catch {
+          overview = null;
+        }
+
+        // 3️⃣ حاول تجيب قائمة الطلاب من الـ overview
+        // الـ overview ممكن يرجع: { students: [...], enrolledStudents: [...], totalEnrolledStudents: N }
+        const enrolledList =
+          overview?.students ||
+          overview?.enrolledStudents ||
+          overview?.studentList ||
+          [];
+
+        setAllStudents(enrolledList);
+
+        // 4️⃣ Merge: لو عندنا قائمة الطلاب نعمل merge، لو لأ نعرض اللي حضروا بس
+        if (enrolledList.length > 0) {
+          // عندنا كل الطلاب — نعمل merge
+          const presentIds = new Set(
+            presentStudents.map(
+              (s) => s.studentId || s.userId || s.id || s.studentName
+            )
+          );
+
+          const merged = enrolledList.map((student) => {
+            const studentKey =
+              student.studentId || student.userId || student.id || student.studentName || student.name;
+
+            const presentRecord = presentStudents.find(
+              (p) =>
+                (p.studentId && p.studentId === student.studentId) ||
+                (p.userId && p.userId === student.userId) ||
+                (p.studentName && p.studentName === (student.studentName || student.name))
+            );
+
+            return {
+              studentName: student.studentName || student.name || student.fullName || "Unknown",
+              studentId: studentKey,
+              status: presentRecord ? "Present" : "Absent",
+              scanTime: presentRecord?.scanTime || null,
+            };
+          });
+
+          setMergedData(merged);
+        } else {
+          // مفيش قائمة طلاب — نعرض اللي حضروا بس كـ Present
+          const merged = presentStudents.map((s) => ({
+            studentName: s.studentName || "Unknown",
+            studentId: s.studentId || s.userId || s.id,
+            status: "Present",
+            scanTime: s.scanTime || null,
+          }));
+          setMergedData(merged);
+        }
+      } catch (err) {
+        console.log(getErrorMessage(err));
+        setMergedData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReport();
+  }, [selectedLectureId, courseId]);
+
+  // ✅ Filter + Search
+  const filtered = mergedData.filter((s) => {
+    const matchSearch = s.studentName?.toLowerCase().includes(search.toLowerCase());
+    const isPresent = s.status === "Present";
+    const matchFilter =
+      filter === "all"     ? true :
+      filter === "present" ? isPresent :
+      !isPresent;
+    return matchSearch && matchFilter;
+  });
+
+  const presentCount = mergedData.filter((s) => s.status === "Present").length;
+  const absentCount  = mergedData.length - presentCount;
+
+  const formatTime = (t) => {
+    if (!t) return null;
+    try { return new Date(t).toLocaleString(); } catch { return null; }
   };
 
-  load();
-}, [courseId]);
-
+  const getLectureLabel = (l) => {
+    return l.title || l.name || `Lecture ${l.id}`;
+  };
 
   return (
     <div className="dashboard records-page">
@@ -317,24 +414,17 @@ useEffect(() => {
             <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>
           </ul>
         </div>
-
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">
-              {lecturerName?.[0]?.toUpperCase() || "L"}
-            </div>
+            <div className="avatar">{lecturerName?.[0]?.toUpperCase() || "L"}</div>
             <div>
               <p>{lecturerName}</p>
               <span>Lecturer</span>
             </div>
           </div>
-
           <button
             className="logout-btn"
-            onClick={() => {
-              localStorage.clear();
-              navigate("/");
-            }}
+            onClick={() => { localStorage.clear(); navigate("/"); }}
           >
             Sign Out
           </button>
@@ -344,79 +434,147 @@ useEffect(() => {
       {/* Main */}
       <div className="main">
         <h1>Attendance Records</h1>
+        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
-        <p onClick={() => navigate(-1)} style={{ cursor: "pointer", color: "#2563eb" }}>
-          ← Back
-        </p>
-
-        {/* Cards */}
+        {/* Stat Cards */}
         <div className="cards">
           <div className="card">
             <p>Course</p>
             <h2>{course?.courseCode || course?.code || "-"}</h2>
           </div>
-
+          <div className="card">
+            <p>Total</p>
+            <h2>{mergedData.length}</h2>
+          </div>
           <div className="card">
             <p>Present</p>
-            <h2 style={{ color: "#22c55e" }}>
-              {report.length}
-            </h2>
+            <h2 style={{ color: "#16a34a" }}>{presentCount}</h2>
           </div>
+          <div className="card">
+            <p>Absent</p>
+            <h2 style={{ color: "#dc2626" }}>{absentCount}</h2>
+          </div>
+        </div>
+
+        {/* Lecture Selector */}
+        {lectures.length > 1 && (
+          <div className="lecture-selector">
+            <label>Select Lecture:</label>
+            <select
+              value={selectedLectureId || ""}
+              onChange={(e) => setSelectedLectureId(Number(e.target.value))}
+            >
+              {lectures.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {getLectureLabel(l)}
+                  {l.startTime ? ` — ${new Date(l.startTime).toLocaleDateString()}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="filters-bar">
+          <input
+            className="filter-search"
+            placeholder="Search student..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button
+            className={`filter-btn ${filter === "all" ? "active-all" : ""}`}
+            onClick={() => setFilter("all")}
+          >All ({mergedData.length})</button>
+          <button
+            className={`filter-btn ${filter === "present" ? "active-present" : ""}`}
+            onClick={() => setFilter("present")}
+          >Present ({presentCount})</button>
+          <button
+            className={`filter-btn ${filter === "absent" ? "active-absent" : ""}`}
+            onClick={() => setFilter("absent")}
+          >Absent ({absentCount})</button>
         </div>
 
         {/* Table */}
         <div className="table-box">
-          <h2>{course?.name || "Course"}</h2>
+          <div className="table-box-header">
+            <h2>{course?.courseName || course?.name || "Course"}</h2>
+            <span className="table-count">{filtered.length} students</span>
+          </div>
 
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <table className="table">
+          <div className="table-scroll">
+            <table>
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Student</th>
                   <th>Status</th>
                   <th>Scan Time</th>
                 </tr>
               </thead>
-
               <tbody>
-                {report.length === 0 ? (
+                {loading ? (
+                  [1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="skeleton-row">
+                      <td><div className="skeleton-bar short" /></td>
+                      <td><div className="skeleton-bar long" /></td>
+                      <td><div className="skeleton-bar medium" /></td>
+                      <td><div className="skeleton-bar medium" /></td>
+                    </tr>
+                  ))
+                ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: "center" }}>
-                      No attendance yet
+                    <td colSpan="4">
+                      <div className="empty-state">
+                        <p>No students found</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  report.map((s, i) => (
-                    <tr key={i}>
-                      <td>{s.studentName}</td>
-
-                      <td>
-                        <span style={{
-                          padding: "5px 10px",
-                          borderRadius: 20,
-                          background: "#dcfce7",
-                          color: "#16a34a",
-                          fontWeight: 600
-                        }}>
-                          {s.status}
-                        </span>
-                      </td>
-
-                      <td>
-                        {s.scanTime
-                          ? new Date(s.scanTime).toLocaleString()
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))
+                  filtered.map((s, i) => {
+                    const isPresent = s.status === "Present";
+                    const time = formatTime(s.scanTime);
+                    return (
+                      <tr key={i}>
+                        <td style={{ color: "#94a3b8", fontSize: 13 }}>{i + 1}</td>
+                        <td>
+                          <div className="student-name">
+                            <div className="student-avatar">
+                              {s.studentName?.[0]?.toUpperCase() || "S"}
+                            </div>
+                            {s.studentName}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`badge ${isPresent ? "badge-present" : "badge-absent"}`}>
+                            <span className="badge-dot" />
+                            {isPresent ? "Present" : "Absent"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`scan-time ${!time ? "no-time" : ""}`}>
+                            {time || "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="mobile-nav">
+        <ul>
+          <li onClick={() => navigate("/lecturer")}>📘 Courses</li>
+          <li onClick={() => navigate("/attendance")}>📊 Attendance</li>
+        </ul>
+      </nav>
+
     </div>
   );
 }
