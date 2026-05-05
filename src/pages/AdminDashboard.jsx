@@ -116,10 +116,10 @@ function AdminDashboard() {
     if (activePage === "lecturers") fetchLecturers();
   }, [activePage, search, lecturersRefresh]);
 
-  // ✅ جيب الـ Classrooms من الـ Backend (دائماً)
+  // ✅ جيب الـ Classrooms من الـ Backend
   useEffect(() => {
     const fetchClassrooms = async () => {
-      if (activePage === "classrooms") setClassroomsLoading(true);
+      setClassroomsLoading(true);
       try {
         const res = await api.get("/classroom/AllClassRoom", {
           params: {
@@ -139,11 +139,11 @@ function AdminDashboard() {
         console.error("Classrooms error:", getErrorMessage(err));
         setClassrooms([]);
       } finally {
-        if (activePage === "classrooms") setClassroomsLoading(false);
+        setClassroomsLoading(false);
       }
     };
-    fetchClassrooms();
-  }, [searchClass, classroomsRefresh]);
+    if (activePage === "classrooms") fetchClassrooms();
+  }, [activePage, searchClass, classroomsRefresh]);
 
   // ✅ جيب الـ Courses من الـ Backend
   useEffect(() => {
@@ -169,7 +169,7 @@ function AdminDashboard() {
       }
     };
     fetchCourses();
-  }, [lecturersRefresh]);
+  }, []);
 
 
   // ✅ إضافة Lecturer
@@ -189,9 +189,6 @@ function AdminDashboard() {
       setShowLecturerModal(false);
       setLecturerForm({ firstName: "", lastName: "", email: "", password: "", ssin: "" });
       setLecturersRefresh((r) => r + 1);
-      // تحديث الإحصائيات
-      const res = await api.get("/admin/SystemDashboard");
-      setStats(res.data);
     } catch (err) {
       setLecturerFormError(getErrorMessage(err));
     } finally {
