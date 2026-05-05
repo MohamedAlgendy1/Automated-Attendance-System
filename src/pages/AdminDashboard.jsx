@@ -83,7 +83,7 @@ const [studentsLoading, setStudentsLoading] = useState(false);
     const fetchStats = async () => {
       try {
         const res = await api.get("/admin/SystemDashboard");
-        setStats(res.data);
+        setStats(res.data?.data || res.data);
       } catch (err) {
         console.error("Stats error:", getErrorMessage(err));
       }
@@ -150,7 +150,8 @@ const [studentsLoading, setStudentsLoading] = useState(false);
   }, [activePage, searchClass, classroomsRefresh]);
 
 
-useEffect(() => {
+
+  useEffect(() => {
   const fetchStudents = async () => {
     setStudentsLoading(true);
     try {
@@ -158,16 +159,14 @@ useEffect(() => {
         params: {
           pagenumber: 1,
           pagesize: 100,
-          name: search,
+          name: studentSearch, // ❗ مهم
         },
       });
 
-      const data = res.data;
+      const data = res.data?.data || res.data?.items || res.data || [];
+      setStudents(data);
 
-      if (Array.isArray(data)) setStudents(data);
-      else if (Array.isArray(data?.items)) setStudents(data.items);
-      else if (Array.isArray(data?.data)) setStudents(data.data);
-      else setStudents([]);
+      console.log("Students Loaded:", data);
     } catch (err) {
       console.log("Students error:", getErrorMessage(err));
       setStudents([]);
@@ -176,8 +175,15 @@ useEffect(() => {
     }
   };
 
-  if (activePage === "students") fetchStudents();
-}, [activePage, search]);
+  fetchStudents(); // ❗ شيل شرط activePage
+}, [studentSearch]);
+
+useEffect(() => {
+  console.log("STATS:", stats);
+  console.log("STUDENTS:", students);
+  console.log("LECTURERS:", lecturers);
+}, [stats, students, lecturers]);
+
 
   // ✅ إضافة Lecturer
   const handleAddLecturer = async (e) => {
@@ -302,11 +308,10 @@ const filteredStudents = students.filter((s) =>
     .includes(studentSearch.toLowerCase())
 );
 
-
 const filteredLecturers = lecturers.filter((l) =>
   `${l.firstName || ""} ${l.lastName || ""}`
     .toLowerCase()
-    .includes(studentSearch.toLowerCase())
+    .includes(search.toLowerCase())
 );
 
 //console.log("Lecturers Data => ", filteredLecturers);
@@ -527,7 +532,7 @@ const filteredLecturers = lecturers.filter((l) =>
                   </tr>
                 ) : (
                   filteredStudents.map((s) => (
-                    <tr key={s.id}>
+                      <tr key={s.userId || s.id}>
                       <td>{s.firstName} {s.lastName}</td>
                       <td>{s.email}</td>
                       <td>{s.ssin || "-"}</td>
@@ -538,7 +543,7 @@ const filteredLecturers = lecturers.filter((l) =>
                         <FaEdit />
                         <FaTrash
                           style={{ color: "#ef4444", cursor: "pointer", marginLeft: 8 }}
-                          onClick={() => deleteStudent(s.id)}
+                          onClick={() => deleteStudent(s.userId || s.id)}
                         />
                       </td>
                     </tr>
@@ -636,10 +641,10 @@ const filteredLecturers = lecturers.filter((l) =>
           <div className="table-box">
             <h2>📊 System Reports</h2>
             <p style={{ color: "#64748b", marginTop: 10 }}>
-              Total Lecturers: {stats?.lecturersCount ?? 0} |
-              Total Students: {stats?.studentsCount ?? 0} |
-              Total Courses: {stats?.coursesCount ?? 0} |
-              Total Classrooms: {stats?.classroomsCount ?? 0}
+              Total Lecturers: {lecturers.length} |
+              Total Students: {students.length} |
+               Total Courses: {stats?.coursesCount ?? 0} |
+              Total Classrooms: {classrooms.length}
             </p>
           </div>
         )}
