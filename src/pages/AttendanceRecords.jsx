@@ -245,7 +245,6 @@
 
 
 
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceRecords.css";
@@ -260,9 +259,7 @@ function AttendanceRecords() {
   const [course, setCourse] = useState(null);
   const [lectures, setLectures] = useState([]);
   const [selectedLectureId, setSelectedLectureId] = useState(null);
-  const [report, setReport] = useState([]);       // اللي حضروا فعلاً
-  const [allStudents, setAllStudents] = useState([]); // كل الطلاب المسجلين
-  const [mergedData, setMergedData] = useState([]); // النتيجة النهائية
+  const [mergedData, setMergedData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -288,9 +285,12 @@ function AttendanceRecords() {
 
         if (lects.length > 0) {
           setSelectedLectureId(lects[0].id);
+        } else {
+          setLoading(false);
         }
       } catch (err) {
         console.log(getErrorMessage(err));
+        setLoading(false);
       }
     };
     loadInitial();
@@ -298,10 +298,7 @@ function AttendanceRecords() {
 
   // ✅ Load attendance report whenever lecture changes
   useEffect(() => {
-    if (!selectedLectureId) {
-      setLoading(false);
-      return;
-    }
+    if (!selectedLectureId) return;
 
     const loadReport = async () => {
       setLoading(true);
@@ -309,9 +306,8 @@ function AttendanceRecords() {
         // 1️⃣ جيب الـ report (اللي حضروا)
         const reportRes = await getAttendanceReport(selectedLectureId);
         const presentStudents = reportRes?.report || [];
-        setReport(presentStudents);
 
-        // 2️⃣ جيب overview الكورس (فيه عدد الطلاب وبياناتهم لو موجودة)
+        // 2️⃣ جيب overview الكورس
         let overview = null;
         try {
           overview = await getCourseOverview(courseId);
@@ -320,24 +316,15 @@ function AttendanceRecords() {
         }
 
         // 3️⃣ حاول تجيب قائمة الطلاب من الـ overview
-        // الـ overview ممكن يرجع: { students: [...], enrolledStudents: [...], totalEnrolledStudents: N }
         const enrolledList =
           overview?.students ||
           overview?.enrolledStudents ||
           overview?.studentList ||
           [];
 
-        setAllStudents(enrolledList);
-
-        // 4️⃣ Merge: لو عندنا قائمة الطلاب نعمل merge، لو لأ نعرض اللي حضروا بس
+        // 4️⃣ Merge
         if (enrolledList.length > 0) {
-          // عندنا كل الطلاب — نعمل merge
-          const presentIds = new Set(
-            presentStudents.map(
-              (s) => s.studentId || s.userId || s.id || s.studentName
-            )
-          );
-
+          // عندنا كل الطلاب — نعمل merge ونحدد حاضر أو غايب
           const merged = enrolledList.map((student) => {
             const studentKey =
               student.studentId || student.userId || student.id || student.studentName || student.name;
@@ -398,9 +385,7 @@ function AttendanceRecords() {
     try { return new Date(t).toLocaleString(); } catch { return null; }
   };
 
-  const getLectureLabel = (l) => {
-    return l.title || l.name || `Lecture ${l.id}`;
-  };
+  const getLectureLabel = (l) => l.title || l.name || `Lecture ${l.id}`;
 
   return (
     <div className="dashboard records-page">
