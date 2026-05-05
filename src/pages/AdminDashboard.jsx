@@ -1,260 +1,305 @@
 import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  FaChalkboardTeacher,
-  FaMapMarkerAlt,
-  FaBook,
-  FaTrash,
-} from "react-icons/fa";
-import api, { getErrorMessage } from "../services/api";
+import { parseJwt, getErrorMessage } from "../services/api";
+import { enrollInCourse, getMyCourses } from "../services/studentService";
+import { getMyAttendanceHistory } from "../services/studentService";
+import { getLecturesByCourse } from "../services/lectureService";
 
-function AdminDashboard() {
+function StudentDashboard() {
+  const [activePage, setActivePage] = useState("courses");
+  const [showModal, setShowModal] = useState(false);
+  const [myCourses, setMyCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0);
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState("lecturers");
 
-  const [lecturers, setLecturers] = useState([]);
-  const [classrooms, setClassrooms] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [enrollForm, setEnrollForm] = useState({ courseCode: "" });
+  const [enrollError, setEnrollError] = useState("");
+  const [enrollLoading, setEnrollLoading] = useState(false);
 
-  const [search, setSearch] = useState("");
-  const [searchClass, setSearchClass] = useState("");
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [attendance, setAttendance] = useState([]);
+  const [totalLectures, setTotalLectures] = useState(0);
 
-  const [lecturersLoading, setLecturersLoading] = useState(false);
-  const [classroomsLoading, setClassroomsLoading] = useState(false);
+  // 👇 NEW TOTALS (Doctors / Classrooms)
+  const [totalDoctors] = useState(0);
+  const [totalClassrooms] = useState(0);
 
-  const [lecturersRefresh, setLecturersRefresh] = useState(0);
-  const [classroomsRefresh, setClassroomsRefresh] = useState(0);
+  const token = localStorage.getItem("token");
+  const decoded = token ? parseJwt(token) : {};
+  const studentName =
+    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+    "Student";
 
-  // Toast
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const studentEmail =
+    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
+    "";
 
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => setToast({ show: false, message: "" }), 3000);
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // ================= STATS =================
+  const handleEnroll = async (e) => {
+    e.preventDefault();
+    setEnrollError("");
+
+    if (!enrollForm.courseCode) {
+      setEnrollError("Please enter course code");
+      return;
+    }
+
+    setEnrollLoading(true);
+
+    try {
+      await enrollInCourse(enrollForm.courseCode);
+
+      showToast("Enrolled successfully 🎉");
+      setShowModal(false);
+      setEnrollForm({ courseCode: "" });
+      setRefresh((r) => r + 1);
+    } catch (err) {
+      setEnrollError(getErrorMessage(err));
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStats = async () => {
+    const load = async () => {
+      setLoading(true);
       try {
-        const res = await api.get("/admin/SystemDashboard");
-        setStats(res.data?.data || res.data);
+        const courses = await getMyCourses();
+        setMyCourses(courses);
+
+        const attendanceData = await getMyAttendanceHistory();
+        setAttendance(attendanceData);
+
+        const lecturesArrays = await Promise.all(
+          courses.map((c) => getLecturesByCourse(c.courseId))
+        );
+
+        const lecturesCount = lecturesArrays.reduce(
+          (sum, arr) => sum + arr.length,
+          0
+        );
+
+        setTotalLectures(lecturesCount);
       } catch (err) {
-        console.log(getErrorMessage(err));
-      }
-    };
-    fetchStats();
-  }, []);
-
-  // ================= LECTURERS =================
-  useEffect(() => {
-    if (activePage !== "lecturers") return;
-
-    const fetchLecturers = async () => {
-      setLecturersLoading(true);
-      try {
-        const res = await api.get("/admin/GetLecturers", {
-          params: { Name: search },
-        });
-        setLecturers(res.data?.data || res.data || []);
-      } catch {
-        setLecturers([]);
+        console.error(getErrorMessage(err));
+        setMyCourses([]);
       } finally {
-        setLecturersLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchLecturers();
-  }, [activePage, search, lecturersRefresh]);
+    load();
+  }, [refresh]);
 
-  // ================= CLASSROOMS =================
-  useEffect(() => {
-    if (activePage !== "classrooms") return;
+  const attendedLectures = attendance.filter(
+    (a) => a.status === "Present"
+  ).length;
 
-    const fetchClassrooms = async () => {
-      setClassroomsLoading(true);
-      try {
-        const res = await api.get("/classroom/AllClassRoom", {
-          params: { Name: searchClass },
-        });
-        setClassrooms(res.data?.data || res.data || []);
-      } catch {
-        setClassrooms([]);
-      } finally {
-        setClassroomsLoading(false);
-      }
-    };
-
-    fetchClassrooms();
-  }, [activePage, searchClass, classroomsRefresh]);
-
-  // ================= ACTIONS =================
-  const handleCloseAccount = async (id) => {
-    if (!window.confirm("Close account?")) return;
-    try {
-      await api.put(`/admin/CloseAccount/${id}`);
-      showToast("Account closed ✅");
-      setLecturersRefresh((r) => r + 1);
-    } catch (err) {
-      showToast(getErrorMessage(err));
-    }
-  };
-
-  const handleDeleteClassroom = async (id) => {
-    if (!window.confirm("Delete classroom?")) return;
-    try {
-      await api.delete(`/classroom/Delete/${id}`);
-      showToast("Deleted ✅");
-      setClassroomsRefresh((r) => r + 1);
-    } catch (err) {
-      showToast(getErrorMessage(err));
-    }
-  };
+  const overallPercent =
+    totalLectures === 0
+      ? 0
+      : Math.round((attendedLectures / totalLectures) * 100);
 
   const handleLogout = () => {
     localStorage.clear();
     navigate("/");
   };
 
-  // ================= FILTER =================
-  const filteredLecturers = lecturers.filter((l) =>
-    `${l.firstName || ""} ${l.lastName || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
-
-  const filteredClassrooms = classrooms.filter((c) =>
-    c.name?.toLowerCase().includes(searchClass.toLowerCase())
-  );
+  const firstName = studentName.split(" ")[0] || "Student";
 
   return (
-    <div className="dashboard">
+    <div className="dashboard student-page">
       {/* Sidebar */}
       <div className="sidebar">
-        <h2 className="logo">QR Attend</h2>
+        <div>
+          <h2 className="logo">QR Attend</h2>
+          <ul className="menu">
+            <li
+              className={activePage === "courses" ? "active" : ""}
+              onClick={() => setActivePage("courses")}
+            >
+              📘 My Courses
+            </li>
+            <li
+              className={activePage === "profile" ? "active" : ""}
+              onClick={() => setActivePage("profile")}
+            >
+              👤 Profile
+            </li>
+          </ul>
+        </div>
 
-        <ul className="menu">
-          <li
-            className={activePage === "lecturers" ? "active" : ""}
-            onClick={() => setActivePage("lecturers")}
-          >
-            <FaChalkboardTeacher /> Lecturers
-          </li>
-
-          <li
-            className={activePage === "classrooms" ? "active" : ""}
-            onClick={() => setActivePage("classrooms")}
-          >
-            <FaMapMarkerAlt /> Classrooms
-          </li>
-        </ul>
-
-        <button className="logout-btn" onClick={handleLogout}>
-          Sign Out
-        </button>
+        <div className="user-box">
+          <div className="user-info">
+            <div className="avatar">
+              {firstName?.[0]?.toUpperCase() || "S"}
+            </div>
+            <div>
+              <p>{firstName}</p>
+              <span>Student</span>
+            </div>
+          </div>
+          <button className="logout-btn" onClick={handleLogout}>
+            Sign Out
+          </button>
+        </div>
       </div>
 
       {/* Main */}
       <div className="main">
-        <h1>Admin Dashboard</h1>
+        {activePage === "courses" && (
+          <>
+            <h1>Student Dashboard</h1>
 
-        {/* ===== CARDS ===== */}
-        <div className="cards">
-          <div className="card">
-            <FaChalkboardTeacher />
-            <h2>{stats?.totalLecturers ?? lecturers.length}</h2>
-            <p>Lecturers</p>
-          </div>
+            {/* ✅ NEW TOP TOTALS */}
+            <div className="cards">
+              <div className="card">
+                <p>Total Doctors</p>
+                <h2>{totalDoctors}</h2>
+              </div>
 
-          <div className="card">
-            <FaBook />
-            <h2>{stats?.totalCourses ?? 0}</h2>
-            <p>Courses</p>
-          </div>
+              <div className="card">
+                <p>Total Classrooms</p>
+                <h2>{totalClassrooms}</h2>
+              </div>
 
-          <div className="card">
-            <FaMapMarkerAlt />
-            <h2>{stats?.totalClassrooms ?? classrooms.length}</h2>
-            <p>Classrooms</p>
-          </div>
-        </div>
+              <div className="card">
+                <p>My Courses</p>
+                <h2>{myCourses.length}</h2>
+              </div>
 
-        {/* ===== LECTURERS ===== */}
-        {activePage === "lecturers" && (
-          <div className="table-box">
-            <h2>Manage Lecturers</h2>
+              <div className="card">
+                <p>Attended Lectures</p>
+                <h2>{attendedLectures}</h2>
+              </div>
 
-            <input
-              className="search"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+              <div className="card">
+                <p>Overall Attendance</p>
+                <h2>{overallPercent}%</h2>
+              </div>
+            </div>
 
-            {lecturersLoading ? (
-              <p>Loading...</p>
+            <div className="top-bar">
+              <button
+                className="enroll-btn"
+                onClick={() => setShowModal(true)}
+              >
+                📘 Enroll in Course
+              </button>
+            </div>
+
+            {loading ? (
+              <p style={{ color: "#64748b", marginTop: 20 }}>Loading...</p>
+            ) : myCourses.length === 0 ? (
+              <div className="empty-box">
+                <div className="icon">📖</div>
+                <p>You're not enrolled in any courses yet.</p>
+                <span>
+                  Use the "Enroll in Course" button to join a course.
+                </span>
+              </div>
             ) : (
-              <table>
-                <tbody>
-                  {filteredLecturers.map((l) => (
-                    <tr key={l.userId}>
-                      <td>{l.firstName} {l.lastName}</td>
-                      <td>{l.email}</td>
-                      <td>
-                        <FaTrash
-                          style={{ cursor: "pointer", color: "red" }}
-                          onClick={() => handleCloseAccount(l.userId)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="courses-grid">
+                {myCourses.map((course) => {
+                  const name = course.name || course.courseName || "";
+                  const code = course.code || course.courseCode || "";
+
+                  return (
+                    <div
+                      key={course.id}
+                      className="course-card"
+                      onClick={() =>
+                        navigate(`/student/course/${course.courseId}`)
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <h3>{name}</h3>
+                      <span className="course-code">{code}</span>
+
+                      <div className="attendance-box">
+                        <div
+                          className="progress-circle"
+                          style={{
+                            background: `conic-gradient(#22c55e 0% 0%, #e5e7eb 0% 100%)`,
+                          }}
+                        >
+                          <span>0%</span>
+                        </div>
+                        <p>My Attendance</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </div>
+          </>
         )}
 
-        {/* ===== CLASSROOMS ===== */}
-        {activePage === "classrooms" && (
-          <div className="table-box">
-            <h2>Manage Classrooms</h2>
+        {activePage === "profile" && (
+          <>
+            <h1>My Profile</h1>
+            <div className="profile-card">
+              <div className="profile-header">
+                <div className="big-avatar">
+                  {firstName?.[0]?.toUpperCase() || "S"}
+                </div>
+                <div>
+                  <h2>{studentName}</h2>
+                  <p>Student</p>
+                </div>
+              </div>
 
-            <input
-              className="search"
-              placeholder="Search..."
-              value={searchClass}
-              onChange={(e) => setSearchClass(e.target.value)}
-            />
-
-            {classroomsLoading ? (
-              <p>Loading...</p>
-            ) : (
-              <table>
-                <tbody>
-                  {filteredClassrooms.map((c) => (
-                    <tr key={c.id}>
-                      <td>{c.name}</td>
-                      <td>{c.buildingName}</td>
-                      <td>
-                        <FaTrash
-                          style={{ cursor: "pointer", color: "red" }}
-                          onClick={() => handleDeleteClassroom(c.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+              <div className="form-grid">
+                <input value={studentName} disabled className="full" />
+                <input value={studentEmail} disabled className="full" />
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Toast */}
-      {toast.show && <div className="toast">{toast.message}</div>}
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Enroll in a Course</h3>
+              <span onClick={() => setShowModal(false)}>✖</span>
+            </div>
+
+            <form onSubmit={handleEnroll}>
+              <input
+                placeholder="Course Code (required)"
+                value={enrollForm.courseCode}
+                onChange={(e) =>
+                  setEnrollForm({
+                    ...enrollForm,
+                    courseCode: e.target.value,
+                  })
+                }
+              />
+
+              {enrollError && <p style={{ color: "red" }}>{enrollError}</p>}
+
+              <button type="submit" disabled={enrollLoading}>
+                {enrollLoading ? "Enrolling..." : "Enroll"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {toast.show && (
+        <div className={`toast ${toast.type}`}>{toast.message}</div>
+      )}
     </div>
   );
 }
 
-export default AdminDashboard;
+export default StudentDashboard;
