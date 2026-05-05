@@ -785,8 +785,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaChalkboardTeacher,
+
   FaMapMarkerAlt,
   FaBook,
+
   FaTrash,
   FaChartBar,
 } from "react-icons/fa";
@@ -811,7 +813,7 @@ function AdminDashboard() {
   // ================= STATS =================
   const [stats, setStats] = useState(null);
 
-  // ================= LECTURER FORM =================
+  // ================= MODALS =================
   const [showLecturerModal, setShowLecturerModal] = useState(false);
   const [lecturerForm, setLecturerForm] = useState({
     firstName: "",
@@ -823,7 +825,6 @@ function AdminDashboard() {
   const [lecturerFormError, setLecturerFormError] = useState("");
   const [lecturerFormLoading, setLecturerFormLoading] = useState(false);
 
-  // ================= CLASSROOM FORM =================
   const [showClassroomModal, setShowClassroomModal] = useState(false);
   const [editClassroom, setEditClassroom] = useState(null);
   const [classroomForm, setClassroomForm] = useState({
@@ -836,7 +837,6 @@ function AdminDashboard() {
   const [classroomFormError, setClassroomFormError] = useState("");
   const [classroomFormLoading, setClassroomFormLoading] = useState(false);
 
-  // ================= TOAST =================
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
   const showToast = (message, type = "success") => {
@@ -869,10 +869,7 @@ function AdminDashboard() {
         });
 
         const data = res.data;
-        setLecturers(
-          Array.isArray(data) ? data :
-          data?.items || data?.data || []
-        );
+        setLecturers(Array.isArray(data) ? data : data?.items || data?.data || []);
 
       } catch (err) {
         console.log(getErrorMessage(err));
@@ -903,10 +900,7 @@ function AdminDashboard() {
         });
 
         const data = res.data;
-        setClassrooms(
-          Array.isArray(data) ? data :
-          data?.items || data?.data || []
-        );
+        setClassrooms(Array.isArray(data) ? data : data?.items || data?.data || []);
 
       } catch (err) {
         console.log(getErrorMessage(err));
@@ -927,20 +921,10 @@ function AdminDashboard() {
 
     try {
       await api.post("/admin/AddLecturer", lecturerForm);
-
       showToast("Lecturer added ✅");
-
       setShowLecturerModal(false);
-      setLecturerForm({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        ssin: "",
-      });
-
+      setLecturerForm({ firstName: "", lastName: "", email: "", password: "", ssin: "" });
       setLecturersRefresh(r => r + 1);
-
     } catch (err) {
       setLecturerFormError(getErrorMessage(err));
     } finally {
@@ -982,17 +966,9 @@ function AdminDashboard() {
       }
 
       showToast("Saved ✅");
-
       setShowClassroomModal(false);
       setEditClassroom(null);
-      setClassroomForm({
-        name: "",
-        buildingName: "",
-        latitude: "",
-        longitude: "",
-        radiusOfAcceptanceMeter: "",
-      });
-
+      setClassroomForm({ name: "", buildingName: "", latitude: "", longitude: "", radiusOfAcceptanceMeter: "" });
       setClassroomsRefresh(r => r + 1);
 
     } catch (err) {
@@ -1002,7 +978,6 @@ function AdminDashboard() {
     }
   };
 
-  // ================= DELETE CLASSROOM =================
   const handleDeleteClassroom = async (id) => {
     if (!window.confirm("Delete classroom?")) return;
 
@@ -1020,7 +995,6 @@ function AdminDashboard() {
     navigate("/");
   };
 
-  // ================= FILTER =================
   const filteredLecturers = lecturers.filter(l =>
     `${l.firstName} ${l.lastName}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -1036,46 +1010,47 @@ function AdminDashboard() {
         <h2 className="logo">QR Attend</h2>
 
         <ul className="menu">
-          <li onClick={() => setActivePage("lecturers")}><FaChalkboardTeacher /> Lecturers</li>
-          <li onClick={() => setActivePage("classrooms")}><FaMapMarkerAlt /> Classrooms</li>
-          <li onClick={() => setActivePage("reports")}><FaChartBar /> Reports</li>
+          <li className={activePage==="lecturers"?"active":""} onClick={()=>setActivePage("lecturers")}><FaChalkboardTeacher/> Lecturers</li>
+          <li className={activePage==="classrooms"?"active":""} onClick={()=>setActivePage("classrooms")}><FaMapMarkerAlt/> Classrooms</li>
+          <li className={activePage==="reports"?"active":""} onClick={()=>setActivePage("reports")}><FaChartBar/> Reports</li>
         </ul>
 
-        <button onClick={handleLogout}>Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>Logout</button>
       </div>
 
       {/* Main */}
       <div className="main">
         <h1>Admin Dashboard</h1>
 
-        {/* Stats */}
+        {/* Cards */}
         <div className="cards">
-          <div className="card"><FaChalkboardTeacher /><h2>{stats?.lecturersCount ?? 0}</h2><p>Lecturers</p></div>
-          <div className="card"><FaBook /><h2>{stats?.coursesCount ?? 0}</h2><p>Courses</p></div>
-          <div className="card"><FaMapMarkerAlt /><h2>{stats?.classroomsCount ?? 0}</h2><p>Classrooms</p></div>
+          <div className="card"><FaChalkboardTeacher/><h2>{stats?.lecturersCount ?? 0}</h2><p>Lecturers</p></div>
+          <div className="card"><FaBook/><h2>{stats?.coursesCount ?? 0}</h2><p>Courses</p></div>
+          <div className="card"><FaMapMarkerAlt/><h2>{stats?.classroomsCount ?? 0}</h2><p>Classrooms</p></div>
         </div>
 
-        {/* ================= LECTURERS ================= */}
-        {activePage === "lecturers" && (
+        {/* Lecturers Table */}
+        {activePage==="lecturers" && (
           <div className="table-box">
-            <button onClick={() => setShowLecturerModal(true)}>+ Add Lecturer</button>
+            <div className="table-header">
+              <h2>Manage Lecturers</h2>
+              <button className="enroll-btn" onClick={()=>setShowLecturerModal(true)}>+ Add Lecturer</button>
+            </div>
 
-            <input
-              className="search"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <input className="search" placeholder="Search..." value={search} onChange={(e)=>setSearch(e.target.value)}/>
 
-            {lecturersLoading ? "Loading..." : (
+            {lecturersLoading ? <p>Loading...</p> : (
               <table>
+                <thead>
+                  <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
+                </thead>
                 <tbody>
-                  {filteredLecturers.map(l => (
+                  {filteredLecturers.map(l=>(
                     <tr key={l.userId}>
                       <td>{l.firstName} {l.lastName}</td>
                       <td>{l.email}</td>
                       <td>
-                        <FaTrash onClick={() => handleCloseAccount(l.userId)} />
+                        <FaTrash style={{cursor:"pointer",color:"red"}} onClick={()=>handleCloseAccount(l.userId)}/>
                       </td>
                     </tr>
                   ))}
@@ -1085,26 +1060,28 @@ function AdminDashboard() {
           </div>
         )}
 
-        {/* ================= CLASSROOMS ================= */}
-        {activePage === "classrooms" && (
+        {/* Classrooms Table */}
+        {activePage==="classrooms" && (
           <div className="table-box">
-            <button onClick={() => setShowClassroomModal(true)}>+ Add Classroom</button>
+            <div className="table-header">
+              <h2>Manage Classrooms</h2>
+              <button className="enroll-btn" onClick={()=>setShowClassroomModal(true)}>+ Add Classroom</button>
+            </div>
 
-            <input
-              className="search"
-              placeholder="Search..."
-              value={searchClass}
-              onChange={(e) => setSearchClass(e.target.value)}
-            />
+            <input className="search" placeholder="Search..." value={searchClass} onChange={(e)=>setSearchClass(e.target.value)}/>
 
-            {classroomsLoading ? "Loading..." : (
+            {classroomsLoading ? <p>Loading...</p> : (
               <table>
+                <thead>
+                  <tr><th>Name</th><th>Building</th><th>Actions</th></tr>
+                </thead>
                 <tbody>
-                  {filteredClassrooms.map(c => (
+                  {filteredClassrooms.map(c=>(
                     <tr key={c.id}>
                       <td>{c.name}</td>
+                      <td>{c.buildingName}</td>
                       <td>
-                        <FaTrash onClick={() => handleDeleteClassroom(c.id)} />
+                        <FaTrash style={{cursor:"pointer",color:"red"}} onClick={()=>handleDeleteClassroom(c.id)}/>
                       </td>
                     </tr>
                   ))}
@@ -1115,28 +1092,33 @@ function AdminDashboard() {
         )}
       </div>
 
-      {/* ================= MODALS ================= */}
+      {/* Modals */}
       {showLecturerModal && (
-        <div className="modal">
-          <form onSubmit={handleAddLecturer}>
-            <input placeholder="First Name" value={lecturerForm.firstName} onChange={e => setLecturerForm({ ...lecturerForm, firstName: e.target.value })} />
-            <input placeholder="Last Name" value={lecturerForm.lastName} onChange={e => setLecturerForm({ ...lecturerForm, lastName: e.target.value })} />
-            <input placeholder="Email" value={lecturerForm.email} onChange={e => setLecturerForm({ ...lecturerForm, email: e.target.value })} />
-            <input placeholder="Password" value={lecturerForm.password} onChange={e => setLecturerForm({ ...lecturerForm, password: e.target.value })} />
-            <button type="submit">{lecturerFormLoading ? "Adding..." : "Add"}</button>
-            {lecturerFormError && <p>{lecturerFormError}</p>}
-          </form>
+        <div className="modal-overlay">
+          <div className="modal">
+            <form onSubmit={handleAddLecturer}>
+              <input placeholder="First Name" value={lecturerForm.firstName} onChange={e=>setLecturerForm({...lecturerForm,firstName:e.target.value})}/>
+              <input placeholder="Last Name" value={lecturerForm.lastName} onChange={e=>setLecturerForm({...lecturerForm,lastName:e.target.value})}/>
+              <input placeholder="Email" value={lecturerForm.email} onChange={e=>setLecturerForm({...lecturerForm,email:e.target.value})}/>
+              <input placeholder="Password" value={lecturerForm.password} onChange={e=>setLecturerForm({...lecturerForm,password:e.target.value})}/>
+              <button type="submit">{lecturerFormLoading?"Adding...":"Add"}</button>
+              {lecturerFormError && <p>{lecturerFormError}</p>}
+            </form>
+          </div>
         </div>
       )}
 
       {showClassroomModal && (
-        <div className="modal">
-          <form onSubmit={handleSaveClassroom}>
-            <input placeholder="Name" value={classroomForm.name} onChange={e => setClassroomForm({ ...classroomForm, name: e.target.value })} />
-            <input placeholder="Radius" value={classroomForm.radiusOfAcceptanceMeter} onChange={e => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })} />
-            <button type="submit">{classroomFormLoading ? "Saving..." : "Save"}</button>
-            {classroomFormError && <p>{classroomFormError}</p>}
-          </form>
+        <div className="modal-overlay">
+          <div className="modal">
+            <form onSubmit={handleSaveClassroom}>
+              <input placeholder="Name" value={classroomForm.name} onChange={e=>setClassroomForm({...classroomForm,name:e.target.value})}/>
+              <input placeholder="Building" value={classroomForm.buildingName} onChange={e=>setClassroomForm({...classroomForm,buildingName:e.target.value})}/>
+              <input placeholder="Radius" value={classroomForm.radiusOfAcceptanceMeter} onChange={e=>setClassroomForm({...classroomForm,radiusOfAcceptanceMeter:e.target.value})}/>
+              <button type="submit">{classroomFormLoading?"Saving...":"Save"}</button>
+              {classroomFormError && <p>{classroomFormError}</p>}
+            </form>
+          </div>
         </div>
       )}
 
