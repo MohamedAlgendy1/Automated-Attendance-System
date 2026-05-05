@@ -25,15 +25,17 @@ function AdminDashboard() {
   const [students, setStudents] = useState(
     JSON.parse(localStorage.getItem("students")) || []
   );
-
+;
+const [studentSearch, setStudentSearch] = useState("");
   // ✅ Classrooms من الـ Backend
   const [classrooms, setClassrooms] = useState([]);
   const [classroomsLoading, setClassroomsLoading] = useState(false);
   const [classroomsRefresh, setClassroomsRefresh] = useState(0);
-const [students, setStudents] = useState([]);
-useEffect(() => {
+
+  useEffect(() => {
   console.log("STUDENTS:", students); // 👈 هنا
-}, [students]);
+}, [students])
+
 
 const [studentsLoading, setStudentsLoading] = useState(false);
   // ✅ Stats
@@ -294,21 +296,20 @@ const handleCloseAccount = async (userid) => {
 
   const deleteStudent = (id) =>
     setStudents(students.filter((s) => s.id !== id));
-
- const filteredStudents = students.filter((s) =>
+const filteredStudents = students.filter((s) =>
   `${s.firstName || ""} ${s.lastName || ""}`
     .toLowerCase()
-    .includes(search.toLowerCase())
+    .includes(studentSearch.toLowerCase())
 );
 
 
 const filteredLecturers = lecturers.filter((l) =>
   `${l.firstName || ""} ${l.lastName || ""}`
     .toLowerCase()
-    .includes(search.toLowerCase())
+    .includes(studentSearch.toLowerCase())
 );
 
-console.log("Lecturers Data => ", filteredLecturers);
+//console.log("Lecturers Data => ", filteredLecturers);
 
   const filteredClassrooms = classrooms.filter((c) =>
     c.name?.toLowerCase().includes(searchClass.toLowerCase())
@@ -497,9 +498,14 @@ console.log("Lecturers Data => ", filteredLecturers);
             <input
               className="search"
               placeholder="Filter students by name, email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
             />
+            {studentsLoading ? (
+  <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>
+    Loading...
+  </p>
+) : (
             <table>
               <thead>
                 <tr>
@@ -539,7 +545,7 @@ console.log("Lecturers Data => ", filteredLecturers);
                   ))
                 )}
               </tbody>
-            </table>
+            </table>)}
           </div>
         )}
 
