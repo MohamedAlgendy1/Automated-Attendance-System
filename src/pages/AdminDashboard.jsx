@@ -19,10 +19,10 @@ function AdminDashboard() {
   const [lecturersLoading, setLecturersLoading] = useState(false);
   const [lecturersRefresh, setLecturersRefresh] = useState(0);
 
-  // ✅ Students من الـ Backend (لو فيه endpoint، لو لا من localStorage)
-  // const [students, setStudents] = useState(
-  //   JSON.parse(localStorage.getItem("students")) || []
-  // );
+// ✅ Students من الـ Backend (لو فيه endpoint، لو لا من localStorage)
+ const [students, setStudents] = useState(
+    JSON.parse(localStorage.getItem("students")) || []
+   );
 
   // ✅ Classrooms من الـ Backend
   const [classrooms, setClassrooms] = useState([]);
