@@ -80,16 +80,19 @@ function AdminDashboard() {
     fetchStats();
   }, []);
 
-  // ✅ جيب الـ Lecturers
+  // ✅ جيب الـ Lecturers — البحث بالاسم أو الإيميل
   useEffect(() => {
     const fetchLecturers = async () => {
       setLecturersLoading(true);
       try {
+        // 🔍 شوف لو الـ search شبه إيميل (فيه @) نبعته كـ email، غير كده نبعته كـ name
+        const isEmailSearch = search.includes("@");
+
         const res = await api.get("/admin/GetLecturers", {
           params: {
             pagenumber: 1,
             pagesize: 100,
-            name: search,
+            ...(isEmailSearch ? { email: search } : { name: search }),
             sortBy: "id",
             isDescindeng: false,
           },
@@ -109,7 +112,7 @@ function AdminDashboard() {
     if (activePage === "lecturers") fetchLecturers();
   }, [activePage, search, lecturersRefresh]);
 
-  // ✅ جيب الـ Classrooms دائماً (مش بس لما تفتح صفحة الكلاس روم)
+  // ✅ جيب الـ Classrooms دائماً
   useEffect(() => {
     const fetchClassrooms = async () => {
       if (activePage === "classrooms") setClassroomsLoading(true);
@@ -268,8 +271,9 @@ function AdminDashboard() {
     );
   };
 
+  // ✅ فلتر محلي — بيشمل الاسم والإيميل معاً
   const filteredLecturers = lecturers.filter((l) =>
-    `${l.firstName || ""} ${l.lastName || ""}`
+    `${l.firstName || ""} ${l.lastName || ""} ${l.email || ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -318,7 +322,7 @@ function AdminDashboard() {
       <div className="main">
         <h1>Admin Dashboard</h1>
 
-        {/* Cards — classrooms count always up to date */}
+        {/* Cards */}
         <div className="cards">
           <div className="card">
             <FaChalkboardTeacher />
@@ -360,9 +364,10 @@ function AdminDashboard() {
               </button>
             </div>
 
+            {/* 🔍 Search by name or email */}
             <input
               className="search"
-              placeholder="Filter lecturers..."
+              placeholder="Search by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
