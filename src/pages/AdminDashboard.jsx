@@ -783,7 +783,6 @@
 // export default AdminDashboard;
 
 
-
 import "./../styles/dashboard.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -802,15 +801,9 @@ function AdminDashboard() {
 
   // ================= STATE =================
   const [lecturers, setLecturers] = useState([]);
-  const [lecturersLoading, setLecturersLoading] = useState(false);
-  const [search, setSearch] = useState("");
-
   const [classrooms, setClassrooms] = useState([]);
-  const [classroomsLoading, setClassroomsLoading] = useState(false);
-
   const [stats, setStats] = useState(null);
 
-  // ================= MODALS =================
   const [showLecturerModal, setShowLecturerModal] = useState(false);
   const [editLecturer, setEditLecturer] = useState(null);
   const [lecturerForm, setLecturerForm] = useState({
@@ -833,66 +826,44 @@ function AdminDashboard() {
 
   // ================= FETCH =================
   useEffect(() => {
-    const fetchStats = async () => {
-      const res = await api.get("/admin/SystemDashboard");
-      setStats(res.data);
-    };
-    fetchStats();
+    api.get("/admin/SystemDashboard").then((res) => setStats(res.data));
   }, []);
 
   useEffect(() => {
-    const fetchLecturers = async () => {
-      setLecturersLoading(true);
-      try {
-        const res = await api.get("/admin/GetLecturers", {
-          params: { Name: search },
-        });
-       const data = res.data;
-
-if (Array.isArray(data)) {
-  setLecturers(data);
-} else if (Array.isArray(data?.items)) {
-  setLecturers(data.items);
-} else if (Array.isArray(data?.data)) {
-  setLecturers(data.data);
-} else {
-  console.log("INVALID LECTURERS RESPONSE:", data);
-  setLecturers([]);
-}
-      } catch {
-        setLecturers([]);
-      } finally {
-        setLecturersLoading(false);
-      }
-    };
-    if (activePage === "lecturers") fetchLecturers();
-  }, [activePage, search]);
+    if (activePage === "lecturers") {
+      api.get("/admin/GetLecturers").then((res) => {
+        const data = res.data;
+        if (Array.isArray(data)) setLecturers(data);
+        else if (Array.isArray(data?.data)) setLecturers(data.data);
+        else setLecturers([]);
+      });
+    }
+  }, [activePage]);
 
   useEffect(() => {
-    const fetchClassrooms = async () => {
-      setClassroomsLoading(true);
-      try {
-        const res = await api.get("/classroom/AllClassRoom");
-       const data = res.data;
-
-if (Array.isArray(data)) {
-  setClassrooms(data);
-} else if (Array.isArray(data?.items)) {
-  setClassrooms(data.items);
-} else if (Array.isArray(data?.data)) {
-  setClassrooms(data.data);
-} else {
-  console.log("INVALID CLASSROOMS RESPONSE:", data);
-  setClassrooms([]);
-}
-      } catch {
-        setClassrooms([]);
-      } finally {
-        setClassroomsLoading(false);
-      }
-    };
-    if (activePage === "classrooms") fetchClassrooms();
+    if (activePage === "classrooms") {
+      api.get("/classroom/AllClassRoom").then((res) => {
+        const data = res.data;
+        if (Array.isArray(data)) setClassrooms(data);
+        else if (Array.isArray(data?.data)) setClassrooms(data.data);
+        else setClassrooms([]);
+      });
+    }
   }, [activePage]);
+
+  // ================= LOCATION =================
+  const handleGetLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setClassroomForm((prev) => ({
+          ...prev,
+          latitude: pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }));
+      },
+      () => alert("Allow location access")
+    );
+  };
 
   // ================= ADD / EDIT =================
   const handleAddLecturer = async (e) => {
@@ -905,13 +876,6 @@ if (Array.isArray(data)) {
       }
       setShowLecturerModal(false);
       setEditLecturer(null);
-      setLecturerForm({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        ssin: "",
-      });
     } catch (err) {
       alert(getErrorMessage(err));
     }
@@ -927,13 +891,6 @@ if (Array.isArray(data)) {
       }
       setShowClassroomModal(false);
       setEditClassroom(null);
-      setClassroomForm({
-        name: "",
-        buildingName: "",
-        latitude: "",
-        longitude: "",
-        radiusOfAcceptanceMeter: "",
-      });
     } catch (err) {
       alert(getErrorMessage(err));
     }
@@ -941,13 +898,11 @@ if (Array.isArray(data)) {
 
   // ================= DELETE =================
   const handleDeleteLecturer = async (id) => {
-    if (!window.confirm("Delete account?")) return;
     await api.put(`/admin/CloseAccount/${id}`);
     setLecturers((prev) => prev.filter((l) => l.userId !== id));
   };
 
   const handleDeleteClassroom = async (id) => {
-    if (!window.confirm("Delete classroom?")) return;
     await api.delete(`/classroom/Delete/${id}`);
     setClassrooms((prev) => prev.filter((c) => c.id !== id));
   };
@@ -959,17 +914,32 @@ if (Array.isArray(data)) {
 
   return (
     <div className="dashboard">
-      {/* SIDEBAR */}
+      {/* ================= SIDEBAR ================= */}
       <div className="sidebar">
-        <h2>QR Attend</h2>
-        <ul>
-          <li onClick={() => setActivePage("lecturers")}>Lecturers</li>
-          <li onClick={() => setActivePage("classrooms")}>Classrooms</li>
+        <h2 className="logo">QR Attend</h2>
+
+        <ul className="menu">
+          <li
+            className={activePage === "lecturers" ? "active" : ""}
+            onClick={() => setActivePage("lecturers")}
+          >
+            <FaChalkboardTeacher /> Lecturers
+          </li>
+
+          <li
+            className={activePage === "classrooms" ? "active" : ""}
+            onClick={() => setActivePage("classrooms")}
+          >
+            <FaMapMarkerAlt /> Classrooms
+          </li>
         </ul>
-        <button onClick={handleLogout}>Logout</button>
+
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
 
-      {/* MAIN */}
+      {/* ================= MAIN ================= */}
       <div className="main">
         <h1>Admin Dashboard</h1>
 
@@ -977,90 +947,93 @@ if (Array.isArray(data)) {
         <div className="cards">
           <div className="card">
             <FaChalkboardTeacher />
-            <h2>{stats?.totalLecturers}</h2>
+            <h2>{stats?.totalLecturers || 0}</h2>
             <p>Lecturers</p>
           </div>
+
           <div className="card">
             <FaBook />
-            <h2>{stats?.totalCourses}</h2>
+            <h2>{stats?.totalCourses || 0}</h2>
             <p>Courses</p>
           </div>
+
           <div className="card">
             <FaMapMarkerAlt />
-            <h2>{stats?.totalClassrooms}</h2>
+            <h2>{stats?.totalClassrooms || 0}</h2>
             <p>Classrooms</p>
           </div>
         </div>
 
-        {/* LECTURERS */}
+        {/* ================= LECTURERS ================= */}
         {activePage === "lecturers" && (
           <div className="table-box">
             <div className="table-header">
               <h2>Lecturers</h2>
-              <button className="enroll-btn" onClick={() => setShowLecturerModal(true)}>
+              <button
+                className="enroll-btn"
+                onClick={() => setShowLecturerModal(true)}
+              >
                 + Add Lecturer
               </button>
             </div>
 
-            <input
-              className="search"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+              <table>
+                <tbody>
+                  {(lecturers || []).slice(0, 100).map((l) => (
+                    <tr key={l.userId}>
+                      <td>{l.name}</td>
+                      <td>{l.email}</td>
 
-            <table>
-              <tbody>
-                {(Array.isArray(lecturers) ? lecturers : []).map((l) => (
-                  <tr key={l.userId}>
-                    <td>{l.name}</td>
-                    <td>{l.email}</td>
-                    <td className="actions">
-                      <FaEdit
-                        className="edit"
-                        onClick={() => {
-                          setEditLecturer(l);
-                          setShowLecturerModal(true);
-                        }}
-                      />
-                      <FaTrash
-                        className="delete"
-                        onClick={() => handleDeleteLecturer(l.userId)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <td className="actions">
+                        <FaEdit
+                          onClick={() => {
+                            setEditLecturer(l);
+                            setShowLecturerModal(true);
+                          }}
+                        />
+
+                        <FaTrash
+                          onClick={() => handleDeleteLecturer(l.userId)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* CLASSROOMS */}
+        {/* ================= CLASSROOMS ================= */}
         {activePage === "classrooms" && (
           <div className="table-box">
             <div className="table-header">
               <h2>Classrooms</h2>
-              <button className="enroll-btn" onClick={() => setShowClassroomModal(true)}>
+              <button
+                className="enroll-btn"
+                onClick={() => setShowClassroomModal(true)}
+              >
                 + Add Classroom
               </button>
             </div>
 
             <table>
               <tbody>
-                {classrooms.map((c) => (
+                {(classrooms || []).map((c) => (
                   <tr key={c.id}>
                     <td>{c.name}</td>
                     <td>{c.buildingName}</td>
+
                     <td className="actions">
                       <FaEdit
-                        className="edit"
                         onClick={() => {
                           setEditClassroom(c);
                           setShowClassroomModal(true);
                         }}
                       />
+
                       <FaTrash
-                        className="delete"
                         onClick={() => handleDeleteClassroom(c.id)}
                       />
                     </td>
@@ -1072,33 +1045,149 @@ if (Array.isArray(data)) {
         )}
       </div>
 
-      {/* MODALS */}
+      {/* ================= LECTURER MODAL ================= */}
       {showLecturerModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <form onSubmit={handleAddLecturer}>
+            <div className="modal-header">
               <h3>{editLecturer ? "Edit Lecturer" : "Add Lecturer"}</h3>
-              <input placeholder="First Name" onChange={(e) => setLecturerForm({ ...lecturerForm, firstName: e.target.value })} />
-              <input placeholder="Last Name" onChange={(e) => setLecturerForm({ ...lecturerForm, lastName: e.target.value })} />
-              <input placeholder="Email" onChange={(e) => setLecturerForm({ ...lecturerForm, email: e.target.value })} />
-              <input placeholder="Password" type="password" onChange={(e) => setLecturerForm({ ...lecturerForm, password: e.target.value })} />
-              <button type="submit">{editLecturer ? "Update" : "Add"}</button>
+              <span
+                className="close-btn"
+                onClick={() => setShowLecturerModal(false)}
+              >
+                ✖
+              </span>
+            </div>
+
+            <form onSubmit={handleAddLecturer}>
+              <div className="form-row">
+                <input
+                  placeholder="First Name"
+                  onChange={(e) =>
+                    setLecturerForm({
+                      ...lecturerForm,
+                      firstName: e.target.value,
+                    })
+                  }
+                />
+                <input
+                  placeholder="Last Name"
+                  onChange={(e) =>
+                    setLecturerForm({
+                      ...lecturerForm,
+                      lastName: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <input
+                placeholder="Email"
+                onChange={(e) =>
+                  setLecturerForm({
+                    ...lecturerForm,
+                    email: e.target.value,
+                  })
+                }
+              />
+
+              <input
+                placeholder="SSIN"
+                onChange={(e) =>
+                  setLecturerForm({
+                    ...lecturerForm,
+                    ssin: e.target.value,
+                  })
+                }
+              />
+
+              <input
+                type="password"
+                placeholder="Password"
+                onChange={(e) =>
+                  setLecturerForm({
+                    ...lecturerForm,
+                    password: e.target.value,
+                  })
+                }
+              />
+
+              <button type="submit" className="save-btn">
+                {editLecturer ? "Update" : "Add"}
+              </button>
             </form>
           </div>
         </div>
       )}
 
+      {/* ================= CLASSROOM MODAL ================= */}
       {showClassroomModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <form onSubmit={handleAddClassroom}>
+            <div className="modal-header">
               <h3>{editClassroom ? "Edit Classroom" : "Add Classroom"}</h3>
-              <input placeholder="Name" onChange={(e) => setClassroomForm({ ...classroomForm, name: e.target.value })} />
-              <input placeholder="Building" onChange={(e) => setClassroomForm({ ...classroomForm, buildingName: e.target.value })} />
-              <input placeholder="Latitude" onChange={(e) => setClassroomForm({ ...classroomForm, latitude: e.target.value })} />
-              <input placeholder="Longitude" onChange={(e) => setClassroomForm({ ...classroomForm, longitude: e.target.value })} />
-              <input placeholder="Radius" onChange={(e) => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })} />
-              <button type="submit">{editClassroom ? "Update" : "Add"}</button>
+              <span
+                className="close-btn"
+                onClick={() => setShowClassroomModal(false)}
+              >
+                ✖
+              </span>
+            </div>
+
+            <form onSubmit={handleAddClassroom}>
+              <input
+                placeholder="Name"
+                onChange={(e) =>
+                  setClassroomForm({
+                    ...classroomForm,
+                    name: e.target.value,
+                  })
+                }
+              />
+
+              <input
+                placeholder="Building"
+                onChange={(e) =>
+                  setClassroomForm({
+                    ...classroomForm,
+                    buildingName: e.target.value,
+                  })
+                }
+              />
+
+              <button
+                type="button"
+                className="location-btn"
+                onClick={handleGetLocation}
+              >
+                📍 Get Location
+              </button>
+
+              <input
+                placeholder="Latitude"
+                value={classroomForm.latitude}
+                readOnly
+              />
+
+              <input
+                placeholder="Longitude"
+                value={classroomForm.longitude}
+                readOnly
+              />
+
+              <input
+                placeholder="Radius"
+                onChange={(e) =>
+                  setClassroomForm({
+                    ...classroomForm,
+                    radiusOfAcceptanceMeter: e.target.value,
+                  })
+                }
+              />
+
+              <button type="submit" className="save-btn">
+                {editClassroom ? "Update" : "Add"}
+              </button>
             </form>
           </div>
         </div>

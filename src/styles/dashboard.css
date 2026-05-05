@@ -702,3 +702,8 @@ table {
   border-radius: 12px;
   width: 400px;
 }
+
+.table-box div {
+  max-height: 400px;
+  overflow-y: auto;
+}
