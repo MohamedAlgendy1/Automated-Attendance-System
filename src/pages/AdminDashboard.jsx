@@ -791,21 +791,22 @@ import {
   FaMapMarkerAlt,
   FaBook,
   FaTrash,
-  FaEdit,
 } from "react-icons/fa";
 import api, { getErrorMessage } from "../services/api";
+import { useCallback } from "react";
+
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState("lecturers");
 
-  // ================= STATE =================
+  const [activePage, setActivePage] = useState("lecturers");
   const [lecturers, setLecturers] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
   const [stats, setStats] = useState(null);
 
   const [showLecturerModal, setShowLecturerModal] = useState(false);
-  const [editLecturer, setEditLecturer] = useState(null);
+  const [showClassroomModal, setShowClassroomModal] = useState(false);
+
   const [lecturerForm, setLecturerForm] = useState({
     firstName: "",
     lastName: "",
@@ -814,8 +815,6 @@ function AdminDashboard() {
     ssin: "",
   });
 
-  const [showClassroomModal, setShowClassroomModal] = useState(false);
-  const [editClassroom, setEditClassroom] = useState(null);
   const [classroomForm, setClassroomForm] = useState({
     name: "",
     buildingName: "",
@@ -824,32 +823,51 @@ function AdminDashboard() {
     radiusOfAcceptanceMeter: "",
   });
 
+  const [editClassroom, setEditClassroom] = useState(null);
+
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // ================= FETCH =================
-  useEffect(() => {
-    api.get("/admin/SystemDashboard").then((res) => setStats(res.data));
-  }, []);
+ const fetchLecturers = useCallback(async () => {
+  try {
+    const res = await api.get("/admin/GetLecturers");
+    const data = res.data;
 
-  useEffect(() => {
-    if (activePage === "lecturers") {
-      api.get("/admin/GetLecturers").then((res) => {
-        const data = res.data;
-        if (Array.isArray(data)) setLecturers(data);
-        else if (Array.isArray(data?.data)) setLecturers(data.data);
-        else setLecturers([]);
-      });
-    }
-  }, [activePage]);
+    if (Array.isArray(data)) setLecturers(data);
+    else if (Array.isArray(data?.data)) setLecturers(data.data);
+    else setLecturers([]);
+  } catch (err) {
+    showToast(getErrorMessage(err));
+  }
+}, []);
 
-  useEffect(() => {
-    if (activePage === "classrooms") {
-      api.get("/classroom/AllClassRoom").then((res) => {
-        const data = res.data;
-        if (Array.isArray(data)) setClassrooms(data);
-        else if (Array.isArray(data?.data)) setClassrooms(data.data);
-        else setClassrooms([]);
-      });
-    }
-  }, [activePage]);
+const fetchClassrooms = useCallback(async () => {
+  try {
+    const res = await api.get("/classroom/AllClassRoom");
+    const data = res.data;
+
+    if (Array.isArray(data)) setClassrooms(data);
+    else if (Array.isArray(data?.data)) setClassrooms(data.data);
+    else setClassrooms([]);
+  } catch (err) {
+    showToast(getErrorMessage(err));
+  }
+}, []);
+
+useEffect(() => {
+  if (activePage === "lecturers") {
+    fetchLecturers();
+  }
+
+  if (activePage === "classrooms") {
+    fetchClassrooms();
+  }
+}, [activePage, fetchLecturers, fetchClassrooms]);
 
   // ================= LOCATION =================
   const handleGetLocation = () => {
@@ -861,50 +879,70 @@ function AdminDashboard() {
           longitude: pos.coords.longitude.toFixed(6),
         }));
       },
-      () => alert("Allow location access")
+      () => showToast("Allow location access")
     );
   };
 
-  // ================= ADD / EDIT =================
+  // ================= ADD =================
   const handleAddLecturer = async (e) => {
     e.preventDefault();
     try {
-      if (editLecturer) {
-        await api.put(`/admin/EditLecturer/${editLecturer.userId}`, lecturerForm);
-      } else {
-        await api.post("/admin/AddLecturer", lecturerForm);
-      }
+      await api.post("/admin/AddLecturer", lecturerForm);
+      showToast("Lecturer added ✅");
       setShowLecturerModal(false);
-      setEditLecturer(null);
+      setLecturerForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        ssin: "",
+      });
+      fetchLecturers();
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err));
     }
   };
 
-  const handleAddClassroom = async (e) => {
+  const handleSaveClassroom = async (e) => {
     e.preventDefault();
     try {
       if (editClassroom) {
         await api.put(`/classroom/Edit/${editClassroom.id}`, classroomForm);
+        showToast("Updated ✅");
       } else {
         await api.post("/classroom/CreateClassRoom", classroomForm);
+        showToast("Added ✅");
       }
+
       setShowClassroomModal(false);
       setEditClassroom(null);
+      setClassroomForm({
+        name: "",
+        buildingName: "",
+        latitude: "",
+        longitude: "",
+        radiusOfAcceptanceMeter: "",
+      });
+
+      fetchClassrooms();
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err));
     }
   };
 
   // ================= DELETE =================
-  const handleDeleteLecturer = async (id) => {
+  const handleCloseAccount = async (id) => {
+    if (!window.confirm("Close account?")) return;
     await api.put(`/admin/CloseAccount/${id}`);
-    setLecturers((prev) => prev.filter((l) => l.userId !== id));
+    showToast("Closed ✅");
+    fetchLecturers();
   };
 
   const handleDeleteClassroom = async (id) => {
+    if (!window.confirm("Delete classroom?")) return;
     await api.delete(`/classroom/Delete/${id}`);
-    setClassrooms((prev) => prev.filter((c) => c.id !== id));
+    showToast("Deleted ✅");
+    fetchClassrooms();
   };
 
   const handleLogout = () => {
@@ -914,22 +952,15 @@ function AdminDashboard() {
 
   return (
     <div className="dashboard">
-      {/* ================= SIDEBAR ================= */}
+      {/* SIDEBAR */}
       <div className="sidebar">
         <h2 className="logo">QR Attend</h2>
 
         <ul className="menu">
-          <li
-            className={activePage === "lecturers" ? "active" : ""}
-            onClick={() => setActivePage("lecturers")}
-          >
+          <li onClick={() => setActivePage("lecturers")}>
             <FaChalkboardTeacher /> Lecturers
           </li>
-
-          <li
-            className={activePage === "classrooms" ? "active" : ""}
-            onClick={() => setActivePage("classrooms")}
-          >
+          <li onClick={() => setActivePage("classrooms")}>
             <FaMapMarkerAlt /> Classrooms
           </li>
         </ul>
@@ -939,7 +970,7 @@ function AdminDashboard() {
         </button>
       </div>
 
-      {/* ================= MAIN ================= */}
+      {/* MAIN */}
       <div className="main">
         <h1>Admin Dashboard</h1>
 
@@ -964,234 +995,88 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* ================= LECTURERS ================= */}
+        {/* LECTURERS */}
         {activePage === "lecturers" && (
           <div className="table-box">
             <div className="table-header">
               <h2>Lecturers</h2>
-              <button
-                className="enroll-btn"
-                onClick={() => setShowLecturerModal(true)}
-              >
+              <button className="enroll-btn" onClick={() => setShowLecturerModal(true)}>
                 + Add Lecturer
               </button>
             </div>
 
             <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-              <table>
-                <tbody>
-                  {(lecturers || []).slice(0, 100).map((l) => (
-                    <tr key={l.userId}>
-                      <td>{l.name}</td>
-                      <td>{l.email}</td>
-
-                      <td className="actions">
-                        <FaEdit
-                          onClick={() => {
-                            setEditLecturer(l);
-                            setShowLecturerModal(true);
-                          }}
-                        />
-
-                        <FaTrash
-                          onClick={() => handleDeleteLecturer(l.userId)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {(lecturers || []).slice(0, 8).map((l) => (
+                <div key={l.userId} className="row">
+                  {l.name} - {l.email}
+                  <FaTrash onClick={() => handleCloseAccount(l.userId)} />
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* ================= CLASSROOMS ================= */}
+        {/* CLASSROOMS */}
         {activePage === "classrooms" && (
           <div className="table-box">
             <div className="table-header">
               <h2>Classrooms</h2>
-              <button
-                className="enroll-btn"
-                onClick={() => setShowClassroomModal(true)}
-              >
+              <button className="enroll-btn" onClick={() => setShowClassroomModal(true)}>
                 + Add Classroom
               </button>
             </div>
 
-            <table>
-              <tbody>
-                {(classrooms || []).map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.name}</td>
-                    <td>{c.buildingName}</td>
-
-                    <td className="actions">
-                      <FaEdit
-                        onClick={() => {
-                          setEditClassroom(c);
-                          setShowClassroomModal(true);
-                        }}
-                      />
-
-                      <FaTrash
-                        onClick={() => handleDeleteClassroom(c.id)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {(classrooms || []).map((c) => (
+              <div key={c.id} className="row">
+                {c.name} - {c.buildingName}
+                <FaTrash onClick={() => handleDeleteClassroom(c.id)} />
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* ================= LECTURER MODAL ================= */}
+      {/* MODALS + TOAST */}
       {showLecturerModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <div className="modal-header">
-              <h3>{editLecturer ? "Edit Lecturer" : "Add Lecturer"}</h3>
-              <span
-                className="close-btn"
-                onClick={() => setShowLecturerModal(false)}
-              >
-                ✖
-              </span>
-            </div>
-
+            <span className="close-btn" onClick={() => setShowLecturerModal(false)}>✖</span>
             <form onSubmit={handleAddLecturer}>
-              <div className="form-row">
-                <input
-                  placeholder="First Name"
-                  onChange={(e) =>
-                    setLecturerForm({
-                      ...lecturerForm,
-                      firstName: e.target.value,
-                    })
-                  }
-                />
-                <input
-                  placeholder="Last Name"
-                  onChange={(e) =>
-                    setLecturerForm({
-                      ...lecturerForm,
-                      lastName: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <input
-                placeholder="Email"
-                onChange={(e) =>
-                  setLecturerForm({
-                    ...lecturerForm,
-                    email: e.target.value,
-                  })
-                }
-              />
-
-              <input
-                placeholder="SSIN"
-                onChange={(e) =>
-                  setLecturerForm({
-                    ...lecturerForm,
-                    ssin: e.target.value,
-                  })
-                }
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                onChange={(e) =>
-                  setLecturerForm({
-                    ...lecturerForm,
-                    password: e.target.value,
-                  })
-                }
-              />
-
-              <button type="submit" className="save-btn">
-                {editLecturer ? "Update" : "Add"}
-              </button>
+              <input placeholder="First Name" onChange={(e) => setLecturerForm({...lecturerForm, firstName: e.target.value})}/>
+              <input placeholder="Last Name" onChange={(e) => setLecturerForm({...lecturerForm, lastName: e.target.value})}/>
+              <input placeholder="Email" onChange={(e) => setLecturerForm({...lecturerForm, email: e.target.value})}/>
+              <input placeholder="SSIN" onChange={(e) => setLecturerForm({...lecturerForm, ssin: e.target.value})}/>
+              <input type="password" placeholder="Password" onChange={(e) => setLecturerForm({...lecturerForm, password: e.target.value})}/>
+              <button type="submit">Add</button>
             </form>
           </div>
         </div>
       )}
 
-      {/* ================= CLASSROOM MODAL ================= */}
       {showClassroomModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <div className="modal-header">
-              <h3>{editClassroom ? "Edit Classroom" : "Add Classroom"}</h3>
-              <span
-                className="close-btn"
-                onClick={() => setShowClassroomModal(false)}
-              >
-                ✖
-              </span>
-            </div>
+            <span className="close-btn" onClick={() => setShowClassroomModal(false)}>✖</span>
 
-            <form onSubmit={handleAddClassroom}>
-              <input
-                placeholder="Name"
-                onChange={(e) =>
-                  setClassroomForm({
-                    ...classroomForm,
-                    name: e.target.value,
-                  })
-                }
-              />
+            <form onSubmit={handleSaveClassroom}>
+              <input placeholder="Name" onChange={(e) => setClassroomForm({...classroomForm, name: e.target.value})}/>
+              <input placeholder="Building" onChange={(e) => setClassroomForm({...classroomForm, buildingName: e.target.value})}/>
 
-              <input
-                placeholder="Building"
-                onChange={(e) =>
-                  setClassroomForm({
-                    ...classroomForm,
-                    buildingName: e.target.value,
-                  })
-                }
-              />
-
-              <button
-                type="button"
-                className="location-btn"
-                onClick={handleGetLocation}
-              >
+              <button type="button" onClick={handleGetLocation}>
                 📍 Get Location
               </button>
 
-              <input
-                placeholder="Latitude"
-                value={classroomForm.latitude}
-                readOnly
-              />
+              <input value={classroomForm.latitude} readOnly />
+              <input value={classroomForm.longitude} readOnly />
 
-              <input
-                placeholder="Longitude"
-                value={classroomForm.longitude}
-                readOnly
-              />
-
-              <input
-                placeholder="Radius"
-                onChange={(e) =>
-                  setClassroomForm({
-                    ...classroomForm,
-                    radiusOfAcceptanceMeter: e.target.value,
-                  })
-                }
-              />
-
-              <button type="submit" className="save-btn">
-                {editClassroom ? "Update" : "Add"}
-              </button>
+              <input placeholder="Radius" onChange={(e) => setClassroomForm({...classroomForm, radiusOfAcceptanceMeter: e.target.value})}/>
+              <button type="submit">Save</button>
             </form>
           </div>
         </div>
       )}
+
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 }
