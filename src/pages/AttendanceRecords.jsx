@@ -249,20 +249,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceRecords.css";
 import { parseJwt, getErrorMessage } from "../services/api";
-import { getAttendanceReport, getLecturesByCourse, getCourseOverview } from "../services/lectureService";
+import { getAttendanceReport } from "../services/lectureService";
 import { getCourseById } from "../services/courseService";
+import { getLecturesByCourse } from "../services/lectureService";
 
 function AttendanceRecords() {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
   const [course, setCourse] = useState(null);
-  const [lectures, setLectures] = useState([]);
-  const [selectedLectureId, setSelectedLectureId] = useState(null);
-  const [mergedData, setMergedData] = useState([]);
+  const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-  const [search, setSearch] = useState("");
 
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
@@ -270,147 +267,46 @@ function AttendanceRecords() {
     decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
     "Lecturer";
 
-  // ✅ Load course + lectures
-  useEffect(() => {
-    const loadInitial = async () => {
-      try {
-        const [courseRes, lecturesRes] = await Promise.all([
-          getCourseById(courseId),
-          getLecturesByCourse(courseId),
-        ]);
-        setCourse(courseRes);
 
-        const lects = lecturesRes || [];
-        setLectures(lects);
 
-        if (lects.length > 0) {
-          setSelectedLectureId(lects[0].id);
-        } else {
-          setLoading(false);
-        }
-      } catch (err) {
-        console.log(getErrorMessage(err));
-        setLoading(false);
-      }
-    };
-    loadInitial();
-  }, [courseId]);
-
-  // ✅ Load attendance report whenever lecture changes
-  useEffect(() => {
-    if (!selectedLectureId) return;
-
-    const loadReport = async () => {
+useEffect(() => {
+  const load = async () => {
+    try {
       setLoading(true);
-      try {
-        // 1️⃣ جيب اللي حضروا من الـ report
-        const reportRes = await getAttendanceReport(selectedLectureId);
-        const presentStudents = reportRes?.report || [];
 
-        // 2️⃣ جيب قائمة كل الطلاب المسجلين في الكورس
-        let enrolledList = [];
-        try {
-          const overview = await getCourseOverview(courseId);
-          enrolledList =
-            overview?.students ||
-            overview?.enrolledStudents ||
-            overview?.studentList ||
-            [];
-        } catch {
-          enrolledList = [];
-        }
+      // 1️⃣ الكورس
+      const courseRes = await getCourseById(courseId);
+      setCourse(courseRes);
 
-        if (enrolledList.length > 0) {
-          // ✅ عندنا كل الطلاب — نعمل merge صح
-          // نعمل Map من الـ present students عشان البحث يبقى سريع
-          const presentMap = new Map();
-          presentStudents.forEach((p) => {
-            const key =
-              p.studentId?.toString() ||
-              p.userId?.toString() ||
-              p.studentName;
-            if (key) presentMap.set(key, p);
-          });
+      // 2️⃣ المحاضرات
+      const lecturesRes = await getLecturesByCourse(courseId);
 
-          const merged = enrolledList.map((student) => {
-            const studentKey =
-              student.studentId?.toString() ||
-              student.userId?.toString() ||
-              student.id?.toString() ||
-              student.studentName ||
-              student.name;
+      const lectures = lecturesRes || [];
 
-            // ✅ نبحث في الـ presentMap بأكتر من طريقة
-            const presentRecord =
-              presentMap.get(student.studentId?.toString()) ||
-              presentMap.get(student.userId?.toString()) ||
-              presentMap.get(student.id?.toString()) ||
-              presentMap.get(student.studentName) ||
-              presentMap.get(student.name) ||
-              // fallback: ابحث بالاسم لو الـ id مش موجود
-              presentStudents.find(
-                (p) =>
-                  p.studentName &&
-                  (student.studentName || student.name) &&
-                  p.studentName === (student.studentName || student.name)
-              );
-
-            return {
-              studentName:
-                student.studentName ||
-                student.name ||
-                student.fullName ||
-                "Unknown",
-              studentId: studentKey,
-              // ✅ حاضر بس لو موجود في الـ report فعلاً
-              status: presentRecord ? "Present" : "Absent",
-              // ✅ وقت الحضور من الـ record
-              scanTime: presentRecord?.scanTime || presentRecord?.attendedAt || null,
-            };
-          });
-
-          setMergedData(merged);
-        } else {
-          // مفيش قائمة طلاب — نعرض اللي حضروا بس
-          const merged = presentStudents.map((s) => ({
-            studentName: s.studentName || "Unknown",
-            studentId: s.studentId?.toString() || s.userId?.toString() || s.id?.toString(),
-            status: "Present",
-            scanTime: s.scanTime || s.attendedAt || null,
-          }));
-          setMergedData(merged);
-        }
-      } catch (err) {
-        console.log(getErrorMessage(err));
-        setMergedData([]);
-      } finally {
-        setLoading(false);
+      if (lectures.length === 0) {
+        setReport([]);
+        return;
       }
-    };
 
-    loadReport();
-  }, [selectedLectureId, courseId]);
+      // 3️⃣ أهم تعديل هنا 👇
+      const lectureId = lectures[0].id; // أول lecture
 
-  // ✅ Filter + Search
-  const filtered = mergedData.filter((s) => {
-    const matchSearch = s.studentName?.toLowerCase().includes(search.toLowerCase());
-    const isPresent = s.status === "Present";
-    const matchFilter =
-      filter === "all"     ? true :
-      filter === "present" ? isPresent :
-      !isPresent;
-    return matchSearch && matchFilter;
-  });
+      // 4️⃣ الحضور
+      const reportRes = await getAttendanceReport(lectureId);
 
-  const presentCount = mergedData.filter((s) => s.status === "Present").length;
-  const absentCount  = mergedData.length - presentCount;
+      setReport(reportRes?.report || []);
 
-  const formatTime = (t) => {
-    if (!t) return null;
-    try { return new Date(t).toLocaleString(); } catch { return null; }
+    } catch (err) {
+      console.log(getErrorMessage(err));
+      setReport([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getLectureLabel = (l) => l.title || l.name || `Lecture ${l.id}`;
+  load();
+}, [courseId]);
+
 
   return (
     <div className="dashboard records-page">
@@ -424,17 +320,24 @@ function AttendanceRecords() {
             <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>
           </ul>
         </div>
+
         <div className="user-box">
           <div className="user-info">
-            <div className="avatar">{lecturerName?.[0]?.toUpperCase() || "L"}</div>
+            <div className="avatar">
+              {lecturerName?.[0]?.toUpperCase() || "L"}
+            </div>
             <div>
               <p>{lecturerName}</p>
               <span>Lecturer</span>
             </div>
           </div>
+
           <button
             className="logout-btn"
-            onClick={() => { localStorage.clear(); navigate("/"); }}
+            onClick={() => {
+              localStorage.clear();
+              navigate("/");
+            }}
           >
             Sign Out
           </button>
@@ -444,147 +347,79 @@ function AttendanceRecords() {
       {/* Main */}
       <div className="main">
         <h1>Attendance Records</h1>
-        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
-        {/* Stat Cards */}
+        <p onClick={() => navigate(-1)} style={{ cursor: "pointer", color: "#2563eb" }}>
+          ← Back
+        </p>
+
+        {/* Cards */}
         <div className="cards">
           <div className="card">
             <p>Course</p>
             <h2>{course?.courseCode || course?.code || "-"}</h2>
           </div>
-          <div className="card">
-            <p>Total</p>
-            <h2>{mergedData.length}</h2>
-          </div>
+
           <div className="card">
             <p>Present</p>
-            <h2 style={{ color: "#16a34a" }}>{presentCount}</h2>
+            <h2 style={{ color: "#22c55e" }}>
+              {report.length}
+            </h2>
           </div>
-          <div className="card">
-            <p>Absent</p>
-            <h2 style={{ color: "#dc2626" }}>{absentCount}</h2>
-          </div>
-        </div>
-
-        {/* Lecture Selector */}
-        {lectures.length > 1 && (
-          <div className="lecture-selector">
-            <label>Select Lecture:</label>
-            <select
-              value={selectedLectureId || ""}
-              onChange={(e) => setSelectedLectureId(Number(e.target.value))}
-            >
-              {lectures.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {getLectureLabel(l)}
-                  {l.startTime ? ` — ${new Date(l.startTime).toLocaleDateString()}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="filters-bar">
-          <input
-            className="filter-search"
-            placeholder="Search student..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button
-            className={`filter-btn ${filter === "all" ? "active-all" : ""}`}
-            onClick={() => setFilter("all")}
-          >All ({mergedData.length})</button>
-          <button
-            className={`filter-btn ${filter === "present" ? "active-present" : ""}`}
-            onClick={() => setFilter("present")}
-          >Present ({presentCount})</button>
-          <button
-            className={`filter-btn ${filter === "absent" ? "active-absent" : ""}`}
-            onClick={() => setFilter("absent")}
-          >Absent ({absentCount})</button>
         </div>
 
         {/* Table */}
         <div className="table-box">
-          <div className="table-box-header">
-            <h2>{course?.courseName || course?.name || "Course"}</h2>
-            <span className="table-count">{filtered.length} students</span>
-          </div>
+          <h2>{course?.name || "Course"}</h2>
 
-          <div className="table-scroll">
-            <table>
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <table className="table">
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Student</th>
                   <th>Status</th>
                   <th>Scan Time</th>
                 </tr>
               </thead>
+
               <tbody>
-                {loading ? (
-                  [1, 2, 3, 4, 5].map((i) => (
-                    <tr key={i} className="skeleton-row">
-                      <td><div className="skeleton-bar short" /></td>
-                      <td><div className="skeleton-bar long" /></td>
-                      <td><div className="skeleton-bar medium" /></td>
-                      <td><div className="skeleton-bar medium" /></td>
-                    </tr>
-                  ))
-                ) : filtered.length === 0 ? (
+                {report.length === 0 ? (
                   <tr>
-                    <td colSpan="4">
-                      <div className="empty-state">
-                        <p>No students found</p>
-                      </div>
+                    <td colSpan="3" style={{ textAlign: "center" }}>
+                      No attendance yet
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((s, i) => {
-                    const isPresent = s.status === "Present";
-                    const time = formatTime(s.scanTime);
-                    return (
-                      <tr key={i}>
-                        <td style={{ color: "#94a3b8", fontSize: 13 }}>{i + 1}</td>
-                        <td>
-                          <div className="student-name">
-                            <div className="student-avatar">
-                              {s.studentName?.[0]?.toUpperCase() || "S"}
-                            </div>
-                            {s.studentName}
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`badge ${isPresent ? "badge-present" : "badge-absent"}`}>
-                            <span className="badge-dot" />
-                            {isPresent ? "Present" : "Absent"}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`scan-time ${!time ? "no-time" : ""}`}>
-                            {time || "—"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  report.map((s, i) => (
+                    <tr key={i}>
+                      <td>{s.studentName}</td>
+
+                      <td>
+                        <span style={{
+                          padding: "5px 10px",
+                          borderRadius: 20,
+                          background: "#dcfce7",
+                          color: "#16a34a",
+                          fontWeight: 600
+                        }}>
+                          {s.status}
+                        </span>
+                      </td>
+
+                      <td>
+                        {s.scanTime
+                          ? new Date(s.scanTime).toLocaleString()
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
-          </div>
+          )}
         </div>
       </div>
-
-      {/* Mobile Bottom Nav */}
-      <nav className="mobile-nav">
-        <ul>
-          <li onClick={() => navigate("/lecturer")}>📘 Courses</li>
-          <li onClick={() => navigate("/attendance")}>📊 Attendance</li>
-        </ul>
-      </nav>
-
     </div>
   );
 }
