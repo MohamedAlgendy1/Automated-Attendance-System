@@ -627,6 +627,19 @@ function AdminDashboard() {
       {toast.show && (
         <div className={`toast ${toast.type}`}>{toast.message}</div>
       )}
+
+      <nav className="mobile-nav">
+  <ul>
+    <li className={activePage === "lecturers" ? "active" : ""} onClick={() => setActivePage("lecturers")}>
+      <FaChalkboardTeacher /> <span>Lecturers</span>
+    </li>
+    <li className={activePage === "classrooms" ? "active" : ""} onClick={() => setActivePage("classrooms")}>
+      <FaMapMarkerAlt /> <span>Classrooms</span>
+    </li>
+  </ul>
+</nav>
+
+
     </div>
   );
 }
