@@ -791,7 +791,6 @@ import {
   FaChalkboardTeacher,
   FaMapMarkerAlt,
   FaBook,
-  
   FaTrash,
 } from "react-icons/fa";
 import api, { getErrorMessage } from "../services/api";
@@ -810,6 +809,25 @@ function AdminDashboard() {
   const [searchClass, setSearchClass] = useState("");
 
   const [stats, setStats] = useState(null);
+
+  // ================= MODALS =================
+  const [showLecturerModal, setShowLecturerModal] = useState(false);
+  const [lecturerForm, setLecturerForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    ssin: "",
+  });
+
+  const [showClassroomModal, setShowClassroomModal] = useState(false);
+  const [classroomForm, setClassroomForm] = useState({
+    name: "",
+    buildingName: "",
+    latitude: "",
+    longitude: "",
+    radiusOfAcceptanceMeter: "",
+  });
 
   // ================= FETCH STATS =================
   useEffect(() => {
@@ -876,7 +894,53 @@ function AdminDashboard() {
     if (activePage === "classrooms") fetchClassrooms();
   }, [activePage]);
 
-  // ================= DELETE LECTURER =================
+  // ================= ADD LECTURER =================
+  const handleAddLecturer = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/admin/AddLecturer", lecturerForm);
+      setShowLecturerModal(false);
+      setLecturerForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        ssin: "",
+      });
+      setActivePage("lecturers");
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  // ================= ADD CLASSROOM =================
+  const handleAddClassroom = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/classroom/CreateClassRoom", {
+        ...classroomForm,
+        latitude: parseFloat(classroomForm.latitude),
+        longitude: parseFloat(classroomForm.longitude),
+        radiusOfAcceptanceMeter: parseInt(
+          classroomForm.radiusOfAcceptanceMeter
+        ),
+      });
+
+      setShowClassroomModal(false);
+      setClassroomForm({
+        name: "",
+        buildingName: "",
+        latitude: "",
+        longitude: "",
+        radiusOfAcceptanceMeter: "",
+      });
+      setActivePage("classrooms");
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  // ================= DELETE =================
   const handleDeleteLecturer = async (id) => {
     if (!window.confirm("Delete this account?")) return;
     try {
@@ -887,7 +951,6 @@ function AdminDashboard() {
     }
   };
 
-  // ================= DELETE CLASSROOM =================
   const handleDeleteClassroom = async (id) => {
     if (!window.confirm("Delete this classroom?")) return;
     try {
@@ -956,10 +1019,15 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* ================= LECTURERS ================= */}
+        {/* LECTURERS */}
         {activePage === "lecturers" && (
           <div className="table-box">
-            <h2>Lecturers</h2>
+            <div className="table-header">
+              <h2>Lecturers</h2>
+              <button onClick={() => setShowLecturerModal(true)}>
+                + Add Lecturer
+              </button>
+            </div>
 
             <input
               className="search"
@@ -983,43 +1051,35 @@ function AdminDashboard() {
                 </thead>
 
                 <tbody>
-                  {lecturers.length === 0 ? (
-                    <tr>
-                      <td colSpan="5">No Data</td>
+                  {lecturers.map((l) => (
+                    <tr key={l.userId}>
+                      <td>{l.name}</td>
+                      <td>{l.email}</td>
+                      <td>{l.ssin}</td>
+                      <td>{l.courses}</td>
+                      <td>
+                        <FaTrash
+                          style={{ cursor: "pointer", color: "red" }}
+                          onClick={() => handleDeleteLecturer(l.userId)}
+                        />
+                      </td>
                     </tr>
-                  ) : (
-                    lecturers.map((l) => (
-                      <tr key={l.userId}>
-                        <td>{l.name}</td>
-                        <td>{l.email}</td>
-                        <td>{l.ssin}</td>
-                        <td>{l.courses}</td>
-                        <td>
-                          <FaTrash
-                            style={{ cursor: "pointer", color: "red" }}
-                            onClick={() => handleDeleteLecturer(l.userId)}
-                          />
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             )}
           </div>
         )}
 
-        {/* ================= CLASSROOMS ================= */}
+        {/* CLASSROOMS */}
         {activePage === "classrooms" && (
           <div className="table-box">
-            <h2>Classrooms</h2>
-
-            <input
-              className="search"
-              placeholder="Search..."
-              value={searchClass}
-              onChange={(e) => setSearchClass(e.target.value)}
-            />
+            <div className="table-header">
+              <h2>Classrooms</h2>
+              <button onClick={() => setShowClassroomModal(true)}>
+                + Add Classroom
+              </button>
+            </div>
 
             {classroomsLoading ? (
               <p>Loading...</p>
@@ -1029,39 +1089,62 @@ function AdminDashboard() {
                   <tr>
                     <th>Name</th>
                     <th>Building</th>
-                    <th>Latitude</th>
-                    <th>Longitude</th>
+                    <th>Lat</th>
+                    <th>Lng</th>
                     <th>Action</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {classrooms.length === 0 ? (
-                    <tr>
-                      <td colSpan="5">No Data</td>
+                  {classrooms.map((c) => (
+                    <tr key={c.id}>
+                      <td>{c.name}</td>
+                      <td>{c.buildingName}</td>
+                      <td>{c.latitude}</td>
+                      <td>{c.longitude}</td>
+                      <td>
+                        <FaTrash
+                          style={{ cursor: "pointer", color: "red" }}
+                          onClick={() => handleDeleteClassroom(c.id)}
+                        />
+                      </td>
                     </tr>
-                  ) : (
-                    classrooms.map((c) => (
-                      <tr key={c.id}>
-                        <td>{c.name}</td>
-                        <td>{c.buildingName}</td>
-                        <td>{c.latitude}</td>
-                        <td>{c.longitude}</td>
-                        <td>
-                          <FaTrash
-                            style={{ cursor: "pointer", color: "red" }}
-                            onClick={() => handleDeleteClassroom(c.id)}
-                          />
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             )}
           </div>
         )}
       </div>
+
+      {/* MODALS */}
+
+      {showLecturerModal && (
+        <div className="modal">
+          <form onSubmit={handleAddLecturer}>
+            <h3>Add Lecturer</h3>
+            <input placeholder="First Name" onChange={(e) => setLecturerForm({ ...lecturerForm, firstName: e.target.value })} />
+            <input placeholder="Last Name" onChange={(e) => setLecturerForm({ ...lecturerForm, lastName: e.target.value })} />
+            <input placeholder="Email" onChange={(e) => setLecturerForm({ ...lecturerForm, email: e.target.value })} />
+            <input placeholder="Password" type="password" onChange={(e) => setLecturerForm({ ...lecturerForm, password: e.target.value })} />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+      )}
+
+      {showClassroomModal && (
+        <div className="modal">
+          <form onSubmit={handleAddClassroom}>
+            <h3>Add Classroom</h3>
+            <input placeholder="Name" onChange={(e) => setClassroomForm({ ...classroomForm, name: e.target.value })} />
+            <input placeholder="Building" onChange={(e) => setClassroomForm({ ...classroomForm, buildingName: e.target.value })} />
+            <input placeholder="Latitude" onChange={(e) => setClassroomForm({ ...classroomForm, latitude: e.target.value })} />
+            <input placeholder="Longitude" onChange={(e) => setClassroomForm({ ...classroomForm, longitude: e.target.value })} />
+            <input placeholder="Radius" onChange={(e) => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })} />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
