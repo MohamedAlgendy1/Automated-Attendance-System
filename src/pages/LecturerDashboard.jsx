@@ -312,7 +312,17 @@ useEffect(() => {
         </div>
       )}
 
-    </div>
+
+{/* Mobile Bottom Nav */}
+      <nav className="mobile-nav">
+        <ul>
+          <li className="active">📘 My Courses</li>
+          <li onClick={() => navigate("/attendance")}>📊 Attendance</li>
+        </ul>
+      </nav>
+
+  
+   </div>
   );
 }
 
