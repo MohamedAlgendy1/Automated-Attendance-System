@@ -1,6 +1,91 @@
 
+/* ============================================================
+   attendanceRecords.css — Professional & Mobile-First
+   ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============================================================
+   FORCE OVERRIDE — يغلب الـ CSS القديم
+   ============================================================ */
+.records-page,
+.records-page .main {
+  background: var(--bg) !important;
+  font-family: 'Sora', sans-serif !important;
+  color: var(--text) !important;
+}
+
+.records-page .sidebar {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+.records-page .menu li {
+  color: var(--text-soft) !important;
+}
+
+.records-page .menu li:hover {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+}
+
+.records-page .menu li.active {
+  background: var(--accent-glow) !important;
+  color: var(--accent) !important;
+}
+
+.records-page .user-info p { color: var(--text) !important; }
+.records-page .user-info span { color: var(--text-muted) !important; }
+
+.records-page .logout-btn {
+  background: transparent !important;
+  border-color: var(--border) !important;
+  color: var(--text-soft) !important;
+}
+
+.records-page .card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.records-page .card p { color: var(--text-muted) !important; }
+.records-page .card h2 { color: var(--text) !important; }
+
+.records-page .table-box {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.records-page .table-box h2 {
+  color: var(--text) !important;
+  padding: 18px 24px 14px !important;
+  border-bottom: 1px solid var(--border) !important;
+  margin-bottom: 0 !important;
+}
+
+.records-page .table th {
+  color: var(--text-muted) !important;
+  background: rgba(255,255,255,0.025) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-top: none !important;
+}
+
+.records-page .table td {
+  color: var(--text-soft) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.records-page .table td:first-child {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+
+.records-page .table tbody tr:hover {
+  background: rgba(255,255,255,0.03) !important;
+}
+
 
 /* ── Variables ── */
 :root {
