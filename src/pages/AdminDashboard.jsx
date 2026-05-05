@@ -792,6 +792,7 @@ import {
   FaMapMarkerAlt,
   FaBook,
   FaTrash,
+  FaEdit,
 } from "react-icons/fa";
 import api, { getErrorMessage } from "../services/api";
 
@@ -806,12 +807,12 @@ function AdminDashboard() {
 
   const [classrooms, setClassrooms] = useState([]);
   const [classroomsLoading, setClassroomsLoading] = useState(false);
-  const [searchClass, setSearchClass] = useState("");
 
   const [stats, setStats] = useState(null);
 
   // ================= MODALS =================
   const [showLecturerModal, setShowLecturerModal] = useState(false);
+  const [editLecturer, setEditLecturer] = useState(null);
   const [lecturerForm, setLecturerForm] = useState({
     firstName: "",
     lastName: "",
@@ -821,6 +822,7 @@ function AdminDashboard() {
   });
 
   const [showClassroomModal, setShowClassroomModal] = useState(false);
+  const [editClassroom, setEditClassroom] = useState(null);
   const [classroomForm, setClassroomForm] = useState({
     name: "",
     buildingName: "",
@@ -829,77 +831,58 @@ function AdminDashboard() {
     radiusOfAcceptanceMeter: "",
   });
 
-  // ================= FETCH STATS =================
+  // ================= FETCH =================
   useEffect(() => {
     const fetchStats = async () => {
-      try {
-        const res = await api.get("/admin/SystemDashboard");
-        setStats(res.data);
-      } catch (err) {
-        console.log(getErrorMessage(err));
-      }
+      const res = await api.get("/admin/SystemDashboard");
+      setStats(res.data);
     };
     fetchStats();
   }, []);
 
-  // ================= FETCH LECTURERS =================
   useEffect(() => {
     const fetchLecturers = async () => {
       setLecturersLoading(true);
       try {
         const res = await api.get("/admin/GetLecturers", {
-          params: {
-            pagenumber: 1,
-            pagesize: 100,
-            Name: search,
-          },
+          params: { Name: search },
         });
-
-        const data = res.data;
-        if (Array.isArray(data)) setLecturers(data);
-        else if (Array.isArray(data?.items)) setLecturers(data.items);
-        else if (Array.isArray(data?.data)) setLecturers(data.data);
-        else setLecturers([]);
-      } catch (err) {
-        console.log(getErrorMessage(err));
+        setLecturers(res.data || []);
+      } catch {
         setLecturers([]);
       } finally {
         setLecturersLoading(false);
       }
     };
-
     if (activePage === "lecturers") fetchLecturers();
   }, [activePage, search]);
 
-  // ================= FETCH CLASSROOMS =================
   useEffect(() => {
     const fetchClassrooms = async () => {
       setClassroomsLoading(true);
       try {
         const res = await api.get("/classroom/AllClassRoom");
-
-        const data = res.data;
-        if (Array.isArray(data)) setClassrooms(data);
-        else if (Array.isArray(data?.items)) setClassrooms(data.items);
-        else if (Array.isArray(data?.data)) setClassrooms(data.data);
-        else setClassrooms([]);
-      } catch (err) {
-        console.log(getErrorMessage(err));
+        setClassrooms(res.data || []);
+      } catch {
         setClassrooms([]);
       } finally {
         setClassroomsLoading(false);
       }
     };
-
     if (activePage === "classrooms") fetchClassrooms();
   }, [activePage]);
 
-  // ================= ADD LECTURER =================
+  // ================= ADD / EDIT =================
   const handleAddLecturer = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/admin/AddLecturer", lecturerForm);
+      if (editLecturer) {
+        await api.put(`/admin/EditLecturer/${editLecturer.userId}`, lecturerForm);
+      } else {
+        await api.post("/admin/AddLecturer", lecturerForm);
+      }
       setShowLecturerModal(false);
+      setEditLecturer(null);
       setLecturerForm({
         firstName: "",
         lastName: "",
@@ -907,26 +890,21 @@ function AdminDashboard() {
         password: "",
         ssin: "",
       });
-      setActivePage("lecturers");
     } catch (err) {
       alert(getErrorMessage(err));
     }
   };
 
-  // ================= ADD CLASSROOM =================
   const handleAddClassroom = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/classroom/CreateClassRoom", {
-        ...classroomForm,
-        latitude: parseFloat(classroomForm.latitude),
-        longitude: parseFloat(classroomForm.longitude),
-        radiusOfAcceptanceMeter: parseInt(
-          classroomForm.radiusOfAcceptanceMeter
-        ),
-      });
-
+      if (editClassroom) {
+        await api.put(`/classroom/Edit/${editClassroom.id}`, classroomForm);
+      } else {
+        await api.post("/classroom/CreateClassRoom", classroomForm);
+      }
       setShowClassroomModal(false);
+      setEditClassroom(null);
       setClassroomForm({
         name: "",
         buildingName: "",
@@ -934,7 +912,6 @@ function AdminDashboard() {
         longitude: "",
         radiusOfAcceptanceMeter: "",
       });
-      setActivePage("classrooms");
     } catch (err) {
       alert(getErrorMessage(err));
     }
@@ -942,23 +919,15 @@ function AdminDashboard() {
 
   // ================= DELETE =================
   const handleDeleteLecturer = async (id) => {
-    if (!window.confirm("Delete this account?")) return;
-    try {
-      await api.put(`/admin/CloseAccount/${id}`);
-      setLecturers((prev) => prev.filter((l) => l.userId !== id));
-    } catch (err) {
-      alert(getErrorMessage(err));
-    }
+    if (!window.confirm("Delete account?")) return;
+    await api.put(`/admin/CloseAccount/${id}`);
+    setLecturers((prev) => prev.filter((l) => l.userId !== id));
   };
 
   const handleDeleteClassroom = async (id) => {
-    if (!window.confirm("Delete this classroom?")) return;
-    try {
-      await api.delete(`/classroom/Delete/${id}`);
-      setClassrooms((prev) => prev.filter((c) => c.id !== id));
-    } catch (err) {
-      alert(getErrorMessage(err));
-    }
+    if (!window.confirm("Delete classroom?")) return;
+    await api.delete(`/classroom/Delete/${id}`);
+    setClassrooms((prev) => prev.filter((c) => c.id !== id));
   };
 
   const handleLogout = () => {
@@ -966,32 +935,16 @@ function AdminDashboard() {
     navigate("/");
   };
 
-  // ================= RENDER =================
   return (
     <div className="dashboard">
       {/* SIDEBAR */}
       <div className="sidebar">
-        <h2 className="logo">QR Attend</h2>
-
-        <ul className="menu">
-          <li
-            className={activePage === "lecturers" ? "active" : ""}
-            onClick={() => setActivePage("lecturers")}
-          >
-            <FaChalkboardTeacher /> Lecturers
-          </li>
-
-          <li
-            className={activePage === "classrooms" ? "active" : ""}
-            onClick={() => setActivePage("classrooms")}
-          >
-            <FaMapMarkerAlt /> Classrooms
-          </li>
+        <h2>QR Attend</h2>
+        <ul>
+          <li onClick={() => setActivePage("lecturers")}>Lecturers</li>
+          <li onClick={() => setActivePage("classrooms")}>Classrooms</li>
         </ul>
-
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
+        <button onClick={handleLogout}>Logout</button>
       </div>
 
       {/* MAIN */}
@@ -1002,19 +955,17 @@ function AdminDashboard() {
         <div className="cards">
           <div className="card">
             <FaChalkboardTeacher />
-            <h2>{stats?.totalLecturers ?? lecturers.length}</h2>
+            <h2>{stats?.totalLecturers}</h2>
             <p>Lecturers</p>
           </div>
-
           <div className="card">
             <FaBook />
-            <h2>{stats?.totalCourses ?? 0}</h2>
+            <h2>{stats?.totalCourses}</h2>
             <p>Courses</p>
           </div>
-
           <div className="card">
             <FaMapMarkerAlt />
-            <h2>{stats?.totalClassrooms ?? classrooms.length}</h2>
+            <h2>{stats?.totalClassrooms}</h2>
             <p>Classrooms</p>
           </div>
         </div>
@@ -1024,7 +975,7 @@ function AdminDashboard() {
           <div className="table-box">
             <div className="table-header">
               <h2>Lecturers</h2>
-              <button onClick={() => setShowLecturerModal(true)}>
+              <button className="enroll-btn" onClick={() => setShowLecturerModal(true)}>
                 + Add Lecturer
               </button>
             </div>
@@ -1036,38 +987,29 @@ function AdminDashboard() {
               onChange={(e) => setSearch(e.target.value)}
             />
 
-            {lecturersLoading ? (
-              <p>Loading...</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>SSIN</th>
-                    <th>Courses</th>
-                    <th>Action</th>
+            <table>
+              <tbody>
+                {lecturers.map((l) => (
+                  <tr key={l.userId}>
+                    <td>{l.name}</td>
+                    <td>{l.email}</td>
+                    <td className="actions">
+                      <FaEdit
+                        className="edit"
+                        onClick={() => {
+                          setEditLecturer(l);
+                          setShowLecturerModal(true);
+                        }}
+                      />
+                      <FaTrash
+                        className="delete"
+                        onClick={() => handleDeleteLecturer(l.userId)}
+                      />
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {lecturers.map((l) => (
-                    <tr key={l.userId}>
-                      <td>{l.name}</td>
-                      <td>{l.email}</td>
-                      <td>{l.ssin}</td>
-                      <td>{l.courses}</td>
-                      <td>
-                        <FaTrash
-                          style={{ cursor: "pointer", color: "red" }}
-                          onClick={() => handleDeleteLecturer(l.userId)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -1076,73 +1018,67 @@ function AdminDashboard() {
           <div className="table-box">
             <div className="table-header">
               <h2>Classrooms</h2>
-              <button onClick={() => setShowClassroomModal(true)}>
+              <button className="enroll-btn" onClick={() => setShowClassroomModal(true)}>
                 + Add Classroom
               </button>
             </div>
 
-            {classroomsLoading ? (
-              <p>Loading...</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Building</th>
-                    <th>Lat</th>
-                    <th>Lng</th>
-                    <th>Action</th>
+            <table>
+              <tbody>
+                {classrooms.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.name}</td>
+                    <td>{c.buildingName}</td>
+                    <td className="actions">
+                      <FaEdit
+                        className="edit"
+                        onClick={() => {
+                          setEditClassroom(c);
+                          setShowClassroomModal(true);
+                        }}
+                      />
+                      <FaTrash
+                        className="delete"
+                        onClick={() => handleDeleteClassroom(c.id)}
+                      />
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {classrooms.map((c) => (
-                    <tr key={c.id}>
-                      <td>{c.name}</td>
-                      <td>{c.buildingName}</td>
-                      <td>{c.latitude}</td>
-                      <td>{c.longitude}</td>
-                      <td>
-                        <FaTrash
-                          style={{ cursor: "pointer", color: "red" }}
-                          onClick={() => handleDeleteClassroom(c.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
       {/* MODALS */}
-
       {showLecturerModal && (
-        <div className="modal">
-          <form onSubmit={handleAddLecturer}>
-            <h3>Add Lecturer</h3>
-            <input placeholder="First Name" onChange={(e) => setLecturerForm({ ...lecturerForm, firstName: e.target.value })} />
-            <input placeholder="Last Name" onChange={(e) => setLecturerForm({ ...lecturerForm, lastName: e.target.value })} />
-            <input placeholder="Email" onChange={(e) => setLecturerForm({ ...lecturerForm, email: e.target.value })} />
-            <input placeholder="Password" type="password" onChange={(e) => setLecturerForm({ ...lecturerForm, password: e.target.value })} />
-            <button type="submit">Add</button>
-          </form>
+        <div className="modal-overlay">
+          <div className="modal">
+            <form onSubmit={handleAddLecturer}>
+              <h3>{editLecturer ? "Edit Lecturer" : "Add Lecturer"}</h3>
+              <input placeholder="First Name" onChange={(e) => setLecturerForm({ ...lecturerForm, firstName: e.target.value })} />
+              <input placeholder="Last Name" onChange={(e) => setLecturerForm({ ...lecturerForm, lastName: e.target.value })} />
+              <input placeholder="Email" onChange={(e) => setLecturerForm({ ...lecturerForm, email: e.target.value })} />
+              <input placeholder="Password" type="password" onChange={(e) => setLecturerForm({ ...lecturerForm, password: e.target.value })} />
+              <button type="submit">{editLecturer ? "Update" : "Add"}</button>
+            </form>
+          </div>
         </div>
       )}
 
       {showClassroomModal && (
-        <div className="modal">
-          <form onSubmit={handleAddClassroom}>
-            <h3>Add Classroom</h3>
-            <input placeholder="Name" onChange={(e) => setClassroomForm({ ...classroomForm, name: e.target.value })} />
-            <input placeholder="Building" onChange={(e) => setClassroomForm({ ...classroomForm, buildingName: e.target.value })} />
-            <input placeholder="Latitude" onChange={(e) => setClassroomForm({ ...classroomForm, latitude: e.target.value })} />
-            <input placeholder="Longitude" onChange={(e) => setClassroomForm({ ...classroomForm, longitude: e.target.value })} />
-            <input placeholder="Radius" onChange={(e) => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })} />
-            <button type="submit">Add</button>
-          </form>
+        <div className="modal-overlay">
+          <div className="modal">
+            <form onSubmit={handleAddClassroom}>
+              <h3>{editClassroom ? "Edit Classroom" : "Add Classroom"}</h3>
+              <input placeholder="Name" onChange={(e) => setClassroomForm({ ...classroomForm, name: e.target.value })} />
+              <input placeholder="Building" onChange={(e) => setClassroomForm({ ...classroomForm, buildingName: e.target.value })} />
+              <input placeholder="Latitude" onChange={(e) => setClassroomForm({ ...classroomForm, latitude: e.target.value })} />
+              <input placeholder="Longitude" onChange={(e) => setClassroomForm({ ...classroomForm, longitude: e.target.value })} />
+              <input placeholder="Radius" onChange={(e) => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })} />
+              <button type="submit">{editClassroom ? "Update" : "Add"}</button>
+            </form>
+          </div>
         </div>
       )}
     </div>
