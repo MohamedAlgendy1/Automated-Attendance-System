@@ -14,25 +14,18 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("lecturers");
 
-  // ✅ Lecturers من الـ Backend
+  // ✅ Lecturers
   const [lecturers, setLecturers] = useState([]);
   const [lecturersLoading, setLecturersLoading] = useState(false);
   const [lecturersRefresh, setLecturersRefresh] = useState(0);
 
-// ✅ Students من الـ Backend (لو فيه endpoint، لو لا من localStorage)
- const [students, setStudents] = useState(
-    JSON.parse(localStorage.getItem("students")) || []
-   );
-
-  // ✅ Classrooms من الـ Backend
+  // ✅ Classrooms
   const [classrooms, setClassrooms] = useState([]);
   const [classroomsLoading, setClassroomsLoading] = useState(false);
   const [classroomsRefresh, setClassroomsRefresh] = useState(0);
 
-  // ✅ Courses من الـ Backend
+  // ✅ Courses
   const [courses, setCourses] = useState([]);
-  const [coursesLoading,setCoursesLoading] = useState(false);
-
 
   // ✅ Stats
   const [stats, setStats] = useState(null);
@@ -87,7 +80,7 @@ function AdminDashboard() {
     fetchStats();
   }, []);
 
-  // ✅ جيب الـ Lecturers من الـ Backend
+  // ✅ جيب الـ Lecturers
   useEffect(() => {
     const fetchLecturers = async () => {
       setLecturersLoading(true);
@@ -116,10 +109,10 @@ function AdminDashboard() {
     if (activePage === "lecturers") fetchLecturers();
   }, [activePage, search, lecturersRefresh]);
 
-  // ✅ جيب الـ Classrooms من الـ Backend
+  // ✅ جيب الـ Classrooms دائماً (مش بس لما تفتح صفحة الكلاس روم)
   useEffect(() => {
     const fetchClassrooms = async () => {
-      setClassroomsLoading(true);
+      if (activePage === "classrooms") setClassroomsLoading(true);
       try {
         const res = await api.get("/classroom/AllClassRoom", {
           params: {
@@ -139,22 +132,18 @@ function AdminDashboard() {
         console.error("Classrooms error:", getErrorMessage(err));
         setClassrooms([]);
       } finally {
-        setClassroomsLoading(false);
+        if (activePage === "classrooms") setClassroomsLoading(false);
       }
     };
-    if (activePage === "classrooms") fetchClassrooms();
+    fetchClassrooms();
   }, [activePage, searchClass, classroomsRefresh]);
 
-  // ✅ جيب الـ Courses من الـ Backend
+  // ✅ جيب الـ Courses
   useEffect(() => {
     const fetchCourses = async () => {
-      setCoursesLoading(true);
       try {
         const res = await api.get("/course/AllCourses", {
-          params: {
-            pagenumber: 1,
-            pagesize: 100,
-          },
+          params: { pagenumber: 1, pagesize: 100 },
         });
         const data = res.data;
         if (Array.isArray(data)) setCourses(data);
@@ -164,13 +153,10 @@ function AdminDashboard() {
       } catch (err) {
         console.error("Courses error:", getErrorMessage(err));
         setCourses([]);
-      } finally {
-        setCoursesLoading(false);
       }
     };
     fetchCourses();
-  }, []);
-
+  }, [lecturersRefresh]);
 
   // ✅ إضافة Lecturer
   const handleAddLecturer = async (e) => {
@@ -196,26 +182,21 @@ function AdminDashboard() {
     }
   };
 
-
-
-const handleCloseAccount = async (userid) => {
-  if (!userid) {
-    showToast("User ID not found", "error");
-    return;
-  }
-
-  if (!window.confirm("Are you sure you want to close this account?")) return;
-
-  try {
-    await api.put(`/admin/CloseAccount/${userid}`);
-    showToast("Account closed successfully ✅");
-    setLecturersRefresh((r) => r + 1);
-  } catch (err) {
-    showToast(getErrorMessage(err), "error");
-  }
-};
-
-
+  // ✅ إغلاق حساب Lecturer
+  const handleCloseAccount = async (userid) => {
+    if (!userid) {
+      showToast("User ID not found", "error");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to close this account?")) return;
+    try {
+      await api.put(`/admin/CloseAccount/${userid}`);
+      showToast("Account closed successfully ✅");
+      setLecturersRefresh((r) => r + 1);
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    }
+  };
 
   // ✅ إضافة / تعديل Classroom
   const handleSaveClassroom = async (e) => {
@@ -288,12 +269,10 @@ const handleCloseAccount = async (userid) => {
   };
 
   const filteredLecturers = lecturers.filter((l) =>
-  `${l.firstName || ""} ${l.lastName || ""}`
-    .toLowerCase()
-    .includes(search.toLowerCase())
-);
-
-//console.log("Lecturers Data => ", filteredLecturers);
+    `${l.firstName || ""} ${l.lastName || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
   const filteredClassrooms = classrooms.filter((c) =>
     c.name?.toLowerCase().includes(searchClass.toLowerCase())
@@ -339,7 +318,7 @@ const handleCloseAccount = async (userid) => {
       <div className="main">
         <h1>Admin Dashboard</h1>
 
-        {/* Cards */}
+        {/* Cards — classrooms count always up to date */}
         <div className="cards">
           <div className="card">
             <FaChalkboardTeacher />
@@ -358,104 +337,76 @@ const handleCloseAccount = async (userid) => {
           </div>
         </div>
 
-        
-
-  {/* ================= LECTURERS ================= */}
-{activePage === "lecturers" && (
-  <div className="table-box">
-    <div className="table-header">
-      <h2>Manage Lecturers</h2>
-
-      <button
-        className="enroll-btn"
-        onClick={() => {
-          setShowLecturerModal(true);
-          setLecturerFormError("");
-          setLecturerForm({
-            firstName: "",
-            lastName: "",
-            email: "",
-            password: "",
-            ssin: "",
-          });
-        }}
-      >
-        + Add Lecturer
-      </button>
-    </div>
-
-    <input
-      className="search"
-      placeholder="Filter lecturers..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-    />
-
-    {lecturersLoading ? (
-      <p
-        style={{
-          textAlign: "center",
-          padding: 20,
-          color: "#64748b",
-        }}
-      >
-        Loading...
-      </p>
-    ) : (
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>SSIN</th>
-            <th>Courses</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {filteredLecturers.length === 0 ? (
-            <tr>
-              <td
-                colSpan="5"
-                style={{
-                  textAlign: "center",
-                  padding: 20,
-                  color: "#888",
+        {/* ================= LECTURERS ================= */}
+        {activePage === "lecturers" && (
+          <div className="table-box">
+            <div className="table-header">
+              <h2>Manage Lecturers</h2>
+              <button
+                className="enroll-btn"
+                onClick={() => {
+                  setShowLecturerModal(true);
+                  setLecturerFormError("");
+                  setLecturerForm({
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    password: "",
+                    ssin: "",
+                  });
                 }}
               >
-                No lecturers found
-              </td>
-            </tr>
-          ) : (
-            filteredLecturers.map((l) => (
-              <tr key={l.userId}>
-                <td>{l.firstName} {l.lastName}</td>
-                <td>{l.email}</td>
-                <td>{l.ssin || "-"}</td>
-                <td>
-  {l.coursesCount ??
-   (Array.isArray(l.courses) ? l.courses.length : 0)}
-</td>
+                + Add Lecturer
+              </button>
+            </div>
 
-<td>
-  <FaTrash
-    style={{
-      color: "#ef4444",
-      cursor: "pointer",
-    }}
-    onClick={() => handleCloseAccount(l.userId)}
-  />
-</td>
+            <input
+              className="search"
+              placeholder="Filter lecturers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
 
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    )}
-  </div>
-)}
+            {lecturersLoading ? (
+              <p style={{ textAlign: "center", padding: 20, color: "#64748b" }}>
+                Loading...
+              </p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>SSIN</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLecturers.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: "center", padding: 20, color: "#888" }}>
+                        No lecturers found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredLecturers.map((l) => (
+                      <tr key={l.userId}>
+                        <td>{l.email}</td>
+                        <td>{l.ssin || "-"}</td>
+                        <td>
+                          <FaTrash
+                            style={{ color: "#ef4444", cursor: "pointer" }}
+                            onClick={() => handleCloseAccount(l.userId)}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
         {/* ================= CLASSROOMS ================= */}
         {activePage === "classrooms" && (
           <div className="table-box">
@@ -468,7 +419,13 @@ const handleCloseAccount = async (userid) => {
                   setEditClassroom(null);
                   setClassroomFormError("");
                   setLocError("");
-                  setClassroomForm({ name: "", buildingName: "", latitude: "", longitude: "", radiusOfAcceptanceMeter: "" });
+                  setClassroomForm({
+                    name: "",
+                    buildingName: "",
+                    latitude: "",
+                    longitude: "",
+                    radiusOfAcceptanceMeter: "",
+                  });
                 }}
               >
                 + Add Classroom
@@ -537,7 +494,6 @@ const handleCloseAccount = async (userid) => {
             )}
           </div>
         )}
-
       </div>
 
       {/* ================= ADD LECTURER MODAL ================= */}
@@ -613,8 +569,6 @@ const handleCloseAccount = async (userid) => {
                 value={classroomForm.buildingName}
                 onChange={(e) => setClassroomForm({ ...classroomForm, buildingName: e.target.value })}
               />
-
-              {/* ✅ زرار الموقع التلقائي */}
               <button
                 type="button"
                 onClick={handleGetLocation}
@@ -630,11 +584,9 @@ const handleCloseAccount = async (userid) => {
               >
                 {locLoading ? "🌀 Getting location..." : "📍 Get Current Location"}
               </button>
-
               {locError && (
                 <p style={{ color: "red", fontSize: 13, marginBottom: 8 }}>{locError}</p>
               )}
-
               <input
                 placeholder="Latitude"
                 value={classroomForm.latitude}
@@ -653,7 +605,6 @@ const handleCloseAccount = async (userid) => {
                 onChange={(e) => setClassroomForm({ ...classroomForm, radiusOfAcceptanceMeter: e.target.value })}
                 required
               />
-
               {classroomFormError && (
                 <p style={{ color: "red", marginBottom: 8 }}>{classroomFormError}</p>
               )}
