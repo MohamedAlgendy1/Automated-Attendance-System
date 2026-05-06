@@ -29,12 +29,14 @@ function Login() {
 
       {/* LEFT PANEL */}
       <div className="login-left">
+        
+        <button className="theme-toggle" onClick={toggleTheme}>
+    {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+  </button>
         <div className="logo-box">⌘</div>
         
                {/* ✅ الزرار هنا */}
-  <button className="theme-toggle" onClick={toggleTheme}>
-    {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
-  </button>
+  
 
         <h1>QR Attendance System</h1>
 
