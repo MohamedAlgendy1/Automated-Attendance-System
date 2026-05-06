@@ -96,17 +96,17 @@ const { theme, toggleTheme } = useTheme();
         )}
       </div>
 {/* Mobile Bottom Nav */}
-  <nav className="mobile-nav">
+<nav className="mobile-nav">
   <ul>
-    <li className="active" >
+    <li onClick={() => navigate("/lecturer")}>
       📘 Courses
     </li>
 
-    <li onClick={() => navigate("/attendance")}>
-      📊 Attendance
+    <li className="active">
+      📊 Overview
     </li>
 
-    {/* Theme Button */}
+    {/* Theme */}
     <li>
       <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
         {theme === "dark" ? "☀️" : "🌙"}

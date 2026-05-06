@@ -226,17 +226,16 @@ function AttendanceRecords() {
       </div>
 
       {/* Mobile Bottom Nav */}
-  <nav className="mobile-nav">
+<nav className="mobile-nav">
   <ul>
-    <li className="active" >
+    <li onClick={() => navigate("/lecturer")}>
       📘 Courses
     </li>
 
-    <li onClick={() => navigate("/attendance")}>
+    <li className="active">
       📊 Attendance
     </li>
 
-    {/* Theme Button */}
     <li>
       <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
         {theme === "dark" ? "☀️" : "🌙"}
