@@ -288,7 +288,7 @@ useEffect(() => {
       {/* MODAL (UNCHANGED STYLE STRUCTURE) */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal">
+          {/* <div className="modal">
 
             <h3>{editCourseData ? "Edit Course" : "Add Course"}</h3>
 
@@ -312,7 +312,42 @@ useEffect(() => {
               </button>
             </form>
 
-          </div>
+          </div> */}
+
+          <div className="modal">
+  {/* Header */}
+  <div className="modal-header">
+    <h3>Add Course</h3>
+    <span className="close-btn" onClick={() => setShowModal(false)}>✖</span>
+  </div>
+
+  <form onSubmit={handleSubmit}>
+    <input
+      placeholder="Course Name"
+      value={form.name}
+      onChange={(e) => setForm({ ...form, name: e.target.value })}
+    />
+
+    <input
+      placeholder="Course Code"
+      value={form.code}
+      onChange={(e) => setForm({ ...form, code: e.target.value })}
+    />
+
+    {formError && <p className="error-text">{formError}</p>}
+
+    {/* Buttons */}
+    <div className="form-actions">
+      <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>
+        Cancel
+      </button>
+
+      <button className="submit-btn" disabled={formLoading}>
+        {formLoading ? "Saving..." : "Save"}
+      </button>
+    </div>
+  </form>
+</div>
         </div>
       )}
 
