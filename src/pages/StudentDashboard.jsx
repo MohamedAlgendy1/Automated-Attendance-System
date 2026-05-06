@@ -281,14 +281,9 @@ const overallPercent =
                 onChange={(e) => setEnrollForm({ ...enrollForm, courseCode: e.target.value })}
                 required
               />
-              {/* <input
-                placeholder="Course ID (optional)"
-                type="number"
-                value={enrollForm.courseId}
-                onChange={(e) => setEnrollForm({ ...enrollForm, courseId: e.target.value })}
-              /> */}
+           
               {enrollError && <p style={{ color: "red" }}>{enrollError}</p>}
-              <button type="submit" disabled={enrollLoading}>
+              <button type="submit"   className="submit-enroll-btn"  disabled={enrollLoading}>
                 {enrollLoading ? "Enrolling..." : "Enroll"}
               </button>
             </form>

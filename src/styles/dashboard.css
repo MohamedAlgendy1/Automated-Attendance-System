@@ -889,3 +889,41 @@ tr:hover td { background: var(--surface-2); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+
+
+
+
+
+
+
+
+
+
+/* Light Mode */
+body.light .submit-enroll-btn {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #ffffff;
+}
+
+/* Dark Mode */
+body.dark .submit-enroll-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+}
+
+/* Hover */
+body.light .submit-enroll-btn:hover {
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
+}
+
+body.dark .submit-enroll-btn:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+/* Disabled */
+.submit-enroll-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
