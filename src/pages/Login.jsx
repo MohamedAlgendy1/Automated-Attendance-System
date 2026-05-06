@@ -122,19 +122,26 @@ function Login() {
 
   return (
     <div className="login-container">
+
+      {/* LEFT PANEL */}
       <div className="login-left">
         <div className="logo-box">⌘</div>
+
         <h1>QR Attendance System</h1>
+
         <p>
           Prevent fake attendance using QR codes with location and time
           verification.
         </p>
+
         <div className="features">
-          <span>✔ Location Verified</span>
-          <span>✔ Time Tracked</span>
+          <span>Location Verified</span>
+          <span>Time Tracked</span>
+          <span>Realtime Sync</span>
         </div>
       </div>
 
+      {/* RIGHT PANEL */}
       <div className="login-right" key={mode}>
         {mode === MODES.LOGIN && (
           <LoginForm
@@ -178,6 +185,7 @@ function Login() {
           />
         )}
       </div>
+
     </div>
   );
 }
