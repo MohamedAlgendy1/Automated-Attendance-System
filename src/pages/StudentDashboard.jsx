@@ -292,6 +292,32 @@ const overallPercent =
       )}
 
       {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+
+      {/* Mobile Bottom Nav */}
+<nav className="mobile-nav">
+  <ul>
+    <li
+      className={activePage === "courses" ? "active" : ""}
+      onClick={() => setActivePage("courses")}
+    >
+      📘 Courses
+    </li>
+
+    <li
+      className={activePage === "profile" ? "active" : ""}
+      onClick={() => setActivePage("profile")}
+    >
+      👤 Profile
+    </li>
+
+    {/* Theme */}
+    <li>
+      <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
+        {theme === "dark" ? "☀️" : "🌙"}
+      </button>
+    </li>
+  </ul>
+</nav>
     </div> 
   );
 }

@@ -361,6 +361,21 @@ const isLectureAttended = (lectureId) =>
           </div>
         </div>
       )}
+<nav className="mobile-nav">
+  <ul>
+    <li onClick={() => navigate("/student")}>
+      📘 Courses
+    </li>
+
+    <li className="active">
+      📄 Details
+    </li>
+
+    <li onClick={() => navigate("/student/profile")}>
+      👤 Profile
+    </li>
+  </ul>
+</nav>
     </div>
   );
 }
