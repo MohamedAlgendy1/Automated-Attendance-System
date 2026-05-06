@@ -23,3 +23,5 @@ button {
 ul {
   list-style: none;
 }
+
+@import "./styles/theme.css";
