@@ -1,32 +1,16 @@
 /* ============================================================
-   attendanceOverview.css — Same System as Records Page
+   attendanceOverview.css — Professional & Mobile-First
    ============================================================ */
 
-/* ========= VARIABLES (نفس النظام) ========= */
-:root {
-  --bg:           #0f1117;
-  --surface:      #1a1d27;
-  --surface-2:    #22263a;
-  --border:       rgba(255,255,255,0.07);
-  --accent:       #6366f1;
-  --accent-glow:  rgba(99,102,241,0.25);
-  --green:        #22c55e;
-  --green-bg:     rgba(34,197,94,0.12);
-  --red:          #ef4444;
-  --red-bg:       rgba(239,68,68,0.12);
-  --text:         #f1f5f9;
-  --text-muted:   #64748b;
-  --text-soft:    #94a3b8;
-  --sidebar-w:    240px;
-  --radius:       14px;
-  --radius-sm:    8px;
-  --shadow:       0 4px 24px rgba(0,0,0,0.4);
-}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ========= FORCE OVERRIDE ========= */
+/* ============================================================
+   FORCE OVERRIDE — يغلب الـ CSS القديم
+   ============================================================ */
 .attendance-page,
 .attendance-page .main {
   background: var(--bg) !important;
+  font-family: 'Sora', sans-serif !important;
   color: var(--text) !important;
 }
 
@@ -39,32 +23,291 @@
   color: var(--text-soft) !important;
 }
 
+.attendance-page .menu li:hover {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+}
+
 .attendance-page .menu li.active {
   background: var(--accent-glow) !important;
   color: var(--accent) !important;
 }
 
-/* ========= MAIN ========= */
-.attendance-page .main {
-  margin-left: var(--sidebar-w);
-  padding: 36px 32px;
-  max-width: 1000px;
+.attendance-page .user-info p { color: var(--text) !important; }
+.attendance-page .user-info span { color: var(--text-muted) !important; }
+
+.attendance-page .logout-btn {
+  background: transparent !important;
+  border-color: var(--border) !important;
+  color: var(--text-soft) !important;
 }
 
-/* ========= CARDS ========= */
+/* Cards */
+.attendance-page .cards {
+  margin-top: 0 !important;
+}
+
+.attendance-page .card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+.attendance-page .card p { color: var(--text-muted) !important; }
+.attendance-page .card h2 { color: var(--text) !important; }
+
+/* Table box */
+.attendance-page .table-box {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.attendance-page .table-box > h2 {
+  color: var(--text) !important;
+  padding: 18px 24px 14px !important;
+  border-bottom: 1px solid var(--border) !important;
+  margin-bottom: 0 !important;
+}
+
+/* Table */
+.attendance-page .table th {
+  color: var(--text-muted) !important;
+  background: rgba(255,255,255,0.025) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.attendance-page .table td {
+  color: var(--text-soft) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.attendance-page .table td:first-child {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+
+.attendance-page .table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.attendance-page .table tbody tr:hover {
+  background: rgba(255,255,255,0.03) !important;
+}
+
+/* Empty / loading rows */
+.attendance-page .table td[colspan] {
+  color: var(--text-muted) !important;
+  text-align: center !important;
+  padding: 32px !important;
+}
+
+
+/* ── Variables ── */
+:root {
+  --bg:           #0f1117;
+  --surface:      #1a1d27;
+  --surface-2:    #22263a;
+  --border:       rgba(255,255,255,0.07);
+  --accent:       #6366f1;
+  --accent-glow:  rgba(99,102,241,0.25);
+  --green:        #22c55e;
+  --green-bg:     rgba(34,197,94,0.12);
+  --amber:        #f59e0b;
+  --amber-bg:     rgba(245,158,11,0.12);
+  --red:          #ef4444;
+  --red-bg:       rgba(239,68,68,0.12);
+  --text:         #f1f5f9;
+  --text-muted:   #64748b;
+  --text-soft:    #94a3b8;
+  --sidebar-w:    240px;
+  --radius:       14px;
+  --radius-sm:    8px;
+  --shadow:       0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.dashboard.attendance-page {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 16px 24px;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  padding: 0 8px;
+  margin-bottom: 32px;
+}
+
+.menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu li {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu li:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.menu li.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+/* User box */
+.user-box {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-info p {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.user-info span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-soft);
+  font-size: 13px;
+  font-family: 'Sora', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 36px 32px 48px;
+  min-height: 100vh;
+}
+
+.main h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 24px;
+}
+
+/* Loading text */
+.main > p {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 40px 0;
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   STAT CARDS (top)
+   ============================================================ */
 .cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
-  margin: 20px 0 30px;
+  margin-bottom: 32px;
 }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  transition: all 0.2s;
+  padding: 20px 22px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
@@ -73,131 +316,234 @@
 }
 
 .card p {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin-bottom: 8px;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
 }
 
 .card h2 {
-  font-size: 26px;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -1px;
 }
 
-/* ========= TABLE BOX ========= */
+/* ============================================================
+   COURSE TABLE BLOCK
+   ============================================================ */
 .table-box {
-  margin-top: 24px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  margin-bottom: 20px;
+  transition: box-shadow 0.2s;
 }
 
-.table-box h2 {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-  font-size: 16px;
+.table-box:hover {
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.2), var(--shadow);
+}
+
+.table-box > h2 {
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text);
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* ========= TABLE ========= */
+.table-box > h2::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
 .table {
   width: 100%;
   border-collapse: collapse;
 }
 
+.table thead tr {
+  background: rgba(255,255,255,0.025);
+}
+
 .table th {
+  padding: 11px 24px;
+  text-align: left;
   font-size: 11px;
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-muted);
-  padding: 12px 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
   border-bottom: 1px solid var(--border);
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.table tbody tr:last-child { border-bottom: none; }
+
+.table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
 }
 
 .table td {
-  padding: 14px 20px;
+  padding: 13px 24px;
+  font-size: 14px;
   color: var(--text-soft);
-  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
 }
 
+/* Student name — bold */
 .table td:first-child {
   color: var(--text);
   font-weight: 500;
 }
 
-.table tr:hover {
-  background: rgba(255,255,255,0.03);
+/* Attended / Total — mono */
+.table td:nth-child(2),
+.table td:nth-child(3) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
-/* ========= PERCENT COLORS (بدل inline style) ========= */
-.table td span {
-  font-weight: 600;
+/* Percentage badge */
+.table td:last-child span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700 !important;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
 
-.table td span {
-  color: var(--green);
-}
-
-.table td span:has(:not(.dummy)) {} /* placeholder */
-
-/* fallback حسب القيمة */
-.table td span {
-  color: var(--green);
-}
-
-/* للأسف JS بيحدد اللون inline، فهنا بنغلبه */
-.table td span[style*="#16a34a"] {
+/* color classes for percent */
+.table td:last-child span[style*="#16a34a"] {
+  background: var(--green-bg) !important;
   color: var(--green) !important;
 }
 
-.table td span[style*="#d97706"] {
-  color: #f59e0b !important;
+.table td:last-child span[style*="#d97706"] {
+  background: var(--amber-bg) !important;
+  color: var(--amber) !important;
 }
 
-.table td span[style*="#dc2626"] {
+.table td:last-child span[style*="#dc2626"] {
+  background: var(--red-bg) !important;
   color: var(--red) !important;
 }
 
-/* ========= EMPTY / LOADING ========= */
+/* Empty / Loading rows */
 .table td[colspan] {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-muted);
+  text-align: center !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  padding: 32px !important;
 }
 
-.attendance-page p {
-  color: var(--text-muted);
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1;   }
 }
 
-/* ========= RESPONSIVE ========= */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.table-box {
+  animation: fadeIn 0.3s ease both;
+}
+
+.table-box:nth-child(2) { animation-delay: 0.05s; }
+.table-box:nth-child(3) { animation-delay: 0.10s; }
+.table-box:nth-child(4) { animation-delay: 0.15s; }
+.table-box:nth-child(5) { animation-delay: 0.20s; }
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
 @media (max-width: 768px) {
 
-  .attendance-page .main {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .main {
     margin-left: 0;
-    padding: 20px 16px 90px;
+    padding: 20px 16px 80px;
+  }
+
+  .main h1 {
+    font-size: 20px;
+    margin-bottom: 16px;
   }
 
   .cards {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
   }
 
-  .cards .card:first-child {
-    grid-column: 1 / -1;
-  }
+  .card { padding: 14px 16px; }
+  .card h2 { font-size: 22px; }
 
+  /* Table box */
   .table-box {
+    border-radius: var(--radius-sm);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-box > h2 {
+    font-size: 13px;
+    padding: 14px 16px 12px;
   }
 
   .table th,
   .table td {
+    padding: 11px 14px;
     white-space: nowrap;
   }
+
+  .table th  { font-size: 10px; }
+  .table td  { font-size: 13px; }
 }
 
-/* ========= SMALL PHONES ========= */
+/* ============================================================
+   SMALL PHONES
+   ============================================================ */
 @media (max-width: 380px) {
-  .cards {
-    grid-template-columns: 1fr;
-  }
+  .main { padding: 14px 10px 80px; }
+  .table th, .table td { padding: 10px 12px; }
 }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
