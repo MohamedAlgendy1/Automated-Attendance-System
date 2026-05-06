@@ -367,9 +367,15 @@ const isLectureAttended = (lectureId) =>
       📘 Courses
     </li>
 
-
-    <li onClick={() => navigate("/student/profile")}>
+    <li onClick={() => navigate("/student")}>
       👤 Profile
+    </li>
+
+    {/* Theme */}
+    <li>
+      <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
+        {theme === "dark" ? "☀️" : "🌙"}
+      </button>
     </li>
   </ul>
 </nav>
