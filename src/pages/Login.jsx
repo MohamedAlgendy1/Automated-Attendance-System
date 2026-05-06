@@ -24,15 +24,17 @@ function Login() {
   return (
     <div className="login-container">
 
-       {/* ✅ الزرار هنا */}
-  <button className="theme-toggle" onClick={toggleTheme}>
-    {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
-  </button>
+
 
 
       {/* LEFT PANEL */}
       <div className="login-left">
         <div className="logo-box">⌘</div>
+        
+               {/* ✅ الزرار هنا */}
+  <button className="theme-toggle" onClick={toggleTheme}>
+    {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+  </button>
 
         <h1>QR Attendance System</h1>
 
