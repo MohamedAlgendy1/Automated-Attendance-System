@@ -900,25 +900,32 @@ tr:hover td { background: var(--surface-2); }
 
 
 
-/* Light Mode */
-body.light .submit-enroll-btn {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #ffffff;
-}
+/* زر Enroll داخل المودال */
+.submit-enroll-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
 
-/* Dark Mode */
-body.dark .submit-enroll-btn {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #ffffff;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 /* Hover */
-body.light .submit-enroll-btn:hover {
+.submit-enroll-btn:hover {
   background: linear-gradient(135deg, #4338ca, #4f46e5);
+  transform: translateY(-1px);
 }
 
-body.dark .submit-enroll-btn:hover {
-  background: linear-gradient(135deg, #16a34a, #15803d);
+/* Active (click) */
+.submit-enroll-btn:active {
+  transform: scale(0.97);
 }
 
 /* Disabled */
@@ -926,4 +933,11 @@ body.dark .submit-enroll-btn:hover {
   background: #94a3b8;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+/* Error text */
+.modal form p {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #ef4444;
 }
