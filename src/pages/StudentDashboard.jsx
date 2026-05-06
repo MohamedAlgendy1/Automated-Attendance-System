@@ -5,8 +5,11 @@ import { parseJwt, getErrorMessage } from "../services/api";
 import { enrollInCourse, getMyCourses } from "../services/studentService";
 import { getMyAttendanceHistory } from "../services/studentService";
 import { getLecturesByCourse } from "../services/lectureService";
+import { useTheme } from "../context/ThemeContext";
+
 
 function StudentDashboard() {
+  const { theme, toggleTheme } = useTheme();
   const [activePage, setActivePage] = useState("courses");
   const [showModal, setShowModal] = useState(false);
 const [myCourses, setMyCourses] = useState([]);
@@ -134,6 +137,9 @@ const overallPercent =
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+          <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
           <ul className="menu">
             <li
               className={activePage === "courses" ? "active" : ""}

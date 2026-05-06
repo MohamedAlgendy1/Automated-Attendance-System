@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getCourseOverview } from "../services/lectureService";
 import { useRealtime } from "../hooks/useRealtime";
 import { EVENTS } from "../realtime";
-
+import { useTheme } from "../context/ThemeContext";
 import { parseJwt, getErrorMessage } from "../services/api";
 
 import {
@@ -17,6 +17,7 @@ import {
 
 
 function LecturerDashboard() {
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState([]);
@@ -167,6 +168,9 @@ useEffect(() => {
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+          <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
 
           <ul className="menu">
             <li className="active">📘 My Courses</li>
