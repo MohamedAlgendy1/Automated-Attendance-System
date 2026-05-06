@@ -367,9 +367,6 @@ const isLectureAttended = (lectureId) =>
       📘 Courses
     </li>
 
-    <li className="active">
-      📄 Details
-    </li>
 
     <li onClick={() => navigate("/student/profile")}>
       👤 Profile
