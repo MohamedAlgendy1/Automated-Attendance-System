@@ -9,8 +9,10 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import api, { getErrorMessage } from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 
 function AdminDashboard() {
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("lecturers");
 
@@ -291,7 +293,11 @@ function AdminDashboard() {
     <div className="dashboard">
       {/* Sidebar */}
       <div className="sidebar">
+
         <h2 className="logo">QR Attend</h2>
+        <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
         <ul className="menu">
           <li
             className={activePage === "lecturers" ? "active" : ""}
