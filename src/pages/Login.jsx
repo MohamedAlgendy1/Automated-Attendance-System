@@ -1,6 +1,6 @@
 import "../styles/login.css";
 import { useState } from "react";
-
+import { useTheme } from "../context/ThemeContext";
 import LoginForm from "../components/LoginForm";
 import RegisterForm from "../components/RegisterForm";
 import VerificationForm from "../components/VerificationForm";
@@ -8,6 +8,8 @@ import ForgetPasswordForm from "../components/ForgetPasswordForm";
 import ResetPasswordForm from "../components/ResetPasswordForm";
 
 function Login() {
+
+  const { theme, toggleTheme } = useTheme();
   const MODES = {
     LOGIN: "login",
     REGISTER: "register",
@@ -21,6 +23,12 @@ function Login() {
 
   return (
     <div className="login-container">
+
+       {/* ✅ الزرار هنا */}
+  <button className="theme-toggle" onClick={toggleTheme}>
+    {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+  </button>
+
 
       {/* LEFT PANEL */}
       <div className="login-left">
