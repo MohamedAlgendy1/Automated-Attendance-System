@@ -642,6 +642,13 @@ function AdminDashboard() {
     <li className={activePage === "classrooms" ? "active" : ""} onClick={() => setActivePage("classrooms")}>
       <FaMapMarkerAlt /> <span>Classrooms</span>
     </li>
+    
+    {/* Theme Button */}
+    <li>
+      <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
+        {theme === "dark" ? "☀️" : "🌙"}
+      </button>
+    </li>
   </ul>
 </nav>
 
