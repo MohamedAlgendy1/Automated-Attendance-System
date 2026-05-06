@@ -422,6 +422,27 @@ useEffect(() => {
       )}
 
       {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+
+      {/* Mobile Bottom Nav */}
+  <nav className="mobile-nav">
+  <ul>
+    <li className="active" >
+      📘 Courses
+    </li>
+
+    <li onClick={() => navigate("/attendance")}>
+      📊 Attendance
+    </li>
+
+    {/* Theme Button */}
+    <li>
+      <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
+        {theme === "dark" ? "☀️" : "🌙"}
+      </button>
+    </li>
+  </ul>
+</nav>
+
     </div>
   );
 }

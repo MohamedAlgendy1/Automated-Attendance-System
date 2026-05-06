@@ -9,6 +9,7 @@ import {
   getAttendanceReport,
 } from "../services/lectureService";
 
+ 
 export default function AttendanceOverview() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
@@ -94,7 +95,25 @@ const { theme, toggleTheme } = useTheme();
           ))
         )}
       </div>
+{/* Mobile Bottom Nav */}
+  <nav className="mobile-nav">
+  <ul>
+    <li className="active" >
+      📘 Courses
+    </li>
 
+    <li onClick={() => navigate("/attendance")}>
+      📊 Attendance
+    </li>
+
+    {/* Theme Button */}
+    <li>
+      <button className="theme-toggle mobile-theme" onClick={toggleTheme}>
+        {theme === "dark" ? "☀️" : "🌙"}
+      </button>
+    </li>
+  </ul>
+</nav>
     </div>
   );
 }
@@ -102,6 +121,8 @@ const { theme, toggleTheme } = useTheme();
 /* ================= COURSE BLOCK ================= */
 
 function CourseBlock({ course }) {
+
+
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -213,6 +234,7 @@ if (s.status?.toLowerCase() === "present") {
           )}
         </tbody>
       </table>
+
 
     </div>
   );
