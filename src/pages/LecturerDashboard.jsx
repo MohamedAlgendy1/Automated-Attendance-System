@@ -288,31 +288,6 @@ useEffect(() => {
       {/* MODAL (UNCHANGED STYLE STRUCTURE) */}
       {showModal && (
         <div className="modal-overlay">
-          {/* <div className="modal">
-
-            <h3>{editCourseData ? "Edit Course" : "Add Course"}</h3>
-
-            <form onSubmit={handleSubmit}>
-              <input
-                placeholder="Course Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-
-              <input
-                placeholder="Course Code"
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
-              />
-
-              {formError && <p style={{ color: "red" }}>{formError}</p>}
-
-              <button disabled={formLoading}>
-                {formLoading ? "Saving..." : "Save"}
-              </button>
-            </form>
-
-          </div> */}
 
           <div className="modal">
   {/* Header */}
