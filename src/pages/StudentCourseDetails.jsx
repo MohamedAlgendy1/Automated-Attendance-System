@@ -8,11 +8,12 @@ import "./../styles/studentCourseDetails.css";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getMyCourses, getMyAttendanceHistory, scanQR } from "../services/studentService";
 import { getLecturesByCourse } from "../services/lectureService";
+import { useTheme } from "../context/ThemeContext";
 
 function StudentCourseDetails() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-
+  const { theme, toggleTheme } = useTheme();
   const [course, setCourse] = useState(null);
   const [lectures, setLectures] = useState([]);
   const [attendance, setAttendance] = useState([]);
@@ -203,6 +204,9 @@ const isLectureAttended = (lectureId) =>
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+          <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
           <ul className="menu">
             <li onClick={() => navigate("/student")}>📘 My Courses</li>
             <li onClick={() => navigate("/student")}>👤 Profile</li>

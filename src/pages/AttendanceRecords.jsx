@@ -4,10 +4,11 @@ import "./../styles/attendanceRecords.css";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAttendanceReport, getLecturesByCourse } from "../services/lectureService";
 import { getCourseById } from "../services/courseService";
-
+import { useTheme } from "../context/ThemeContext";
 function AttendanceRecords() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const [course, setCourse]               = useState(null);
   const [lectures, setLectures]           = useState([]);
@@ -85,6 +86,9 @@ function AttendanceRecords() {
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+          <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
           <ul className="menu">
             <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
             <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>

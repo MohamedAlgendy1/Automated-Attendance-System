@@ -6,6 +6,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import "./../styles/courseDetails.css";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getCourseById } from "../services/courseService";
+import { useTheme } from "../context/ThemeContext";
 import {
   getLecturesByCourse,
   createLecture,
@@ -18,7 +19,7 @@ import api from "../services/api";
 function CourseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { theme, toggleTheme } = useTheme();
   const [course, setCourse] = useState(null);
   const [lectures, setLectures] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
@@ -225,6 +226,9 @@ useEffect(() => {
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+          <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
           <ul className="menu">
             <li className="active">📘 My Courses</li>
             <li onClick={() => navigate("/attendance")}>📊 Attendance Overview</li>

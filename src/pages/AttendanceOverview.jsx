@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceOverview.css";
-
+import { useTheme } from "../context/ThemeContext";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAllCourses } from "../services/courseService";
 import {
@@ -13,7 +13,7 @@ export default function AttendanceOverview() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-
+const { theme, toggleTheme } = useTheme();
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
   const lecturerName =
@@ -42,6 +42,9 @@ export default function AttendanceOverview() {
       <div className="sidebar">
         <div>
           <h2 className="logo">QR Attend</h2>
+          <button className="theme-toggle" onClick={toggleTheme}>
+  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
 
           <ul className="menu">
             <li onClick={() => navigate("/lecturer")}>📘 My Courses</li>
