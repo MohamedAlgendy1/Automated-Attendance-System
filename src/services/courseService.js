@@ -48,10 +48,13 @@ export const getAllCourses = async () => {
     params: { pagenumber: 1, pagesize: 100 },
   });
   const data = res.data;
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.data)) return data.data;
-  return [];
+  const all = Array.isArray(data) ? data
+    : Array.isArray(data?.items) ? data.items
+    : Array.isArray(data?.data) ? data.data
+    : [];
+
+  console.log("COURSE SAMPLE:", all[0]); // 👈
+  return all;
 };
 
 export const getCourseById = async (id) => {
