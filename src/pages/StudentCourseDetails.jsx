@@ -417,6 +417,7 @@ function StudentCourseDetails() {
 
   const videoRef = useRef(null);
   const readerRef = useRef(null);
+  const scannedRef = useRef(false); // ✅ منع تكرار الـ QR read
 
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
@@ -491,7 +492,8 @@ function StudentCourseDetails() {
   const closeScanner = () => {
     setShowScanner(false);
     setScanMode("camera");
-    setLocationStatus("idle"); // ✅ reset عند إغلاق الـ scanner
+    setLocationStatus("idle");
+    scannedRef.current = false; // ✅ reset الـ flag عند الإغلاق
     if (readerRef.current) {
       try { readerRef.current.reset(); } catch { /* ignore */ }
     }
@@ -499,9 +501,10 @@ function StudentCourseDetails() {
 
   // ✅ فتح الـ scanner مع reset كامل للـ state
   const openScanner = () => {
-    setScanResult(null);      // ✅ امسح نتيجة الـ scan القديمة
+    setScanResult(null);
     setScanMessage("");
-    setLocationStatus("idle"); // ✅ امسح حالة الموقع
+    setLocationStatus("idle");
+    scannedRef.current = false; // ✅ reset الـ flag
     setShowScanner(true);
   };
 
@@ -544,7 +547,10 @@ function StudentCourseDetails() {
       const codeReader = new BrowserQRCodeReader();
       readerRef.current = codeReader;
       codeReader.decodeFromVideoDevice(null, videoRef.current, (result) => {
-        if (result) handleQRResult(result.getText());
+        if (result && !scannedRef.current) {
+          scannedRef.current = true; // ✅ منع التكرار
+          handleQRResult(result.getText());
+        }
       });
     }
     return () => {
