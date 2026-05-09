@@ -78,27 +78,49 @@
 //   return res.data;
 // };
 
-import api from "./api";
+import api, { parseJwt } from "./api";
 
-// ✅ AllCourses — الـ Backend بيفلتر تلقائياً بالـ JWT token
+// ✅ جيب اسم الدكتور من الـ token
+const getLecturerName = () => {
+  const token = localStorage.getItem("token");
+  const decoded = parseJwt(token) || {};
+  return (
+    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+    decoded?.["name"] ||
+    null
+  );
+};
+
+// ✅ جيب كورسات الدكتور بس عن طريق فلترة lecturerName
 export const getAllCourses = async () => {
   const res = await api.get("/course/AllCourses", {
     params: { pagenumber: 1, pagesize: 100 },
   });
-  console.log("AllCourses response:", res.data); // ← هنا
+
   const data = res.data;
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.data)) return data.data;
-  return [];
+  let courses = [];
+  if (Array.isArray(data)) courses = data;
+  else if (Array.isArray(data?.items)) courses = data.items;
+  else if (Array.isArray(data?.data)) courses = data.data;
+
+  // فلتر بالاسم مؤقتاً لحد ما الـ Backend يتعدل
+  const lecturerName = getLecturerName();
+  if (lecturerName) {
+    courses = courses.filter(
+      (c) => c.lecturerName?.toLowerCase() === lecturerName.toLowerCase()
+    );
+  }
+
+  return courses;
 };
+
 // ✅ جيب كورس واحد
 export const getCourseById = async (id) => {
   const res = await api.get(`/course/GetOne/${id}`);
   return res.data;
 };
 
-// ✅ إنشاء كورس — الـ Backend بياخد الـ lecturerId من الـ token تلقائياً
+// ✅ إنشاء كورس
 export const createCourse = async (name, code) => {
   const res = await api.post("/course/Create", { name, code });
   return res.data;
