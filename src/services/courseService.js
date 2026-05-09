@@ -78,27 +78,13 @@
 //   return res.data;
 // };
 
-import api, { parseJwt } from "./api";
+import api from "./api";
 
-// ✅ جيب الـ lecturerId (GUID) من الـ token
-const getLecturerId = () => {
-  const token = localStorage.getItem("token");
-  const decoded = parseJwt(token) || {};
-  return decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || null;
-};
-
-// ✅ جيب كورسات الدكتور بس
+// ✅ AllCourses — الـ Backend بيفلتر تلقائياً بالـ JWT token
 export const getAllCourses = async () => {
-  const lecturerId = getLecturerId();
-
   const res = await api.get("/course/AllCourses", {
-    params: {
-      pagenumber: 1,
-      pagesize: 100,
-      ...(lecturerId ? { LecturerId: lecturerId } : {}),
-    },
+    params: { pagenumber: 1, pagesize: 100 },
   });
-
   const data = res.data;
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
@@ -112,25 +98,15 @@ export const getCourseById = async (id) => {
   return res.data;
 };
 
-// ✅ إنشاء كورس مع إرسال الـ lecturerId كـ GUID string
+// ✅ إنشاء كورس — الـ Backend بياخد الـ lecturerId من الـ token تلقائياً
 export const createCourse = async (name, code) => {
-  const lecturerId = getLecturerId();
-
-  const res = await api.post("/course/Create", {
-    name,
-    code,
-    lecturerId, // GUID string مش number
-  });
-
+  const res = await api.post("/course/Create", { name, code });
   return res.data;
 };
 
 // ✅ تعديل كورس
-export const editCourse = async (id, code, name) => {
-  const res = await api.put(`/course/Edit/${id}`, {
-    courseCode: code,
-    courseName: name,
-  });
+export const editCourse = async (id, courseCode, courseName) => {
+  const res = await api.put(`/course/Edit/${id}`, { courseCode, courseName });
   return res.data;
 };
 
