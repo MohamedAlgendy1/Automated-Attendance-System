@@ -25,8 +25,6 @@ function Login() {
     <div className="login-container">
 
 
-
-
       {/* LEFT PANEL */}
       <div className="login-left">
         
