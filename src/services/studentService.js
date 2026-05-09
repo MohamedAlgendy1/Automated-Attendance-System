@@ -49,20 +49,20 @@ export const getMyAttendanceHistory = async () => {
 
 
 
-// export const scanQR = async (token, lat, lng) => {
-//   const res = await api.post("/student/ScanQr", {
-//     token,
-//     studentLatitude: lat || 0,
-//     studentLongitude: lng || 0,
-//   });
-//   return res.data;
-// };
-
 export const scanQR = async (token, lat, lng) => {
   const res = await api.post("/student/ScanQr", {
     token,
-    studentLatitude: lat,
-    studentLongitude: lng,
+    studentLatitude: lat || 0,
+    studentLongitude: lng || 0,
   });
   return res.data;
 };
+
+// export const scanQR = async (token, lat, lng) => {
+//   const res = await api.post("/student/ScanQr", {
+//     token,
+//     studentLatitude: lat,
+//     studentLongitude: lng,
+//   });
+//   return res.data;
+// };
