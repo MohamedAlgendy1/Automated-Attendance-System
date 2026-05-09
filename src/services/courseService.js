@@ -80,18 +80,11 @@
 
 import api, { parseJwt } from "./api";
 
-// ✅ جيب الـ lecturerId من الـ token
+// ✅ جيب الـ lecturerId (GUID) من الـ token
 const getLecturerId = () => {
   const token = localStorage.getItem("token");
   const decoded = parseJwt(token) || {};
-  return (
-    decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
-    decoded?.["sub"] ||
-    decoded?.["id"] ||
-    decoded?.["Id"] ||
-    decoded?.["userId"] ||
-    null
-  );
+  return decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || null;
 };
 
 // ✅ جيب كورسات الدكتور بس
@@ -102,7 +95,7 @@ export const getAllCourses = async () => {
     params: {
       pagenumber: 1,
       pagesize: 100,
-      ...(lecturerId ? { LecturerId: Number(lecturerId) } : {}),
+      ...(lecturerId ? { LecturerId: lecturerId } : {}),
     },
   });
 
@@ -119,14 +112,14 @@ export const getCourseById = async (id) => {
   return res.data;
 };
 
-// ✅ إنشاء كورس مع إرسال الـ lecturerId
+// ✅ إنشاء كورس مع إرسال الـ lecturerId كـ GUID string
 export const createCourse = async (name, code) => {
   const lecturerId = getLecturerId();
 
   const res = await api.post("/course/Create", {
     name,
     code,
-    lecturerId: Number(lecturerId),
+    lecturerId, // GUID string مش number
   });
 
   return res.data;
