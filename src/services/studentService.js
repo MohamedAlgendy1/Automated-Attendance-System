@@ -57,3 +57,12 @@ export const scanQR = async (token, lat, lng) => {
   });
   return res.data;
 };
+
+export const scanQR = async (token, lat, lng) => {
+  const res = await api.post("/student/ScanQr", {
+    token,
+    studentLatitude: lat,
+    studentLongitude: lng,
+  });
+  return res.data;
+};
