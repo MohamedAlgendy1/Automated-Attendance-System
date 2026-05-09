@@ -85,13 +85,13 @@ export const getAllCourses = async () => {
   const res = await api.get("/course/AllCourses", {
     params: { pagenumber: 1, pagesize: 100 },
   });
+  console.log("AllCourses response:", res.data); // ← هنا
   const data = res.data;
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.data)) return data.data;
   return [];
 };
-
 // ✅ جيب كورس واحد
 export const getCourseById = async (id) => {
   const res = await api.get(`/course/GetOne/${id}`);
