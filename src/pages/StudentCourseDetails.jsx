@@ -1135,7 +1135,7 @@
 import { useRealtime } from "../hooks/useRealtime";
 import { EVENTS } from "../realtime";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserQRCodeReader } from "@zxing/browser";
 import "./../styles/dashboard.css";
 import "./../styles/studentCourseDetails.css";
@@ -1172,17 +1172,12 @@ function StudentCourseDetails() {
   const studentName = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Student";
   const firstName = studentName.split(" ")[0] || "Student";
 
-  useRealtime((msg) => {
-    // ✅ بس لما محاضرة جديدة تتضاف للكورس ده
-    if (
-      msg.event === EVENTS.LECTURE_ADDED &&
-      msg.data?.courseCode === (course?.code || course?.courseCode)
-    ) {
+  const courseCode = course?.code || course?.courseCode;
+  useRealtime(EVENTS.LECTURE_ADDED, useCallback((msg) => {
+    if (msg.data?.courseCode === courseCode) {
       setRefresh((r) => r + 1);
     }
-    // ❌ مش بنعمل refresh على ATTENDANCE_RECORDED
-    // لأنه بيسبب تكرار الـ toast وهز الشاشة
-  });
+  }, [courseCode]));
 
   useEffect(() => {
     const load = async () => {
@@ -1265,7 +1260,12 @@ function StudentCourseDetails() {
   };
 
   const handleQRResult = (text) => {
-    closeScanner();
+    // ✅ اقفل الـ scanner بس متعملش reset للـ scannedRef لحد ما الـ attendance يتسجل
+    setShowScanner(false);
+    setScanMode("camera");
+    if (readerRef.current) {
+      try { readerRef.current.reset(); } catch { /* ignore */ }
+    }
 
     if (!navigator.geolocation) {
       recordAttendance(text, 0, 0);
@@ -1276,7 +1276,6 @@ function StudentCourseDetails() {
         recordAttendance(text, position.coords.latitude, position.coords.longitude);
       },
       () => {
-        // ✅ لو فشل الموقع، نبعت 0,0 بدون رسالة خطأ
         recordAttendance(text, 0, 0);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
