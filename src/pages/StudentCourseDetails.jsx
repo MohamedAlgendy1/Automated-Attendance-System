@@ -1165,6 +1165,7 @@ function StudentCourseDetails() {
   const readerRef = useRef(null);
   const scannedRef = useRef(false);
   const toastTimerRef = useRef(null); // ✅ منع تكرار الـ toast
+  const [toastKey, setToastKey] = useState(0); // ✅ remount كل مرة
 
   const token = localStorage.getItem("token");
   const decoded = token ? parseJwt(token) : {};
@@ -1223,10 +1224,10 @@ function StudentCourseDetails() {
   const isLectureAttended = (lectureId) =>
     attendance.some((a) => a.courseLectureId === lectureId);
 
-  const showError = (msg) => {
-    // ✅ لو في toast شغال، امسحه الأول
+  const showToast = (type, msg) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setScanResult("error");
+    setToastKey((k) => k + 1); // ✅ remount
+    setScanResult(type);
     setScanMessage(msg);
     setLocationStatus("idle");
     toastTimerRef.current = setTimeout(() => {
@@ -1234,6 +1235,8 @@ function StudentCourseDetails() {
       toastTimerRef.current = null;
     }, 4000);
   };
+
+  const showError = (msg) => showToast("error", msg);
 
   const closeScanner = () => {
     setShowScanner(false);
@@ -1256,15 +1259,8 @@ function StudentCourseDetails() {
   const recordAttendance = async (qrToken, lat, lng) => {
     try {
       await scanQR(qrToken, lat, lng);
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-      setScanResult("success");
-      setScanMessage("✅ Attendance recorded successfully!");
-      setLocationStatus("idle");
       setRefresh((r) => r + 1);
-      toastTimerRef.current = setTimeout(() => {
-        setScanResult(null);
-        toastTimerRef.current = null;
-      }, 4000);
+      showToast("success", "✅ Attendance recorded successfully!");
     } catch (err) {
       const msg = getErrorMessage(err);
       // ✅ لو الـ backend بيقول "already recorded" أو "outside" نعرض رسالة واضحة
@@ -1272,13 +1268,7 @@ function StudentCourseDetails() {
         showError("📍 You are outside the classroom range.");
       } else if (msg?.toLowerCase().includes("already") || msg?.toLowerCase().includes("recorded")) {
         // ✅ الطالب سجل قبل كده — مش error حقيقي
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        setScanResult("success");
-        setScanMessage("✅ Attendance already recorded for this lecture.");
-        toastTimerRef.current = setTimeout(() => {
-          setScanResult(null);
-          toastTimerRef.current = null;
-        }, 4000);
+        showToast("success", "✅ Attendance already recorded for this lecture.");
       } else {
         showError(msg);
       }
@@ -1375,7 +1365,7 @@ function StudentCourseDetails() {
 
         {/* Toast */}
         {scanResult && (
-          <div className={`scan-toast ${scanResult}`}>
+          <div key={toastKey} className={`scan-toast ${scanResult}`}>
             {scanMessage}
             <span onClick={() => setScanResult(null)}>✖</span>
           </div>
