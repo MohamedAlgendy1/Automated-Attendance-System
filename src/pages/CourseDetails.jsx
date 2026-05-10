@@ -724,30 +724,17 @@ function CourseDetails() {
         </div>
 
         {/* ✅ QR Duration Selector */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          margin: "16px 0", padding: "12px 16px",
-          background: "var(--color-background-secondary, #f8fafc)",
-          borderRadius: 10, border: "1px solid var(--color-border, #e2e8f0)",
-          width: "fit-content"
-        }}>
-          <span style={{ fontWeight: 500, fontSize: 14 }}>⏱ QR Duration:</span>
+        <div className="qr-duration">
+          <span>⏱ QR Duration:</span>
           {[5, 10, 15, 30].map((min) => (
             <button
               key={min}
+              className={`qr-duration-btn${qrMinutes === min ? " active" : ""}`}
               onClick={() => setQrMinutes(min)}
-              style={{
-                padding: "6px 14px", borderRadius: 8, border: "none",
-                cursor: "pointer", fontWeight: 600, fontSize: 13,
-                background: qrMinutes === min ? "#2563eb" : "#e2e8f0",
-                color: qrMinutes === min ? "white" : "#334155",
-                transition: "all 0.2s",
-              }}
             >
               {min}m
             </button>
           ))}
-          <span style={{ fontSize: 13, color: "#64748b" }}>selected: {qrMinutes} min</span>
         </div>
 
         {/* Lectures Table */}
@@ -813,22 +800,12 @@ function CourseDetails() {
             </p>
             <QRCodeCanvas value={qrToken} size={200} />
 
-            {/* العداد التنازلي */}
-            <div style={{
-              marginTop: 16, padding: "10px 24px",
-              borderRadius: 12, background: countdown <= 60 ? "#fef2f2" : "#f0fdf4",
-              border: `2px solid ${countdown <= 60 ? "#fca5a5" : "#86efac"}`,
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-            }}>
-              <span style={{ fontSize: 12, color: "#64748b" }}>Expires in</span>
-              <span style={{
-                fontSize: 32, fontWeight: 700, fontFamily: "monospace",
-                color: countdown <= 60 ? "#ef4444" : "#16a34a",
-              }}>
-                {formatCountdown(countdown)}
-              </span>
+            {/* ✅ العداد التنازلي */}
+            <div className={`qr-countdown${countdown <= 60 ? " expiring" : ""}`}>
+              <span className="qr-countdown-label">Expires in</span>
+              <span className="qr-countdown-time">{formatCountdown(countdown)}</span>
               {countdown <= 60 && (
-                <span style={{ fontSize: 12, color: "#ef4444" }}>⚠️ Expiring soon!</span>
+                <span className="qr-countdown-warn">⚠️ Expiring soon!</span>
               )}
             </div>
 
