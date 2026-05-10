@@ -1,12 +1,34 @@
-import { useEffect } from "react";
+// import { useEffect } from "react";
+// import { listen, stopListening } from "../realtime";
+
+// export const useRealtime = (eventName, callback) => {
+//   useEffect(() => {
+//     if (!eventName || !callback) return;
+
+//     listen(eventName, callback);
+
+//     return () => stopListening(eventName, callback);
+//   }, [eventName, callback]);
+// };
+
+import { useEffect, useRef } from "react";
 import { listen, stopListening } from "../realtime";
 
 export const useRealtime = (eventName, callback) => {
+  const callbackRef = useRef(callback);
+
+  // ✅ بنحدث الـ ref جوه useEffect مش في الـ render
   useEffect(() => {
-    if (!eventName || !callback) return;
+    callbackRef.current = callback;
+  });
 
-    listen(eventName, callback);
+  useEffect(() => {
+    if (!eventName) return;
 
-    return () => stopListening(eventName, callback);
-  }, [eventName, callback]);
+    const handler = (data) => callbackRef.current(data);
+
+    listen(eventName, handler);
+    return () => stopListening(eventName, handler);
+
+  }, [eventName]);
 };
