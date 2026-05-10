@@ -18,9 +18,6 @@
   text-decoration: underline;
 }
 
-/* ============================================================
-   ATTENDANCE RATE CARD
-   ============================================================ */
 .attendance-rate-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -70,9 +67,6 @@
   font-size: 13px;
 }
 
-/* ============================================================
-   STATUS BADGE
-   ============================================================ */
 .status-badge {
   padding: 4px 12px;
   border-radius: 20px;
@@ -93,15 +87,11 @@
   border: 1px solid var(--border);
 }
 
-/* ============================================================
-   SCAN BUTTON
-   ============================================================ */
 .scan-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border: none;
   border-radius: var(--radius-sm);
   background: var(--accent-glow);
   color: var(--accent);
@@ -120,9 +110,6 @@
   transform: translateY(-1px);
 }
 
-/* ============================================================
-   SCANNER MODAL
-   ============================================================ */
 .scanner-modal {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -158,9 +145,6 @@
 
 .scanner-header span:hover { color: var(--red); }
 
-/* ============================================================
-   SCAN TOGGLE
-   ============================================================ */
 .scan-toggle {
   display: flex;
   gap: 6px;
@@ -188,7 +172,6 @@
 .scan-toggle button.active {
   background: var(--surface-2);
   color: var(--accent);
-  box-shadow: none;
 }
 
 .scan-toggle button:not(.active):hover {
@@ -196,9 +179,6 @@
   background: var(--surface-2);
 }
 
-/* ============================================================
-   CAMERA BOX
-   ============================================================ */
 .camera-box {
   position: relative;
   border-radius: var(--radius-sm);
@@ -229,9 +209,6 @@
 .corner.bl { bottom: 0; left: 0;  border-width: 0 0 3px 3px; }
 .corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
 
-/* ============================================================
-   MANUAL FORM
-   ============================================================ */
 .manual-form {
   display: flex;
   flex-direction: column;
@@ -279,37 +256,47 @@
 }
 
 /* ============================================================
-   SCAN TOAST
+   SCAN TOAST — Fixed position, no layout shake
    ============================================================ */
 .scan-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  min-width: 300px;
+  max-width: calc(100vw - 40px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: var(--radius-sm);
-  margin-bottom: 16px;
   font-size: 14px;
   font-weight: 600;
-  animation: slideUp 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  animation: toastDrop 0.3s ease;
 }
 
+/* ✅ success = أخضر */
 .scan-toast.success {
   background: var(--green-bg);
   color: var(--green);
-  border: 1px solid rgba(34,197,94,0.25);
+  border: 1px solid rgba(34,197,94,0.3);
 }
 
+/* ✅ error = أحمر */
 .scan-toast.error {
   background: var(--red-bg);
   color: var(--red);
-  border: 1px solid rgba(239,68,68,0.25);
+  border: 1px solid rgba(239,68,68,0.3);
 }
 
 .scan-toast span {
   cursor: pointer;
-  margin-left: 10px;
+  margin-left: 12px;
   opacity: 0.7;
   transition: opacity 0.2s;
+  flex-shrink: 0;
 }
 
 .scan-toast span:hover { opacity: 1; }
@@ -329,7 +316,6 @@
   margin-bottom: 16px;
   font-size: 14px;
   font-weight: 600;
-  animation: slideUp 0.3s ease;
 }
 
 .spinner {
@@ -340,9 +326,9 @@
 /* ============================================================
    ANIMATIONS
    ============================================================ */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+@keyframes toastDrop {
+  from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 @keyframes slideUp {
@@ -356,11 +342,12 @@
 }
 
 /* ============================================================
-   RESPONSIVE — Mobile
+   RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
   .attendance-rate-card { padding: 18px; }
   .rate-percent { font-size: 22px; }
   .scanner-modal { padding: 20px; }
   .scan-frame { width: 160px; height: 160px; }
+  .scan-toast { min-width: unset; width: calc(100vw - 32px); }
 }
