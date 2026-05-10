@@ -1159,7 +1159,7 @@ function StudentCourseDetails() {
   const [manualInput, setManualInput] = useState("");
   const [scanResult, setScanResult] = useState(null);
   const [scanMessage, setScanMessage] = useState("");
-  const [locationStatus, setLocationStatus] = useState("idle");
+
 
   const videoRef = useRef(null);
   const readerRef = useRef(null);
@@ -1229,7 +1229,6 @@ function StudentCourseDetails() {
     setToastKey((k) => k + 1); // ✅ remount
     setScanResult(type);
     setScanMessage(msg);
-    setLocationStatus("idle");
     toastTimerRef.current = setTimeout(() => {
       setScanResult(null);
       toastTimerRef.current = null;
@@ -1241,7 +1240,6 @@ function StudentCourseDetails() {
   const closeScanner = () => {
     setShowScanner(false);
     setScanMode("camera");
-    setLocationStatus("idle");
     scannedRef.current = false;
     if (readerRef.current) {
       try { readerRef.current.reset(); } catch { /* ignore */ }
@@ -1251,7 +1249,6 @@ function StudentCourseDetails() {
   const openScanner = () => {
     setScanResult(null);
     setScanMessage("");
-    setLocationStatus("idle");
     scannedRef.current = false;
     setShowScanner(true);
   };
@@ -1282,25 +1279,15 @@ function StudentCourseDetails() {
       recordAttendance(text, 0, 0);
       return;
     }
-
-    setLocationStatus("checking");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocationStatus("approved");
         recordAttendance(text, position.coords.latitude, position.coords.longitude);
       },
-      (err) => {
-        console.log("Location error:", err.code, err.message);
-        setLocationStatus("idle");
-        if (err.code === 1) {
-          showError("❌ Location access denied. Please allow location to record attendance.");
-        } else if (err.code === 2) {
-          showError("❌ Location unavailable. Please try again outdoors.");
-        } else {
-          showError("❌ Location timeout. Please try again.");
-        }
+      () => {
+        // ✅ لو فشل الموقع، نبعت 0,0 بدون رسالة خطأ
+        recordAttendance(text, 0, 0);
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -1371,13 +1358,7 @@ function StudentCourseDetails() {
           </div>
         )}
 
-        {/* Location Checking */}
-        {locationStatus === "checking" && (
-          <div className="location-checking">
-            <span className="spinner">🌀</span>
-            Getting your location... please wait
-          </div>
-        )}
+
 
         {/* Attendance Rate */}
         <div className="attendance-rate-card">
