@@ -816,18 +816,13 @@ function StudentCourseDetails() {
         const found = coursesData.find((c) => c.courseId === Number(courseId));
         setCourse(found || null);
 
-        // ✅ deduplication
-        const uniqueAttendance = Object.values(
-          historyData.reduce((acc, a) => {
-            if (!acc[a.courseLectureId]) acc[a.courseLectureId] = a;
-            return acc;
-          }, {})
-        );
-        setAttendance(uniqueAttendance);
+        // ✅ الـ historyData بيرجع تاريخ الطالب نفسه فقط
+        // مش محتاجين deduplication — ده كان بيمسح records صح
+        setAttendance(Array.isArray(historyData) ? historyData : []);
 
         if (found) {
           const lecturesData = await getLecturesByCourse(found.courseId);
-          setLectures(lecturesData);
+          setLectures(lecturesData || []);
         }
       } catch (err) {
         console.error(getErrorMessage(err));
@@ -885,12 +880,10 @@ function StudentCourseDetails() {
     }
   };
 
-  // ✅ الحل: لو الموقع اترفض، نبعت رسالة بدل 0,0
   const handleQRResult = (text) => {
     closeScanner();
 
     if (!navigator.geolocation) {
-      // ✅ لو الجهاز مش بيدعم الموقع خالص، نبعت 0,0
       recordAttendance(text, 0, 0);
       return;
     }
@@ -898,23 +891,17 @@ function StudentCourseDetails() {
     setLocationStatus("checking");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        // ✅ الموقع اتاخد صح
         setLocationStatus("approved");
         recordAttendance(text, position.coords.latitude, position.coords.longitude);
       },
       (err) => {
-        // ✅ الطالب رفض الموقع أو timeout — مش نبعت 0,0
         console.log("Location error:", err.code, err.message);
         setLocationStatus("idle");
-
         if (err.code === 1) {
-          // PERMISSION_DENIED
           showError("❌ Location access denied. Please allow location to record attendance.");
         } else if (err.code === 2) {
-          // POSITION_UNAVAILABLE
           showError("❌ Location unavailable. Please try again outdoors.");
         } else {
-          // TIMEOUT
           showError("❌ Location timeout. Please try again.");
         }
       },
@@ -1072,7 +1059,6 @@ function StudentCourseDetails() {
               <span onClick={closeScanner}>✖</span>
             </div>
 
-            {/* ✅ تحذير الموقع قبل الـ scan */}
             <div style={{
               background: "var(--accent-glow)",
               border: "1px solid rgba(99,102,241,0.25)",
