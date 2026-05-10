@@ -56,14 +56,24 @@ export const editLecture = async (
   return res.data;
 };
 
-export const generateQR = async (courseLectureId) => {
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+// export const generateQR = async (courseLectureId) => {
+//   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
+//   const res = await api.post("/lecturer/GenerateQR", {
+//     expiresAt,
+//     courseLectureId: Number(courseLectureId),
+//   });
+
+//   return res.data;
+// };
+
+// ✅ بياخد qrMinutes عشان يحدد وقت الانتهاء — default 10
+export const generateQR = async (courseLectureId, qrMinutes = 10) => {
+  const expiresAt = new Date(Date.now() + qrMinutes * 60 * 1000).toISOString();
   const res = await api.post("/lecturer/GenerateQR", {
     expiresAt,
     courseLectureId: Number(courseLectureId),
   });
-
   return res.data;
 };
 
