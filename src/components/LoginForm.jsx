@@ -24,21 +24,19 @@ function LoginForm({ goToReset, goToRegister }) {
         "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
       ]?.toLowerCase();
 
+      // ✅ امسح كل الـ data القديمة قبل ما تحفظ الـ user الجديد
+      localStorage.clear();
+
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("isLoggedIn", "true");
 
-      // ✅ لو دكتور، احفظ الـ profile
       if (role === "lecturer") {
         const name = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "";
         const emailFromToken = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || email;
-        localStorage.setItem("lecturerProfile", JSON.stringify({
-          name,
-          email: emailFromToken,
-        }));
+        localStorage.setItem("lecturerProfile", JSON.stringify({ name, email: emailFromToken }));
       }
 
-      // ✅ لو طالب، احفظ الـ profile
       if (role === "student") {
         const name = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "";
         const emailFromToken = decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || email;
