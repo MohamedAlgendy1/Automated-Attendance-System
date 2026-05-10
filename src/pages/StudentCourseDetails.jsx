@@ -1259,16 +1259,8 @@ function StudentCourseDetails() {
       setRefresh((r) => r + 1);
       showToast("success", "✅ Attendance recorded successfully!");
     } catch (err) {
-      const msg = getErrorMessage(err);
-      // ✅ لو الـ backend بيقول "already recorded" أو "outside" نعرض رسالة واضحة
-      if (msg?.toLowerCase().includes("outside") || msg?.toLowerCase().includes("range") || msg?.toLowerCase().includes("location")) {
-        showError("📍 You are outside the classroom range.");
-      } else if (msg?.toLowerCase().includes("already") || msg?.toLowerCase().includes("recorded")) {
-        // ✅ الطالب سجل قبل كده — مش error حقيقي
-        showToast("success", "✅ Attendance already recorded for this lecture.");
-      } else {
-        showError(msg);
-      }
+      // ✅ بنعرض رسالة الـ Backend مباشرة زي ما هي
+      showError(getErrorMessage(err));
     }
   };
 
