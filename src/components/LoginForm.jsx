@@ -25,7 +25,8 @@ function LoginForm({ goToReset, goToRegister }) {
       ]?.toLowerCase();
 
       // ✅ امسح كل الـ data القديمة قبل ما تحفظ الـ user الجديد
-      localStorage.clear();
+      //localStorage.clear();
+      localStorage.removeItem("token");
 
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);

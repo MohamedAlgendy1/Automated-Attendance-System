@@ -428,7 +428,7 @@ function StudentDashboard() {
   const overallPercent = totalLectures === 0 ? 0 : Math.round((attendedLectures / totalLectures) * 100);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
     navigate("/");
   };
 

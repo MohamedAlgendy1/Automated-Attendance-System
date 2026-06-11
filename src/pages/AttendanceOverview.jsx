@@ -67,7 +67,8 @@ const { theme, toggleTheme } = useTheme();
           <button
             className="logout-btn"
             onClick={() => {
-              localStorage.clear();
+              //localStorage.clear();
+              localStorage.removeItem("token");
               navigate("/");
             }}
           >

@@ -691,7 +691,7 @@ function CourseDetails() {
             <div className="avatar">{lecturerName?.[0]?.toUpperCase() || "L"}</div>
             <div><p>{lecturerName}</p><span>Lecturer</span></div>
           </div>
-          <button className="logout-btn" onClick={() => { localStorage.clear(); navigate("/"); }}>
+          <button className="logout-btn" onClick={() => {localStorage.removeItem("token");  navigate("/"); }}>
             Sign Out
           </button>
         </div>

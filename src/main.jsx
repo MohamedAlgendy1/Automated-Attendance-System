@@ -5,6 +5,9 @@ import "./styles/theme.css";
 import { migrateFromLocalStorage } from "./migrate";
 import { ThemeProvider } from "./context/ThemeContext";
 
+import { getDeviceId } from "./utils/device";
+
+getDeviceId();
 // ✅ رحّل البيانات القديمة قبل ما التطبيق يبدأ
 migrateFromLocalStorage().then(() => {
   createRoot(document.getElementById("root")).render(

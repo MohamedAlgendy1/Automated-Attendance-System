@@ -354,7 +354,7 @@ function AttendanceRecords() {
               <span>Lecturer</span>
             </div>
           </div>
-          <button className="logout-btn" onClick={() => { localStorage.clear(); navigate("/"); }}>
+          <button className="logout-btn" onClick={() => { localStorage.removeItem("token"); navigate("/"); }}>
             Sign Out
           </button>
         </div>

@@ -285,7 +285,8 @@ function AdminDashboard() {
   );
 
   const handleLogout = () => {
-    localStorage.clear();
+    //localStorage.clear();
+    localStorage.removeItem("token");
     navigate("/");
   };
 

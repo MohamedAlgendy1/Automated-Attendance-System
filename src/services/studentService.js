@@ -1,6 +1,9 @@
 import api from "./api";
 
 
+import { getDeviceId } from "../utils/device";
+
+
 export const getMyCourses = async () => {
   const res = await api.get("/student/MyCourses");
   const data = res.data;
@@ -47,16 +50,25 @@ export const getMyAttendanceHistory = async () => {
 };
 
 
-
-
 export const scanQR = async (token, lat, lng) => {
   const res = await api.post("/student/ScanQr", {
     token,
     studentLatitude: lat || 0,
     studentLongitude: lng || 0,
+    deviceId: getDeviceId(),
   });
+
   return res.data;
 };
+
+// export const scanQR = async (token, lat, lng) => {
+//   const res = await api.post("/student/ScanQr", {
+//     token,
+//     studentLatitude: lat || 0,
+//     studentLongitude: lng || 0,
+//   });
+//   return res.data;
+// };
 
 // export const scanQR = async (token, lat, lng) => {
 //   const res = await api.post("/student/ScanQr", {
