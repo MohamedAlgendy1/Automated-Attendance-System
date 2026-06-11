@@ -386,6 +386,7 @@ function StudentDashboard() {
       setLoading(true);
       try {
         const courses = await getMyCourses();
+        console.log("MY COURSES:", courses);
         setMyCourses(courses);
 
         const rawAttendance = await getMyAttendanceHistory();
