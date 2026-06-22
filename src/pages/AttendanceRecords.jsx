@@ -336,6 +336,7 @@ function AttendanceRecords() {
   ).length;
 
   const handleAttendanceToggle = async (student) => {
+    console.log("STUDENT =", student);
   try {
     const isPresent =
       (student.status || "Present").toLowerCase() === "present";
