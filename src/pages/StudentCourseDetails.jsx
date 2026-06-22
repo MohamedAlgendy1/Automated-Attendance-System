@@ -139,38 +139,18 @@ function StudentCourseDetails() {
       recordAttendance(text, 0, 0);
       return;
     }
-  //   navigator.geolocation.getCurrentPosition(
-  //     (position) => {
-  //       recordAttendance(text, position.coords.latitude, position.coords.longitude);
-  //     },
-  //     () => {
-  //       recordAttendance(text, 0, 0);
-  //     },
-  //     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  //   );
-  // };
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        recordAttendance(text, position.coords.latitude, position.coords.longitude);
+      },
+      () => {
+        recordAttendance(text, 0, 0);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
-  navigator.geolocation.getCurrentPosition(
-  async (position) => {
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
-
-    console.log("LAT =", lat);
-    console.log("LNG =", lng);
-    console.log("ACCURACY =", position.coords.accuracy);
-    console.log("TIMESTAMP =", position.timestamp);
-
-    await scanQR(text, lat, lng);
-  },
-  (err) => {
-    console.log(err);
-  },
-  {
-    enableHighAccuracy: true,
-    maximumAge: 0,
-    timeout: 10000,
-  }
-);
+  
   useEffect(() => {
     if (showScanner && scanMode === "camera" && videoRef.current) {
       const codeReader = new BrowserQRCodeReader();
