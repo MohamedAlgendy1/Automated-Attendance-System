@@ -337,10 +337,12 @@ function AttendanceRecords() {
 
  const handleAttendanceToggle = async (student) => {
   try {
-    const isPresent =
-      (student.status || "Present").toLowerCase() === "present";
+    //const isPresent =
+    //  (student.status || "Present").toLowerCase() === "present";
+ const isPresent = Number(student.status) === 0;
+const newStatus = isPresent ? 1 : 0;
 
-    const newStatus = isPresent ? 0 : 1;
+    //const newStatus = isPresent ? 0 : 1;
 
     console.log("BEFORE SEND =", {
       courseLectureId: selectedLectureId,
@@ -488,7 +490,8 @@ function AttendanceRecords() {
                   </tr>
                 ) : (
                   filteredReport.map((s, i) => {
-                    const isPresent = (s.status || "Present").toLowerCase() === "present";
+                    //const isPresent = (s.status || "Present").toLowerCase() === "present";
+                    const isPresent = Number(s.status) === 0;
                     return (
                       <tr key={i}>
                         <td>{s.studentName}</td>
