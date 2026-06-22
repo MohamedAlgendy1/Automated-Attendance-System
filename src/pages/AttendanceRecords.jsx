@@ -313,7 +313,13 @@ function AttendanceRecords() {
        const reportData = Array.isArray(res?.report)
   ? res.report.map(s => ({
       ...s,
-      status: Number(s.status) // 🔥 مهم جدًا
+      //status: Number(s.status) // 🔥 مهم جدًا
+ status: typeof s.status === "number"
+  ? s.status
+  : s.status === "Present"
+    ? 0
+    : 1
+   
     }))
   : [];
         setReport(reportData);
@@ -330,12 +336,24 @@ function AttendanceRecords() {
   }, [selectedLectureId]);
 
   // ✅ فلترة الطلاب
-  const filteredReport = report.filter((s) => {
-    const status = (s.status || "Present").toLowerCase();
-    if (filter === "present") return status === "present";
-    if (filter === "absent")  return status === "absent";
-    return true;
-  });
+  //const filteredReport = report.filter((s) => {
+   // const status = (s.status || "Present").toLowerCase();
+   // const status = Number(s.status);
+   // if (filter === "present") return status === "present";
+    //if (filter === "absent")  return status === "absent";
+   // if (filter === "present") return s.status === 0;
+//if (filter === "absent") return s.status === 1;
+    //return true;
+ // });
+const filteredReport = report.filter((s) => {
+  const status = Number(s.status);
+
+  if (filter === "present") return status === 0;
+  if (filter === "absent") return status === 1;
+
+  return true;
+});
+
 
   const absentCount = report.filter(
     (s) => (s.status || "Present").toLowerCase() === "absent"
