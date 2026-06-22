@@ -1238,6 +1238,59 @@ body {
   border: 1px solid rgba(239,68,68,0.2);
 }
 
+/* ===== Attendance Actions ===== */
+
+.mark-present-btn,
+.mark-absent-btn {
+  border: none;
+  outline: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: 130px;
+  color: white;
+}
+
+/* Present Button */
+.mark-present-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}
+
+.mark-present-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.35);
+}
+
+/* Absent Button */
+.mark-absent-btn {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.mark-absent-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.35);
+}
+
+.mark-present-btn:active,
+.mark-absent-btn:active {
+  transform: scale(0.96);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .mark-present-btn,
+  .mark-absent-btn {
+    min-width: 110px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+}
+
 /* ============================================================
    MOBILE — filter tabs
    ============================================================ */
