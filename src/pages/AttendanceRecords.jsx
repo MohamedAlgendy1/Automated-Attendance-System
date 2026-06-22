@@ -335,22 +335,30 @@ function AttendanceRecords() {
     (s) => (s.status || "Present").toLowerCase() === "absent"
   ).length;
 
-  const handleAttendanceToggle = async (student) => {
-    console.log("STUDENT =", student);
+ const handleAttendanceToggle = async (student) => {
   try {
     const isPresent =
       (student.status || "Present").toLowerCase() === "present";
 
-    // غالباً Present=1 و Absent=0
     const newStatus = isPresent ? 0 : 1;
 
-    await updateStudentAttendance(
+    console.log("BEFORE SEND =", {
+      courseLectureId: selectedLectureId,
+      studentId: student.studentId,
+      status: newStatus,
+    });
+
+    const response = await updateStudentAttendance(
       selectedLectureId,
       student.studentId,
       newStatus
     );
 
+    console.log("API RESPONSE =", response);
+
     const res = await getAttendanceReport(selectedLectureId);
+
+    console.log("NEW REPORT =", res);
 
     const reportData = Array.isArray(res?.report)
       ? res.report
@@ -362,6 +370,7 @@ function AttendanceRecords() {
 
     alert("Attendance updated successfully");
   } catch (err) {
+    console.log("ERROR =", err.response?.data);
     alert(getErrorMessage(err));
   }
 };
