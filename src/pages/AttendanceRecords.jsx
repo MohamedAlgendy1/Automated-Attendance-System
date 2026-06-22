@@ -255,7 +255,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./../styles/attendanceRecords.css";
 import { parseJwt, getErrorMessage } from "../services/api";
-import { getAttendanceReport, getLecturesByCourse } from "../services/lectureService";
+import {
+  getAttendanceReport,
+  getLecturesByCourse,
+  updateStudentAttendance,
+} from "../services/lectureService";
 import { getCourseById } from "../services/courseService";
 import { useTheme } from "../context/ThemeContext";
 
@@ -330,6 +334,36 @@ function AttendanceRecords() {
   const absentCount = report.filter(
     (s) => (s.status || "Present").toLowerCase() === "absent"
   ).length;
+
+  const handleAttendanceToggle = async (student) => {
+  try {
+    const isPresent =
+      (student.status || "Present").toLowerCase() === "present";
+
+    // غالباً Present=1 و Absent=0
+    const newStatus = isPresent ? 0 : 1;
+
+    await updateStudentAttendance(
+      selectedLectureId,
+      student.studentId,
+      newStatus
+    );
+
+    const res = await getAttendanceReport(selectedLectureId);
+
+    const reportData = Array.isArray(res?.report)
+      ? res.report
+      : [];
+
+    setReport(reportData);
+    setTotalPresent(res?.totalPresent ?? 0);
+    setTotalEnrolled(res?.totalEnrolled ?? 0);
+
+    alert("Attendance updated successfully");
+  } catch (err) {
+    alert(getErrorMessage(err));
+  }
+};
 
   return (
     <div className="dashboard records-page">
@@ -434,12 +468,13 @@ function AttendanceRecords() {
                   <th>Student</th>
                   <th>Status</th>
                   <th>Scan Time</th>
+                    <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredReport.length === 0 ? (
                   <tr>
-                    <td colSpan="3">No records found</td>
+                    <td colSpan="4">No records found</td>
                   </tr>
                 ) : (
                   filteredReport.map((s, i) => {
@@ -453,10 +488,27 @@ function AttendanceRecords() {
                           </span>
                         </td>
                         <td>
-                          {s.scanTime || s.attendedAt || s.time
-                            ? new Date(s.scanTime || s.attendedAt || s.time).toLocaleString()
-                            : "—"}
-                        </td>
+  {s.scanTime || s.attendedAt || s.time
+    ? new Date(
+        s.scanTime || s.attendedAt || s.time
+      ).toLocaleString()
+    : "—"}
+</td>
+
+<td>
+  <button
+    className={
+      isPresent
+        ? "mark-absent-btn"
+        : "mark-present-btn"
+    }
+    onClick={() => handleAttendanceToggle(s)}
+  >
+    {isPresent
+      ? "Mark Absent"
+      : "Mark Present"}
+  </button>
+</td>
                       </tr>
                     );
                   })

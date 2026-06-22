@@ -5,10 +5,9 @@ import { useTheme } from "../context/ThemeContext";
 import { parseJwt, getErrorMessage } from "../services/api";
 import { getAllCourses } from "../services/courseService";
 import {
-  getLecturesByCourse,
   getAttendanceReport,
+  getLecturesByCourse
 } from "../services/lectureService";
-
  
 export default function AttendanceOverview() {
   const navigate = useNavigate();
@@ -35,6 +34,7 @@ const { theme, toggleTheme } = useTheme();
 
     load();
   }, []);
+
 
   return (
     <div className="dashboard attendance-page">
@@ -183,6 +183,9 @@ if (s.status?.toLowerCase() === "present") {
 
     load();
   }, [courseId]);
+
+
+ 
 
   return (
     <div className="table-box">
