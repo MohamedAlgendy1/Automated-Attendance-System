@@ -139,15 +139,39 @@ function StudentCourseDetails() {
       recordAttendance(text, 0, 0);
       return;
     }
+    // navigator.geolocation.getCurrentPosition(
+    //   (position) => {
+    //     recordAttendance(text, position.coords.latitude, position.coords.longitude);
+    //   },
+    //   () => {
+    //     recordAttendance(text, 0, 0);
+    //   },
+    //   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    // );
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        recordAttendance(text, position.coords.latitude, position.coords.longitude);
-      },
-      () => {
-        recordAttendance(text, 0, 0);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+  async (position) => {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    console.log("LAT =", lat);
+    console.log("LNG =", lng);
+    console.log("ACCURACY =", position.coords.accuracy);
+    console.log("TIMESTAMP =", position.timestamp);
+
+    await recordAttendance(text, lat, lng);
+  },
+  (err) => {
+    console.log("GPS ERROR:", err);
+
+    recordAttendance(text, 0, 0);
+  },
+  {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 10000,
+  }
+);
   };
 
   
