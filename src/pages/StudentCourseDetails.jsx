@@ -127,67 +127,31 @@ function StudentCourseDetails() {
     }
   };
 
-  // const handleQRResult = (text) => {
-  //   // ✅ اقفل الـ scanner بس متعملش reset للـ scannedRef لحد ما الـ attendance يتسجل
-  //   setShowScanner(false);
-  //   setScanMode("camera");
-  //   if (readerRef.current) {
-  //     try { readerRef.current.reset(); } catch { /* ignore */ }
-  //   }
+  const handleQRResult = (text) => {
+    // ✅ اقفل الـ scanner بس متعملش reset للـ scannedRef لحد ما الـ attendance يتسجل
+    setShowScanner(false);
+    setScanMode("camera");
+    if (readerRef.current) {
+      try { readerRef.current.reset(); } catch { /* ignore */ }
+    }
 
-  //   if (!navigator.geolocation) {
-  //     recordAttendance(text, 0, 0);
-  //     return;
-  //   }
-    // navigator.geolocation.getCurrentPosition(
-    //   (position) => {
-    //     recordAttendance(text, position.coords.latitude, position.coords.longitude);
-    //   },
-    //   () => {
-    //     recordAttendance(text, 0, 0);
-    //   },
-    //   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    // );
+    if (!navigator.geolocation) {
+      recordAttendance(text, 0, 0);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        recordAttendance(text, position.coords.latitude, position.coords.longitude);
+      },
+      () => {
+        recordAttendance(text, 0, 0);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
 
   
-  //};
-  const handleQRResult = (text) => {
-  setShowScanner(false);
-  setScanMode("camera");
-  if (readerRef.current) {
-    try { readerRef.current.reset(); } catch { /* ignore */ }
-  }
-
-  if (!navigator.geolocation) {
-    showError("Geolocation is not supported by your browser.");
-    return;
-  }
-
-  // اختياري: ممكن تظهر رسالة تحميل للطالب عشان يعرف إن الموبايل بيقرا مكانه
-  // showToast("info", "Fetching your live location...");
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      // لو نجح، ابعت الإحداثيات الصح للسيرفر
-      recordAttendance(text, position.coords.latitude, position.coords.longitude);
-    },
-    (error) => {
-      // 🚨 هنا التعديل الأهم: إياك تبعت 0,0! اعرض رسالة بالسبب الحقيقي للطالب
-      let errMsg = "Location error.";
-      if (error.code === 1) errMsg = "Please allow location permissions to record attendance.";
-      if (error.code === 2) errMsg = "Location unavailable. Please make sure your GPS/Location is turned ON.";
-      if (error.code === 3) errMsg = "Location request timed out. GPS signal is weak, please try standing near a window or clear area.";
-      
-      showError(errMsg); // اظهر رسالة الخطأ للطالب
-      scannedRef.current = false; // عشان يقدر يعمل سكان تاني
-    },
-    { 
-      enableHighAccuracy: true, 
-      timeout: 15000, // 👈 كبرناها لـ 15 ثانية عشان الـ GPS ياخد وقته جوه المدرج
-      maximumAge: 0 
-    }
-  );
-};
+  };
+ 
 
   
   useEffect(() => {
