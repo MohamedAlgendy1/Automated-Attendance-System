@@ -279,7 +279,7 @@ function AttendanceRecords() {
   {s.scanTime || s.attendedAt || s.time
     ? new Date(
         s.scanTime || s.attendedAt || s.time
-      ).toLocaleTimeString("ar-EG", {
+      ).toLocaleString("en-GB", {
         timeZone: "Africa/Cairo",
       })
     : "—"}
