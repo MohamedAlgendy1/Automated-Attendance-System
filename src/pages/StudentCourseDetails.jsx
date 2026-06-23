@@ -13,7 +13,8 @@ import { getLecturesByCourse } from "../services/lectureService";
 import { useTheme } from "../context/ThemeContext";
 
 function StudentCourseDetails() {
-  const { courseId } = useParams();
+ const { courseId } = useParams();
+
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [course, setCourse] = useState(null);

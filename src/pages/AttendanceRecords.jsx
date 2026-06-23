@@ -12,7 +12,8 @@ import { getCourseById } from "../services/courseService";
 import { useTheme } from "../context/ThemeContext";
 
 function AttendanceRecords() {
-  const { courseId } = useParams();
+  //const { courseId } = useParams();
+  const { courseId, lectureId } = useParams();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
@@ -44,8 +45,15 @@ function AttendanceRecords() {
         const lects = lecturesRes || [];
         setLectures(lects);
 
-        if (lects.length > 0) setSelectedLectureId(lects[0].id);
-        else setLoading(false);
+        // if (lects.length > 0) setSelectedLectureId(lects[0].id);
+        // else setLoading(false);
+        if (lectureId) {
+  setSelectedLectureId(Number(lectureId));
+} else if (lects.length > 0) {
+  setSelectedLectureId(lects[0].id);
+} else {
+  setLoading(false);
+} 
       } catch (err) {
         console.log(getErrorMessage(err));
         setLoading(false);
@@ -53,7 +61,7 @@ function AttendanceRecords() {
     };
 
     load();
-  }, [courseId]);
+  }, [courseId, lectureId]);
 
   // ================= LOAD REPORT =================
   useEffect(() => {
