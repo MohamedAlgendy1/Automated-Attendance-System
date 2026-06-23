@@ -276,13 +276,7 @@ function AttendanceRecords() {
                           </span>
                         </td>
 <td>
-  {s.scanTime || s.attendedAt || s.time
-    ? new Date(
-        s.scanTime || s.attendedAt || s.time
-      ).toLocaleString("en-GB", {
-        timeZone: "Africa/Cairo",
-      })
-    : "—"}
+  {formatTime(s.scanTime || s.attendedAt || s.time)}
 </td>
                         <td>
                           <button
@@ -325,3 +319,19 @@ function AttendanceRecords() {
 }
 
 export default AttendanceRecords;
+
+
+const formatTime = (timeStr) => {
+if (!timeStr) return "—";
+const utcStr = timeStr.endsWith("Z") ? timeStr : `${ timeStr}
+Z`;
+return new Date(utcStr).toLocaleString("en-GB", {
+timeZone: "Africa/Cairo",
+year: "numeric",
+month: "short",
+day: "numeric",
+hour: "numeric",
+minute: "numeric",
+hour12: true, 
+});
+};
