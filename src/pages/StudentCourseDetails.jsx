@@ -78,9 +78,17 @@ function StudentCourseDetails() {
 
   const totalLectures = lectures.length;
 
+  // const attended = lectures.filter((lec) =>
+  //   attendance.some((a) => a.courseLectureId === lec.id)
+  // ).length;
+
   const attended = lectures.filter((lec) =>
-    attendance.some((a) => a.courseLectureId === lec.id)
-  ).length;
+  attendance.some(
+    (a) =>
+      a.courseLectureId === lec.id &&
+      (a.status === 0 || a.status === "Present")
+  )
+).length;
 
   const percent = totalLectures === 0 ? 0 : Math.round((attended / totalLectures) * 100);
 
@@ -92,7 +100,7 @@ function StudentCourseDetails() {
       a.courseLectureId === lectureId &&
       (a.status === 0 || a.status === "Present")
   );
-  
+
 
   const showToast = (type, msg) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
