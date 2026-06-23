@@ -282,13 +282,7 @@ function StudentCourseDetails() {
                   return (
                     <tr key={lec.id}>
                       <td>{lec.title}</td>
-                     <td>
-  {lec.startTime
-    ? new Date(lec.startTime).toLocaleString("ar-EG", {
-        timeZone: "Africa/Cairo",
-      })
-    : "-"}
-</td>
+                      <td>{lec.startTime ? new Date(lec.startTime).toLocaleString() : "-"}</td>
                       <td>
                         <span className={`status-badge ${isAttended ? "attended" : "not-recorded"}`}>
                           {isAttended ? "✅ Attended" : "Not Recorded"}
